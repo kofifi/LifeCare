@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LifeCare")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a07b53f3fb87906ca376fb1b54584fc887a383c6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+79789807cd4a76e856ffe6ce6722eef1485571f3")]
 [assembly: System.Reflection.AssemblyProductAttribute("LifeCare")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LifeCare")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
