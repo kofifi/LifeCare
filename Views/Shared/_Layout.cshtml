@@ -26,6 +26,27 @@
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>
                 </ul>
+                <ul class="navbar-nav ms-auto">
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="~/images/profile-placeholder.png" alt="Profil" class="rounded-circle me-2" style="width:32px; height:32px;" />
+                            <span>@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</span>
+
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Profil</a></li>
+                            <li>
+                                <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post">
+                                    <button type="submit" class="dropdown-item">Wyloguj</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                    }
+                </ul>
             </div>
         </div>
     </nav>

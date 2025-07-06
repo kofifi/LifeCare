@@ -1,0 +1,115 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <h2>Create a new account.</h2>
+            <hr />
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Login" class="form-control" placeholder="Login" />
+                <label asp-for="Input.Login">Login</label>
+                <span asp-validation-for="Input.Login" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <label asp-for="Input.Email">Email</label>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <label asp-for="Input.Password">Password</label>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="Input.EnableProfile" class="form-check-input" type="checkbox" id="enableProfile" />
+                <label class="form-check-label" for="enableProfile">
+                    Czy chcesz podać dane do profilu (wiek, waga, cel itd.)?
+                </label>
+            </div>
+
+            <div id="profileSection" style="display:none;">
+                <div class="form-group">
+                    <label>Wiek</label>
+                    <input asp-for="Input.Age" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>Płeć</label>
+                    <select asp-for="Input.Gender" class="form-control">
+                        <option value="">Wybierz</option>
+                        <option value="Kobieta">Kobieta</option>
+                        <option value="Mężczyzna">Mężczyzna</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Waga (kg)</label>
+                    <input asp-for="Input.Weight" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>Wzrost (cm)</label>
+                    <input asp-for="Input.Height" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>Cel</label>
+                    <select asp-for="Input.Goal" class="form-control" id="goalSelect">
+                        <option value="">Wybierz</option>
+                        <option value="Zwiększyć wagę">Zwiększyć wagę</option>
+                        <option value="Zmniejszyć wagę">Zmniejszyć wagę</option>
+                        <option value="Utrzymać wagę">Utrzymać wagę</option>
+                    </select>
+                </div>
+                <div class="form-group" id="targetWeightGroup" style="display: none;">
+                    <label>Waga docelowa (kg)</label>
+                    <input asp-for="Input.TargetWeight" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>Aktywność fizyczna</label>
+                    <select asp-for="Input.ActivityLevel" class="form-control">
+                        <option value="">Wybierz poziom</option>
+                        <option value="Bardzo niski">Bardzo niski (brak treningów)</option>
+                        <option value="Niski">Niski (1–3 dni w tygodniu)</option>
+                        <option value="Średni">Średni (4–5 dni w tygodniu)</option>
+                        <option value="Wysoki">Wysoki (codzienne treningi)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleProfileSection() {
+            const enableProfile = document.getElementById('enableProfile').checked;
+            document.getElementById('profileSection').style.display = enableProfile ? 'block' : 'none';
+        }
+
+        function toggleTargetWeight() {
+            const goal = document.getElementById('goalSelect').value;
+            const targetGroup = document.getElementById('targetWeightGroup');
+            targetGroup.style.display = (goal === "Zwiększyć wagę" || goal === "Zmniejszyć wagę") ? 'block' : 'none';
+        }
+
+        document.getElementById('enableProfile').addEventListener('change', toggleProfileSection);
+        document.getElementById('goalSelect').addEventListener('change', toggleTargetWeight);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleProfileSection();
+            toggleTargetWeight();
+        });
+    </script>
+}
