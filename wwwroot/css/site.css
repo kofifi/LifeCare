@@ -26,6 +26,12 @@
   --clr-surface-tonal-a30: #6d6359;
   --clr-surface-tonal-a40: #847b73;
   --clr-surface-tonal-a50: #9b948d;
+
+  /* Bootstrap variable overrides */
+  --bs-body-bg: var(--clr-surface-a10);
+  --bs-body-color: var(--clr-light-a0);
+  --bs-primary: var(--clr-primary-a30);
+  --bs-primary-rgb: 196, 151, 95;
 }
 
 html {
