@@ -1,5 +1,37 @@
+:root {
+  /** Base colors */
+  --clr-dark-a0: #000000;
+  --clr-light-a0: #ffffff;
+
+  /** Theme primary colors */
+  --clr-primary-a0: #9f6706;
+  --clr-primary-a10: #ac772a;
+  --clr-primary-a20: #b88745;
+  --clr-primary-a30: #c4975f;
+  --clr-primary-a40: #cfa878;
+  --clr-primary-a50: #dab992;
+
+  /** Theme surface colors */
+  --clr-surface-a0: #121212;
+  --clr-surface-a10: #282828;
+  --clr-surface-a20: #3f3f3f;
+  --clr-surface-a30: #575757;
+  --clr-surface-a40: #717171;
+  --clr-surface-a50: #8b8b8b;
+
+  /** Theme tonal surface colors */
+  --clr-surface-tonal-a0: #2d2215;
+  --clr-surface-tonal-a10: #42372a;
+  --clr-surface-tonal-a20: #574c41;
+  --clr-surface-tonal-a30: #6d6359;
+  --clr-surface-tonal-a40: #847b73;
+  --clr-surface-tonal-a50: #9b948d;
+}
+
 html {
   font-size: 14px;
+  position: relative;
+  min-height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -8,15 +40,16 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem var(--clr-light-a0), 0 0 0 0.25rem var(--clr-primary-a20);
 }
 
 body {
   margin-bottom: 60px;
+  color: var(--clr-light-a0);
+  background-color: var(--clr-surface-a10);
 }
