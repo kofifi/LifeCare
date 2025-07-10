@@ -1,33 +1,48 @@
 /* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
 
+html[b-wpcxtsghgf], body[b-wpcxtsghgf] {
+  height: 100%;
+}
+
 a.navbar-brand[b-wpcxtsghgf] {
   white-space: normal;
   text-align: center;
   word-break: break-all;
+  color: var(--clr-primary-a40);
+}
+
+#mainNav[b-wpcxtsghgf] {
+  background-color: var(--clr-surface-tonal-a20);
+  border-bottom-color: var(--clr-surface-a30);
 }
 
 a[b-wpcxtsghgf] {
-  color: #0077cc;
+  color: var(--clr-primary-a30);
+}
+
+.navbar-nav .nav-link[b-wpcxtsghgf] {
+  color: var(--clr-light-a0);
 }
 
 .btn-primary[b-wpcxtsghgf] {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+  color: var(--clr-light-a0);
+  background-color: var(--clr-primary-a20);
+  border-color: var(--clr-primary-a30);
 }
 
-.nav-pills .nav-link.active[b-wpcxtsghgf], .nav-pills .show > .nav-link[b-wpcxtsghgf] {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+.nav-pills .nav-link.active[b-wpcxtsghgf],
+.nav-pills .show > .nav-link[b-wpcxtsghgf] {
+  color: var(--clr-light-a0);
+  background-color: var(--clr-primary-a20);
+  border-color: var(--clr-primary-a30);
 }
 
 .border-top[b-wpcxtsghgf] {
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--clr-surface-a30);
 }
 .border-bottom[b-wpcxtsghgf] {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--clr-surface-a30);
 }
 
 .box-shadow[b-wpcxtsghgf] {
@@ -40,9 +55,10 @@ button.accept-policy[b-wpcxtsghgf] {
 }
 
 .footer[b-wpcxtsghgf] {
-  position: absolute;
-  bottom: 0;
+  margin-top: auto;
   width: 100%;
   white-space: nowrap;
   line-height: 60px;
+  background-color: var(--clr-surface-a20);
+  color: var(--clr-light-a0);
 }
