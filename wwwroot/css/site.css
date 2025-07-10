@@ -59,3 +59,32 @@ body {
   color: var(--clr-light-a0);
   background-color: var(--clr-surface-a10);
 }
+
+/* Override Bootstrap button colors with theme variables */
+.btn-primary {
+  color: var(--clr-light-a0);
+  background-color: var(--clr-primary-a20);
+  border-color: var(--clr-primary-a30);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  color: var(--clr-light-a0);
+  background-color: var(--clr-primary-a30);
+  border-color: var(--clr-primary-a40);
+}
+
+.btn-primary:active,
+.btn-primary.active,
+.show > .btn-primary.dropdown-toggle {
+  color: var(--clr-light-a0);
+  background-color: var(--clr-primary-a40);
+  border-color: var(--clr-primary-a50);
+}
+
+.btn-primary:disabled,
+.btn-primary.disabled {
+  color: var(--clr-light-a0);
+  background-color: var(--clr-primary-a20);
+  border-color: var(--clr-primary-a30);
+}
