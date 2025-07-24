@@ -5,12 +5,11 @@
 }
 <h1 class="text-center mb-3">@ViewData["Title"]</h1>
 
-<form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post"
-      class="d-flex justify-content-center flex-column flex-md-row flex-wrap gap-4 mx-auto"
-      style="max-width: 1020px;">
+<form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="container">
+    <div class="row justify-content-center gx-4">
 
     <!-- Dane logowania -->
-    <div class="d-flex flex-column flex-grow-1" style="min-width: 300px; max-width: 500px;">
+    <div class="col-12 col-md-6 mb-4 mb-md-0 d-flex flex-column">
         <h2 class="h5">Dane logowania</h2>
         <hr />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
@@ -48,8 +47,7 @@
     </div>
 
     <!-- Dane profilu -->
-    <div id="profileSection" class="d-flex flex-column flex-grow-1"
-         style="min-width: 300px; max-width: 500px; display:@(Model.Input?.EnableProfile == true ? "flex" : "none")">
+    <div id="profileSection" class="col-12 col-md-6 d-flex flex-column @(Model.Input?.EnableProfile == true ? string.Empty : "d-none")">
         <h2 class="h5">Dane profilu</h2>
         <hr />
         <div class="row g-3">
@@ -100,12 +98,11 @@
     </div>
 
     <!-- Przycisk -->
-    <div class="row w-100 mt-4 mx-auto" style="max-width: 1020px;">
-        <div id="registerBtnWrapper" class="col-md-6 mx-auto">
-            <button id="registerSubmit" type="submit" class="btn btn-lg btn-primary w-100">
-                Rejestruj
-            </button>
-        </div>
+    <div id="registerBtnWrapper" class="col-12 col-md-6 mx-auto mt-4">
+        <button id="registerSubmit" type="submit" class="btn btn-lg btn-primary w-100">
+            Rejestruj
+        </button>
+    </div>
     </div>
 </form>
 
@@ -123,7 +120,7 @@
                 const show = checkbox.checked;
 
                 if (profileSection)
-                    profileSection.style.setProperty("display", show ? "flex" : "none", "important");
+                    profileSection.classList.toggle("d-none", !show);
 
                 if (btnWrapper) {
                     btnWrapper.classList.toggle("col-12", show);
