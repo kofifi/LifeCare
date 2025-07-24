@@ -3,15 +3,14 @@
 @{
     ViewData["Title"] = "Rejestracja";
 }
-
 <h1 class="text-center mb-3">@ViewData["Title"]</h1>
 
-<!-- Wrapper for form and profile -->
-<div id="formWrapper" class="d-flex justify-content-center flex-column flex-md-row flex-wrap gap-4 mx-auto" style="max-width: 500px;">
+<form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post"
+      class="d-flex justify-content-center flex-column flex-md-row flex-wrap gap-4 mx-auto"
+      style="max-width: 1020px;">
 
-    <!-- Login section -->
-    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post"
-          class="d-flex flex-column flex-grow-1" style="min-width: 300px; max-width: 500px;">
+    <!-- Dane logowania -->
+    <div class="d-flex flex-column flex-grow-1" style="min-width: 300px; max-width: 500px;">
         <h2 class="h5">Dane logowania</h2>
         <hr />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
@@ -41,15 +40,16 @@
         </div>
 
         <div class="form-check mb-3">
-            <input asp-for="Input.EnableProfile" class="form-check-input" type="checkbox" id="enableProfile" />
-            <label class="form-check-label" for="enableProfile">
+            <input asp-for="Input.EnableProfile" class="form-check-input" type="checkbox" />
+            <label class="form-check-label" asp-for="Input.EnableProfile">
                 Czy chcesz podać dane do profilu (wiek, waga, cel itd.)?
             </label>
         </div>
-    </form>
+    </div>
 
-    <!-- Profile section -->
-    <div id="profileSection" class="flex-grow-1" style="min-width: 300px; max-width: 500px; display: none;">
+    <!-- Dane profilu -->
+    <div id="profileSection" class="d-flex flex-column flex-grow-1"
+         style="min-width: 300px; max-width: 500px; display:@(Model.Input?.EnableProfile == true ? "flex" : "none")">
         <h2 class="h5">Dane profilu</h2>
         <hr />
         <div class="row g-3">
@@ -90,51 +90,57 @@
                 <label asp-for="Input.ActivityLevel" class="form-label">Aktywność fizyczna</label>
                 <select asp-for="Input.ActivityLevel" class="form-control">
                     <option value="">Wybierz poziom</option>
-                    <option value="Bardzo niski">Bardzo niski (brak treningów)</option>
-                    <option value="Niski">Niski (1–3 dni w tygodniu)</option>
-                    <option value="Średni">Średni (4–5 dni w tygodniu)</option>
-                    <option value="Wysoki">Wysoki (codzienne treningi)</option>
+                    <option value="Bardzo niski">Bardzo niski</option>
+                    <option value="Niski">Niski</option>
+                    <option value="Średni">Średni</option>
+                    <option value="Wysoki">Wysoki</option>
                 </select>
             </div>
         </div>
     </div>
-    <!-- Unified submit button -->
-    <div class="w-100 mt-4 d-flex justify-content-center">
-        <button id="registerSubmit" type="submit" form="registerForm"
-                class="btn btn-lg btn-primary w-100">
-            Register
-        </button>
-    </div>
-</div>
 
-<!-- Extra CSS -->
-<style>
-    .expanded-wrapper {
-        max-width: 1020px !important;
-    }
-</style>
+    <!-- Przycisk -->
+    <div class="row w-100 mt-4 mx-auto" style="max-width: 1020px;">
+        <div id="registerBtnWrapper" class="col-md-6 mx-auto">
+            <button id="registerSubmit" type="submit" class="btn btn-lg btn-primary w-100">
+                Rejestruj
+            </button>
+        </div>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        function toggleProfileSection() {
-            const profileSection = document.getElementById('profileSection');
-            const formWrapper = document.getElementById('formWrapper');
-            const show = document.getElementById('enableProfile').checked;
+        document.addEventListener("DOMContentLoaded", function () {
+            const checkbox = document.getElementById("Input_EnableProfile");
+            const profileSection = document.getElementById("profileSection");
+            const goalSelect = document.getElementById("goalSelect");
+            const targetWeightGroup = document.getElementById("targetWeightGroup");
+            const btnWrapper = document.getElementById("registerBtnWrapper");
 
-            profileSection.style.display = show ? 'block' : 'none';
-            formWrapper.classList.toggle('expanded-wrapper', show);
-        }
+            function toggleProfileSection() {
+                const show = checkbox.checked;
 
-        function toggleTargetWeight() {
-            const goalValue = document.getElementById('goalSelect').value;
-            const targetWeightGroup = document.getElementById('targetWeightGroup');
-            targetWeightGroup.style.display = (goalValue === "Zwiększyć wagę" || goalValue === "Zmniejszyć wagę") ? 'block' : 'none';
-        }
+                if (profileSection)
+                    profileSection.style.setProperty("display", show ? "flex" : "none", "important");
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('enableProfile').addEventListener('change', toggleProfileSection);
-            document.getElementById('goalSelect').addEventListener('change', toggleTargetWeight);
+                if (btnWrapper) {
+                    btnWrapper.classList.toggle("col-12", show);
+                    btnWrapper.classList.toggle("col-md-6", !show);
+                }
+            }
+
+            function toggleTargetWeight() {
+                if (goalSelect && targetWeightGroup) {
+                    const val = goalSelect.value;
+                    targetWeightGroup.style.display = (val === "Zwiększyć wagę" || val === "Zmniejszyć wagę") ? "block" : "none";
+                }
+            }
+
+            if (checkbox) checkbox.addEventListener("change", toggleProfileSection);
+            if (goalSelect) goalSelect.addEventListener("change", toggleTargetWeight);
+
             toggleProfileSection();
             toggleTargetWeight();
         });

@@ -858,3 +858,4 @@ C:\GithubRepos\LifeCare\obj\Debug\net8.0\refint\LifeCare.dll
 C:\GithubRepos\LifeCare\obj\Debug\net8.0\LifeCare.pdb
 C:\GithubRepos\LifeCare\obj\Debug\net8.0\LifeCare.genruntimeconfig.cache
 C:\GithubRepos\LifeCare\obj\Debug\net8.0\ref\LifeCare.dll
+C:\GithubRepos\LifeCare\bin\Debug\net8.0\libman.json
