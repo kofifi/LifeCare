@@ -7,7 +7,7 @@
 <h1 class="text-center mb-3">@ViewData["Title"]</h1>
 
 <!-- Wrapper for form and profile -->
-<div id="formWrapper" class="d-flex justify-content-center flex-column flex-md-row flex-wrap gap-4">
+<div id="formWrapper" class="d-flex justify-content-center flex-column flex-md-row flex-wrap gap-4 mx-auto" style="max-width: 500px;">
 
     <!-- Login section -->
     <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post"
@@ -98,19 +98,18 @@
             </div>
         </div>
     </div>
-</div>
-
-<!-- Unified submit button -->
-<div class="w-100 mt-4 d-flex justify-content-center">
-    <button id="registerSubmit" type="submit" form="registerForm"
-            class="btn btn-lg btn-primary w-100" style="max-width: 500px;">
-        Register
-    </button>
+    <!-- Unified submit button -->
+    <div class="w-100 mt-4 d-flex justify-content-center">
+        <button id="registerSubmit" type="submit" form="registerForm"
+                class="btn btn-lg btn-primary w-100">
+            Register
+        </button>
+    </div>
 </div>
 
 <!-- Extra CSS -->
 <style>
-    .expanded-btn {
+    .expanded-wrapper {
         max-width: 1020px !important;
     }
 </style>
@@ -120,11 +119,11 @@
     <script>
         function toggleProfileSection() {
             const profileSection = document.getElementById('profileSection');
-            const registerButton = document.getElementById('registerSubmit');
+            const formWrapper = document.getElementById('formWrapper');
             const show = document.getElementById('enableProfile').checked;
 
             profileSection.style.display = show ? 'block' : 'none';
-            registerButton.classList.toggle('expanded-btn', show);
+            formWrapper.classList.toggle('expanded-wrapper', show);
         }
 
         function toggleTargetWeight() {
