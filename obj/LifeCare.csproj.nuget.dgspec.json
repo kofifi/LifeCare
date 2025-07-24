@@ -1,29 +1,27 @@
 {
   "format": 1,
   "restore": {
-    "C:\\UBB\\PZPP\\LifeCare\\LifeCare.csproj": {}
+    "C:\\GithubRepos\\LifeCare\\LifeCare.csproj": {}
   },
   "projects": {
-    "C:\\UBB\\PZPP\\LifeCare\\LifeCare.csproj": {
+    "C:\\GithubRepos\\LifeCare\\LifeCare.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\UBB\\PZPP\\LifeCare\\LifeCare.csproj",
+        "projectUniqueName": "C:\\GithubRepos\\LifeCare\\LifeCare.csproj",
         "projectName": "LifeCare",
-        "projectPath": "C:\\UBB\\PZPP\\LifeCare\\LifeCare.csproj",
-        "packagesPath": "C:\\Users\\kofirlej\\.nuget\\packages\\",
-        "outputPath": "C:\\UBB\\PZPP\\LifeCare\\obj\\",
+        "projectPath": "C:\\GithubRepos\\LifeCare\\LifeCare.csproj",
+        "packagesPath": "C:\\Users\\kfirlej\\.nuget\\packages\\",
+        "outputPath": "C:\\GithubRepos\\LifeCare\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\kofirlej\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\kfirlej\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
-          "https://api.nuget.org/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/avalonia-ci/api/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
@@ -41,7 +39,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -90,19 +88,19 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.17, 8.0.17]"
+              "version": "[8.0.15, 8.0.15]"
             },
             {
               "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.17, 8.0.17]"
+              "version": "[8.0.15, 8.0.15]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.17, 8.0.17]"
+              "version": "[8.0.15, 8.0.15]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.17, 8.0.17]"
+              "version": "[8.0.15, 8.0.15]"
             }
           ],
           "frameworkReferences": {
@@ -113,7 +111,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
