@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace LifeCare.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateFixed : Migration
+    public partial class InitialClean : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,6 +30,7 @@ namespace LifeCare.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DisplayName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsAdmin = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -181,20 +182,21 @@ namespace LifeCare.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Habits",
+                name: "HabitCategory",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Color = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Icon = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Habits", x => x.Id);
+                    table.PrimaryKey("PK_HabitCategory", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Habits_AspNetUsers_UserId",
+                        name: "FK_HabitCategory_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -247,6 +249,32 @@ namespace LifeCare.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserProfiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Age = table.Column<int>(type: "int", nullable: true),
+                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Weight = table.Column<float>(type: "real", nullable: true),
+                    Height = table.Column<float>(type: "real", nullable: true),
+                    Goal = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TargetWeight = table.Column<float>(type: "real", nullable: true),
+                    ActivityLevel = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserProfiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserProfiles_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "WorkoutPlans",
                 columns: table => new
                 {
@@ -269,24 +297,35 @@ namespace LifeCare.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "HabitEntries",
+                name: "Habits",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    HabitId = table.Column<int>(type: "int", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Completed = table.Column<bool>(type: "bit", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Color = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Icon = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    Unit = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CategoryId = table.Column<int>(type: "int", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_HabitEntries", x => x.Id);
+                    table.PrimaryKey("PK_Habits", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_HabitEntries_Habits_HabitId",
-                        column: x => x.HabitId,
-                        principalTable: "Habits",
+                        name: "FK_Habits_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Habits_HabitCategory_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "HabitCategory",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -306,6 +345,28 @@ namespace LifeCare.Migrations
                         name: "FK_RoutineEntries_Routines_RoutineId",
                         column: x => x.RoutineId,
                         principalTable: "Routines",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "HabitEntries",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    HabitId = table.Column<int>(type: "int", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Completed = table.Column<bool>(type: "bit", nullable: true),
+                    Quantity = table.Column<float>(type: "real", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_HabitEntries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_HabitEntries_Habits_HabitId",
+                        column: x => x.HabitId,
+                        principalTable: "Habits",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -355,9 +416,19 @@ namespace LifeCare.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_HabitCategory_UserId",
+                table: "HabitCategory",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_HabitEntries_HabitId",
                 table: "HabitEntries",
                 column: "HabitId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Habits_CategoryId",
+                table: "Habits",
+                column: "CategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Habits_UserId",
@@ -378,6 +449,12 @@ namespace LifeCare.Migrations
                 name: "IX_Routines_UserId",
                 table: "Routines",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserProfiles_UserId",
+                table: "UserProfiles",
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_WorkoutPlans_UserId",
@@ -416,6 +493,9 @@ namespace LifeCare.Migrations
                 name: "RoutineEntries");
 
             migrationBuilder.DropTable(
+                name: "UserProfiles");
+
+            migrationBuilder.DropTable(
                 name: "WorkoutPlans");
 
             migrationBuilder.DropTable(
@@ -426,6 +506,9 @@ namespace LifeCare.Migrations
 
             migrationBuilder.DropTable(
                 name: "Routines");
+
+            migrationBuilder.DropTable(
+                name: "HabitCategory");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
