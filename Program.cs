@@ -1,5 +1,7 @@
 using LifeCare.Data;
 using LifeCare.Models;
+using LifeCare.Services;
+using LifeCare.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +18,10 @@ builder.Services.AddDefaultIdentity<User>(options =>
     .AddEntityFrameworkStores<LifeCareDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IHabitService, HabitService>();
+
+builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 
