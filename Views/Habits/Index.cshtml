@@ -1,18 +1,17 @@
 ﻿@model IEnumerable<LifeCare.ViewModels.HabitVM>
 @{
-ViewData["Title"] = "Twoje nawyki";
-var selectedDate = DateTime.Today;
-var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
+    ViewData["Title"] = "Twoje nawyki";
+    var selectedDate = DateTime.Today;
+    var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
 }
 
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8"/>
     <title>@ViewData["Title"]</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
         .habit-card .card {
             width: 100%;
@@ -32,10 +31,11 @@ var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
     <div class="d-flex overflow-auto mb-3" id="calendar-scroll">
         @for (int i = -3; i <= 3; i++)
         {
-        var date = selectedDate.AddDays(i);
-        <button class="btn btn-outline-primary mx-1 day-button @(date == selectedDate ? "active" : "")" data-date="@date.ToString("yyyy-MM-dd")">
-            @date.ToString("ddd dd.MM")
-        </button>
+            var date = selectedDate.AddDays(i);
+            <button class="btn btn-outline-primary mx-1 day-button @(date == selectedDate ? "active" : "")"
+                    data-date="@date.ToString("yyyy-MM-dd")">
+                @date.ToString("ddd dd.MM")
+            </button>
         }
     </div>
 
@@ -45,10 +45,10 @@ var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
             <option value="">Wszystkie kategorie</option>
             @if (categories != null)
             {
-            foreach (var category in categories)
-            {
-                <option value="@category.Id">@category.Name</option>
-            }
+                foreach (var category in categories)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
             }
         </select>
     </div>
@@ -57,44 +57,72 @@ var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
     <div class="d-flex flex-column gap-3" id="habit-list">
         @foreach (var habit in Model.OrderBy(h => h.Id))
         {
-        <div class="habit-card" data-category-id="@habit.CategoryId" data-id="@habit.Id">
-            <div class="card d-flex flex-row align-items-center p-3" style="border-left: 10px solid @habit.Color; cursor: pointer;">
-                <i class="me-3 fa @habit.Icon fa-2x" style="color: @habit.Color;"></i>
-                <div class="flex-grow-1">
-                    <a asp-action="Details" asp-route-id="@habit.Id" class="text-decoration-none text-dark">
-                        <strong>@habit.Name</strong><br />
-                        <small>@habit.Description</small>
-                    </a>
-                </div>
-                <div>
-                    @if (habit.Type == LifeCare.Models.HabitType.Quantity)
-                    {
-                    <button class="btn btn-outline-primary btn-sm">+</button>
-                    }
-                    else
-                    {
-                    <input type="checkbox" class="form-check-input" />
-                    }
+            <div class="habit-card" data-id="@habit.Id" data-category-id="@habit.CategoryId" data-target="@habit.TargetQuantity" data-unit="@habit.Unit" data-color="@habit.Color">
+                <div class="card d-flex flex-row align-items-center p-3" style="border-left: 10px solid @habit.Color;">
+                    <i class="me-3 fa @habit.Icon fa-2x" style="color: @habit.Color;"></i>
+                    <div class="flex-grow-1">
+                        <a asp-action="Details" asp-route-id="@habit.Id" class="text-decoration-none text-dark">
+                            <strong>@habit.Name</strong><br/>
+                            <small>@habit.Description</small>
+                        </a>
+                    </div>
+                    <div class="text-end">
+                        @if (habit.Type == LifeCare.Models.HabitType.Quantity)
+                        {
+                            <span class="habit-progress me-2" data-habit-id="@habit.Id" style="font-size: 0.9em; color: gray;">0/@habit.TargetQuantity</span>
+                            <button class="btn btn-outline-primary btn-sm">+</button>
+                        }
+                        else
+                        {
+                            <input type="checkbox" class="form-check-input"/>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
         }
     </div>
 </div>
 
+<!-- Modal do wpisywania ilości -->
+<div class="modal fade" id="quantityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj wykonanie</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="modalHabitName"></strong></p>
+                <p>Jednostka: <span id="modalUnit"></span></p>
+                <div class="mb-3">
+                    <label for="modalQuantityInput" class="form-label">Ilość wykonana dziś</label>
+                    <input type="number" class="form-control" id="modalQuantityInput" min="0"/>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmQuantityBtn" class="btn btn-success">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
+    let selectedHabitId = null;
+    let selectedDate = new Date().toISOString().split('T')[0];
+
     new Sortable(document.getElementById('habit-list'), {
         animation: 150,
-        onEnd: function (evt) {
+        onEnd: function () {
             const order = Array.from(document.querySelectorAll('.habit-card'))
                 .map(el => el.getAttribute('data-id'));
 
-            fetch('/Habit/UpdateOrder', {
+            fetch('/Habits/UpdateOrder', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(order)
             }).then(res => {
@@ -116,58 +144,119 @@ var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
 
     document.querySelectorAll(".day-button").forEach(btn => {
         btn.addEventListener("click", function () {
-            const selectedDate = this.dataset.date;
-
-            fetch(`/Habit/GetEntries?date=${selectedDate}`)
-                .then(res => res.json())
-                .then(entries => {
-                    document.querySelectorAll('.habit-card').forEach(card => {
-                        const id = parseInt(card.dataset.id);
-                        const entry = entries.find(e => e.habitId === id);
-                        const checkbox = card.querySelector('input[type=checkbox]');
-                        const plusButton = card.querySelector('button');
-
-                        if (checkbox) {
-                            checkbox.checked = entry?.completed || false;
-                            checkbox.onchange = () => {
-                                fetch('/Habit/SaveEntry', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        habitId: id,
-                                        date: selectedDate,
-                                        completed: checkbox.checked
-                                    })
-                                });
-                            };
-                        }
-
-                        if (plusButton) {
-                            plusButton.onclick = () => {
-                                let quantity = prompt('Ilość do dodania:');
-                                quantity = parseInt(quantity);
-                                if (!isNaN(quantity)) {
-                                    fetch('/Habit/SaveEntry', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify({
-                                            habitId: id,
-                                            date: selectedDate,
-                                            completed: true,
-                                            quantity: quantity
-                                        })
-                                    });
-                                }
-                            };
-                        }
-                    });
-                });
+            document.querySelectorAll(".day-button").forEach(b => b.classList.remove("active"));
+            this.classList.add("active");
+            selectedDate = this.dataset.date;
+            loadEntriesForDate(selectedDate);
         });
     });
+
+    function loadEntriesForDate(date) {
+        fetch(`/Habits/GetEntries?date=${date}`)
+            .then(res => res.json())
+            .then(entries => {
+                document.querySelectorAll(".habit-card").forEach(card => {
+                    const id = parseInt(card.dataset.id);
+                    const entry = entries.find(e => e.habitId === id);
+                    const checkbox = card.querySelector('input[type=checkbox]');
+                    const progress = card.querySelector('.habit-progress');
+                    const target = parseInt(card.getAttribute('data-target')) || 0;
+
+                    if (checkbox) {
+                        checkbox.checked = entry?.completed || false;
+                    }
+
+                    if (progress) {
+                        const quantity = entry?.quantity || 0;
+                        progress.innerHTML = `${quantity}/${target}`;
+                        progress.style.color = quantity >= target ? card.dataset.color : 'gray';
+                        if (quantity >= target) {
+                            progress.innerHTML += ' <i class="fa fa-check text-success"></i>';
+                        }
+                    }
+                });
+            });
+    }
+
+    function openQuantityModal(habitId, card, current, target) {
+        selectedHabitId = habitId;
+        const name = card.querySelector('strong').textContent;
+        const unit = card.getAttribute('data-unit') || "";
+
+        document.getElementById("modalHabitName").textContent = name;
+        document.getElementById("modalUnit").textContent = unit;
+        document.getElementById("modalQuantityInput").value = current;
+        const modal = new bootstrap.Modal(document.getElementById("quantityModal"));
+        modal.show();
+    }
+
+    document.getElementById("confirmQuantityBtn").addEventListener("click", async function () {
+        const quantity = parseInt(document.getElementById("modalQuantityInput").value);
+        if (!isNaN(quantity)) {
+            const res = await fetch('/Habits/SaveEntry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    habitId: selectedHabitId,
+                    date: selectedDate,
+                    completed: true,
+                    quantity: quantity
+                })
+            });
+
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById("quantityModal")).hide();
+                const entriesRes = await fetch(`/Habits/GetEntries?date=${selectedDate}`);
+                const entries = await entriesRes.json();
+                const entry = entries.find(e => e.habitId === selectedHabitId);
+
+                const card = document.querySelector(`.habit-card[data-id="${selectedHabitId}"]`);
+                const progress = card.querySelector('.habit-progress');
+                const target = parseInt(card.getAttribute('data-target')) || 0;
+                const qty = entry?.quantity || 0;
+
+                progress.innerHTML = `${qty}/${target}`;
+                progress.style.color = qty >= target ? card.dataset.color : 'gray';
+                if (qty >= target) {
+                    progress.innerHTML += ' <i class="fa fa-check text-success"></i>';
+                }
+            } else {
+                alert('Wystąpił błąd podczas zapisu.');
+            }
+        }
+    });
+
+    document.getElementById('habit-list').addEventListener('click', function (e) {
+        if (e.target.closest('button') && e.target.closest('.habit-card')) {
+            const button = e.target.closest('button');
+            const card = button.closest('.habit-card');
+            const habitId = parseInt(card.dataset.id);
+            const progress = card.querySelector('.habit-progress');
+            const quantity = parseInt(progress?.textContent.split('/')[0]) || 0;
+            const target = parseInt(card.dataset.target) || 0;
+            openQuantityModal(habitId, card, quantity, target);
+        }
+    });
+
+    document.getElementById('habit-list').addEventListener('change', function (e) {
+        if (e.target.type === 'checkbox' && e.target.closest('.habit-card')) {
+            const card = e.target.closest('.habit-card');
+            const habitId = parseInt(card.dataset.id);
+            saveEntry(habitId, selectedDate, e.target.checked);
+        }
+    });
+
+    function saveEntry(habitId, date, completed, quantity = null) {
+        fetch('/Habits/SaveEntry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ habitId, date, completed, quantity })
+        });
+    }
+
+    loadEntriesForDate(selectedDate);
 </script>
 </body>
 </html>

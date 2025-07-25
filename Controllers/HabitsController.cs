@@ -120,7 +120,7 @@ public class HabitsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetEntires(DateTime date)
+    public async Task<IActionResult> GetEntries(DateTime date)
     {
         var userId = _userManager.GetUserId(User);
         var entries = await _habitService.GetEntriesForDateAsync(date, userId);
