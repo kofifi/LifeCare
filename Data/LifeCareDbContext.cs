@@ -11,6 +11,7 @@ public class LifeCareDbContext : IdentityDbContext<User>
 
     public DbSet<Habit> Habits { get; set; }
     public DbSet<HabitEntry> HabitEntries { get; set; }
+    public DbSet<Category> Categories { get; set; }
     public DbSet<Routine> Routines { get; set; }
     public DbSet<RoutineEntry> RoutineEntries { get; set; }
     public DbSet<NutritionPlan> NutritionPlans { get; set; }
@@ -36,14 +37,14 @@ public class LifeCareDbContext : IdentityDbContext<User>
             .HasForeignKey(e => e.HabitId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // HABIT CATEGORY (jeśli masz klasę HabitCategory)
+        // CATEGORY (jeśli masz klasę Category)
         modelBuilder.Entity<Habit>()
             .HasOne(h => h.Category)
             .WithMany(c => c.Habits)
             .HasForeignKey(h => h.CategoryId)
             .OnDelete(DeleteBehavior.Restrict); // zapobiega błędowi multiple cascade
 
-        modelBuilder.Entity<HabitCategory>()
+        modelBuilder.Entity<Category>()
             .HasOne(c => c.User)
             .WithMany(u => u.HabitCategories)
             .HasForeignKey(c => c.UserId)

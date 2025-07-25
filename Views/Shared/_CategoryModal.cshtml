@@ -1,0 +1,21 @@
+﻿@model LifeCare.ViewModels.CategoryVM
+
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="categoryForm" class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalLabel">Dodaj kategorię</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="categoryName" class="form-label">Nazwa</label>
+                    <input type="text" id="categoryName" class="form-control" required />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Dodaj</button>
+            </div>
+        </form>
+    </div>
+</div>

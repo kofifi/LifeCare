@@ -1,8 +1,9 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using LifeCare.Data;
+using LifeCare.Models;
 using LifeCare.Services.Interfaces;
 using LifeCare.ViewModels;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LifeCare.Services;
@@ -17,7 +18,7 @@ public class HabitService : IHabitService
         _context = context;
         _mapper = mapper;
     }
-    
+
     public async Task<List<HabitVM>> GetAllHabitsAsync(string userId)
     {
         var habits = await _context.Habits
@@ -65,11 +66,69 @@ public class HabitService : IHabitService
         _context.Habits.Remove(habit);
         await _context.SaveChangesAsync();
     }
-    
-    public async Task<List<HabitCategory>> GetUserCategoriesAsync(string userId)
+
+    public async Task<List<Category>> GetUserCategoriesAsync(string userId)
     {
-        return await _context.Set<HabitCategory>()
+        return await _context.Set<Category>()
             .Where(c => c.UserId == userId)
             .ToListAsync();
+    }
+
+    public async Task UpdateHabitOrderAsync(List<int> orderedHabitIds, string userId)
+    {
+        var habits = await _context.Habits
+            .Where(h => h.UserId == userId && orderedHabitIds.Contains(h.Id))
+            .ToListAsync();
+
+        for (int i = 0; i < orderedHabitIds.Count; i++)
+        {
+            var habit = habits.FirstOrDefault(h => h.Id == orderedHabitIds[i]);
+            if (habit != null)
+            {
+                habit.Order = i;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<HabitEntryVM>> GetEntriesForDateAsync(DateTime date, string? userId)
+    {
+        return await _context.HabitEntries
+            .Where(e => e.Habit.UserId == userId && e.Date.Date == date.Date)
+            .ProjectTo<HabitEntryVM>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task<bool> SaveHabitEntryAsync(HabitEntryVM entryVm, string? userId)
+    {
+        var habit = await _context.Habits
+            .FirstOrDefaultAsync(h => h.UserId == userId && h.Id == entryVm.HabitId);
+        if (habit == null)
+            return false;
+
+        var entry = await _context.HabitEntries
+            .FirstOrDefaultAsync(e => e.Date.Date == entryVm.Date.Date &&
+                                      e.HabitId == entryVm.HabitId);
+
+        if (entry == null)
+        {
+            entry = new HabitEntry
+            {
+                HabitId = entryVm.HabitId,
+                Date = entryVm.Date,
+                Completed = entryVm.Completed,
+                Quantity = entryVm.Quantity
+            };
+            _context.HabitEntries.Add(entry);
+        }
+        else
+        {
+            entry.Completed = entryVm.Completed;
+            entry.Quantity = entryVm.Quantity;
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

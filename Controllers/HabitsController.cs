@@ -1,12 +1,9 @@
-﻿using AutoMapper;
-using LifeCare.Data;
-using LifeCare.Models;
+﻿using LifeCare.Models;
 using LifeCare.Services.Interfaces;
 using LifeCare.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LifeCare.Controllers;
 
@@ -26,7 +23,9 @@ public class HabitsController : Controller
     {
         var userId = _userManager.GetUserId(User);
         var habits = await _habitService.GetAllHabitsAsync(userId);
+        var categories = await _habitService.GetUserCategoriesAsync(userId);
         
+        ViewBag.Categories = categories;
         return View(habits);
     }
 
@@ -110,5 +109,29 @@ public class HabitsController : Controller
         var userId = _userManager.GetUserId(User);
         await _habitService.DeleteHabitAsync(id, userId);
         return RedirectToAction(nameof(Index));
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateOrder([FromBody] List<int> orderedHabitIds)
+    {
+        var userId = _userManager.GetUserId(User);
+        await _habitService.UpdateHabitOrderAsync(orderedHabitIds, userId);
+        return Ok();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetEntires(DateTime date)
+    {
+        var userId = _userManager.GetUserId(User);
+        var entries = await _habitService.GetEntriesForDateAsync(date, userId);
+        return Json(entries);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> SaveEntry([FromBody] HabitEntryVM entryVM)
+    {
+        var userId = _userManager.GetUserId(User);
+        var result = await _habitService.SaveHabitEntryAsync(entryVM, userId);
+        return result ? Ok() : BadRequest();
     }
 }

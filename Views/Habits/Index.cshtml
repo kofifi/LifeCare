@@ -1,0 +1,173 @@
+﻿@model IEnumerable<LifeCare.ViewModels.HabitVM>
+@{
+ViewData["Title"] = "Twoje nawyki";
+var selectedDate = DateTime.Today;
+var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        .habit-card .card {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Twoje nawyki</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fa fa-plus"></i>
+        </a>
+    </div>
+
+    <!-- Kalendarz -->
+    <div class="d-flex overflow-auto mb-3" id="calendar-scroll">
+        @for (int i = -3; i <= 3; i++)
+        {
+        var date = selectedDate.AddDays(i);
+        <button class="btn btn-outline-primary mx-1 day-button @(date == selectedDate ? "active" : "")" data-date="@date.ToString("yyyy-MM-dd")">
+            @date.ToString("ddd dd.MM")
+        </button>
+        }
+    </div>
+
+    <!-- Filtrowanie po kategorii -->
+    <div class="mb-3">
+        <select class="form-select" id="categoryFilter">
+            <option value="">Wszystkie kategorie</option>
+            @if (categories != null)
+            {
+            foreach (var category in categories)
+            {
+                <option value="@category.Id">@category.Name</option>
+            }
+            }
+        </select>
+    </div>
+
+    <!-- Lista nawyków -->
+    <div class="d-flex flex-column gap-3" id="habit-list">
+        @foreach (var habit in Model.OrderBy(h => h.Id))
+        {
+        <div class="habit-card" data-category-id="@habit.CategoryId" data-id="@habit.Id">
+            <div class="card d-flex flex-row align-items-center p-3" style="border-left: 10px solid @habit.Color; cursor: pointer;">
+                <i class="me-3 fa @habit.Icon fa-2x" style="color: @habit.Color;"></i>
+                <div class="flex-grow-1">
+                    <a asp-action="Details" asp-route-id="@habit.Id" class="text-decoration-none text-dark">
+                        <strong>@habit.Name</strong><br />
+                        <small>@habit.Description</small>
+                    </a>
+                </div>
+                <div>
+                    @if (habit.Type == LifeCare.Models.HabitType.Quantity)
+                    {
+                    <button class="btn btn-outline-primary btn-sm">+</button>
+                    }
+                    else
+                    {
+                    <input type="checkbox" class="form-check-input" />
+                    }
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    new Sortable(document.getElementById('habit-list'), {
+        animation: 150,
+        onEnd: function (evt) {
+            const order = Array.from(document.querySelectorAll('.habit-card'))
+                .map(el => el.getAttribute('data-id'));
+
+            fetch('/Habit/UpdateOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(order)
+            }).then(res => {
+                if (!res.ok) alert('Błąd zapisu kolejności');
+            });
+        }
+    });
+
+    document.getElementById("categoryFilter").addEventListener("change", function () {
+        const selected = this.value;
+        document.querySelectorAll(".habit-card").forEach(el => {
+            if (!selected || el.dataset.categoryId === selected) {
+                el.style.display = "block";
+            } else {
+                el.style.display = "none";
+            }
+        });
+    });
+
+    document.querySelectorAll(".day-button").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const selectedDate = this.dataset.date;
+
+            fetch(`/Habit/GetEntries?date=${selectedDate}`)
+                .then(res => res.json())
+                .then(entries => {
+                    document.querySelectorAll('.habit-card').forEach(card => {
+                        const id = parseInt(card.dataset.id);
+                        const entry = entries.find(e => e.habitId === id);
+                        const checkbox = card.querySelector('input[type=checkbox]');
+                        const plusButton = card.querySelector('button');
+
+                        if (checkbox) {
+                            checkbox.checked = entry?.completed || false;
+                            checkbox.onchange = () => {
+                                fetch('/Habit/SaveEntry', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        habitId: id,
+                                        date: selectedDate,
+                                        completed: checkbox.checked
+                                    })
+                                });
+                            };
+                        }
+
+                        if (plusButton) {
+                            plusButton.onclick = () => {
+                                let quantity = prompt('Ilość do dodania:');
+                                quantity = parseInt(quantity);
+                                if (!isNaN(quantity)) {
+                                    fetch('/Habit/SaveEntry', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            habitId: id,
+                                            date: selectedDate,
+                                            completed: true,
+                                            quantity: quantity
+                                        })
+                                    });
+                                }
+                            };
+                        }
+                    });
+                });
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
-﻿using LifeCare.ViewModels;
+﻿using LifeCare.Models;
+using LifeCare.ViewModels;
 
 namespace LifeCare.Services.Interfaces;
 
@@ -9,5 +10,8 @@ public interface IHabitService
     Task CreateHabitAsync(HabitVM habitVM, string userId);
     Task UpdateHabitAsync(HabitVM habitVM, string userId);
     Task DeleteHabitAsync(int habitId, string userId);
-    Task<List<HabitCategory>> GetUserCategoriesAsync(string userId);
+    Task<List<Category>> GetUserCategoriesAsync(string userId);
+    Task UpdateHabitOrderAsync(List<int> orderedHabitIds, string userId);
+    Task<List<HabitEntryVM>> GetEntriesForDateAsync(DateTime date, string? userId);
+    Task<bool> SaveHabitEntryAsync(HabitEntryVM entryVm, string? userId);
 }

@@ -4,6 +4,7 @@ using LifeCare.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeCare.Migrations
 {
     [DbContext(typeof(LifeCareDbContext))]
-    partial class LifeCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250725164814_AddHabitOrder")]
+    partial class AddHabitOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,6 +72,7 @@ namespace LifeCare.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Icon")
@@ -80,9 +84,6 @@ namespace LifeCare.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TargetQuantity")
                         .HasColumnType("int");
 
                     b.Property<int>("Type")
@@ -131,13 +132,21 @@ namespace LifeCare.Migrations
                     b.ToTable("HabitEntries");
                 });
 
-            modelBuilder.Entity("LifeCare.Models.Category", b =>
+            modelBuilder.Entity("LifeCare.Models.HabitCategory", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -151,7 +160,7 @@ namespace LifeCare.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("HabitCategory");
                 });
 
             modelBuilder.Entity("LifeCare.Models.NutritionPlan", b =>
@@ -320,15 +329,18 @@ namespace LifeCare.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ActivityLevel")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Age")
                         .HasColumnType("int");
 
                     b.Property<string>("Gender")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Goal")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<float?>("Height")
@@ -532,7 +544,7 @@ namespace LifeCare.Migrations
 
             modelBuilder.Entity("Habit", b =>
                 {
-                    b.HasOne("LifeCare.Models.Category", "Category")
+                    b.HasOne("LifeCare.Models.HabitCategory", "Category")
                         .WithMany("Habits")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -559,7 +571,7 @@ namespace LifeCare.Migrations
                     b.Navigation("Habit");
                 });
 
-            modelBuilder.Entity("LifeCare.Models.Category", b =>
+            modelBuilder.Entity("LifeCare.Models.HabitCategory", b =>
                 {
                     b.HasOne("LifeCare.Models.User", "User")
                         .WithMany("HabitCategories")
@@ -681,7 +693,7 @@ namespace LifeCare.Migrations
                     b.Navigation("Entries");
                 });
 
-            modelBuilder.Entity("LifeCare.Models.Category", b =>
+            modelBuilder.Entity("LifeCare.Models.HabitCategory", b =>
                 {
                     b.Navigation("Habits");
                 });
