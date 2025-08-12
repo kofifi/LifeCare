@@ -95,19 +95,17 @@
             desc.style.display = isVisible ? 'none' : 'block';
             this.innerHTML = isVisible ? '<i class="fa fa-plus"></i> Dodaj opis' : '<i class="fa fa-minus"></i> Ukryj opis';
         });
-        
+
         document.getElementById("categoryForm").addEventListener("submit", async function (e) {
             e.preventDefault();
             const name = document.getElementById("categoryName").value;
-            const color = document.getElementById("categoryColor").value;
-            const icon = document.getElementById("categoryIcon").value;
 
             const response = await fetch('/Category/CreateAjax', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ name, color, icon })
+                body: JSON.stringify({ name }) // ✅ tylko pole, które istnieje w CategoryVM
             });
 
             if (response.ok) {
@@ -131,7 +129,6 @@
                 selectedIcon = btn.dataset.icon;
                 document.getElementById("categoryIcon").value = selectedIcon;
 
-                // Podświetl wybraną ikonę
                 document.querySelectorAll(".icon-btn").forEach(b => b.classList.remove("btn-primary"));
                 btn.classList.add("btn-primary");
             });

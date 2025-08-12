@@ -38,7 +38,7 @@ public class HabitsController : Controller
         {
             return NotFound();
         }
-        
+        ViewBag.Categories = await _habitService.GetUserCategoriesAsync(userId);
         return View(habit);
     }
 

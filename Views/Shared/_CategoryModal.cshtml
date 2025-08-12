@@ -10,7 +10,8 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label for="categoryName" class="form-label">Nazwa</label>
-                    <input type="text" id="categoryName" class="form-control" required />
+                    <input type="text" id="categoryName" name="Name" class="form-control" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
                 </div>
             </div>
             <div class="modal-footer">
@@ -19,3 +20,42 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.getElementById("categoryForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById("categoryName").value;
+
+            fetch('/Category/CreateAjax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Błąd dodawania kategorii.");
+                return res.json();
+            })
+            .then(data => {
+                // Przykład: dodaj kategorię do selecta z filtrowaniem (jeśli istnieje)
+                const select = document.getElementById("categoryFilter");
+                if (select) {
+                    const option = document.createElement("option");
+                    option.value = data.id;
+                    option.textContent = data.name;
+                    select.appendChild(option);
+                    select.value = data.id;
+                }
+
+                // Resetuj formularz i zamknij modal
+                document.getElementById("categoryName").value = "";
+                const modal = bootstrap.Modal.getInstance(document.getElementById("categoryModal"));
+                modal.hide();
+            })
+            .catch(err => alert(err.message));
+        });
+    </script>
+}

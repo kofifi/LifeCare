@@ -1,28 +1,28 @@
 :root {
   /** Base colors */
   --clr-dark-a0: #000000;
-  --clr-light-a0: #ffffff;
+  --clr-light-a0: #000000;
 
   /** Theme primary colors */
   --clr-primary-a0: #9f6706;
   --clr-primary-a10: #ac772a;
-  --clr-primary-a20: #b88745;
+  --clr-primary-a20: #0073a3;
   --clr-primary-a30: #c4975f;
-  --clr-primary-a40: #cfa878;
+  --clr-primary-a40: #8acae4;
   --clr-primary-a50: #dab992;
 
   /** Theme surface colors */
   --clr-surface-a0: #121212;
-  --clr-surface-a10: #282828;
-  --clr-surface-a20: #3f3f3f;
-  --clr-surface-a30: #575757;
+  --clr-surface-a10: #fff;
+  --clr-surface-a20: #2868e3;
+  --clr-surface-a30: #0b5ed7;
   --clr-surface-a40: #717171;
   --clr-surface-a50: #8b8b8b;
 
   /** Theme tonal surface colors */
   --clr-surface-tonal-a0: #2d2215;
   --clr-surface-tonal-a10: #42372a;
-  --clr-surface-tonal-a20: #574c41;
+  --clr-surface-tonal-a20: #0b5ed7;
   --clr-surface-tonal-a30: #6d6359;
   --clr-surface-tonal-a40: #847b73;
   --clr-surface-tonal-a50: #9b948d;

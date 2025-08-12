@@ -1,0 +1,142 @@
+﻿@model LifeCare.ViewModels.HabitVM
+@{
+ViewData["Title"] = "Szczegóły nawyku";
+var categories = ViewBag.Categories as List<Category>;
+var color = Model.Color;
+var icon = Model.Icon;
+}
+
+<div class="container py-4">
+
+    <div class="position-relative mb-4">
+        <!-- Menu opcji -->
+        <div class="position-absolute top-0 end-0">
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Opcje">
+                    <i class="fa fa-ellipsis-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <button id="toggleEditBtn" type="button" class="dropdown-item">
+                            <i class="fa fa-edit me-2"></i>Edytuj
+                        </button>
+                    </li>
+                    <li>
+                        <form method="post" action="@Url.Action("DeleteConfirmed", "Habits", new { id = Model.Id })"
+                              onsubmit="return confirm('Czy na pewno chcesz usunąć ten nawyk?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="fa fa-trash me-2"></i>Usuń
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <i class="fa @icon fa-3x mb-2" style="color: @color;"></i>
+            <h3 class="mb-0" style="color: @color;">@Model.Name</h3>
+        </div>
+    </div>
+
+    <div id="editCard" class="card shadow-sm mb-4" style="display:none;">
+        <div class="card-header">
+            <strong style="color: black">Edytuj nawyk</strong>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" asp-controller="Habits" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3 row">
+                    <label class="col-sm-2 col-form-label">Kategoria</label>
+                    <div class="col-sm-10">
+                        <select class="form-select"
+                                asp-for="CategoryId"
+                                asp-items="@(new SelectList(categories ?? new List<Category>(), "Id", "Name", Model.CategoryId))">
+                            <option value="">(brak)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label class="col-sm-2 col-form-label">Nazwa</label>
+                    <div class="col-sm-10">
+                        <input class="form-control" asp-for="Name" />
+                        <span class="text-danger" asp-validation-for="Name"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label class="col-sm-2 col-form-label">Kolor / Ikona</label>
+                    <div class="col-sm-10">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="color" class="form-control form-control-color w-100" asp-for="Color" title="Wybierz kolor" />
+                            </div>
+                            <div class="col-md-8">
+                                <input class="form-control" asp-for="Icon" placeholder="np. fa-dumbbell, fa-book, fa-heart" />
+                            </div>
+                        </div>
+                        <small class="text-muted">Użyj klas Font Awesome, np. <code>fa-book</code>.</small>
+                    </div>
+                </div>
+
+                <!-- Typ -->
+                <div class="mb-3 row">
+                    <label class="col-sm-2 col-form-label">Typ</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" value="@Model.Type" readonly />
+                    </div>
+                </div>
+
+                <div id="quantityFields">
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label">Jednostka</label>
+                        <div class="col-sm-10">
+                            <input class="form-control" asp-for="Unit" placeholder="np. minuty, strony" />
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label">Cel (ilość)</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" asp-for="TargetQuantity" min="0" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save me-2"></i>Zapisz zmiany
+                    </button>
+                    <button type="button" id="cancelEditBtn2" class="btn btn-outline-secondary">Anuluj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+
+<script>
+    const editCard = document.getElementById('editCard');
+    const toggleBtn = document.getElementById('toggleEditBtn');
+    const cancel2 = document.getElementById('cancelEditBtn2');
+
+    function showEdit() { editCard.style.display = 'block'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function hideEdit() { editCard.style.display = 'none'; }
+
+    if (toggleBtn) toggleBtn.addEventListener('click', showEdit);
+    if (cancel2) cancel2.addEventListener('click', hideEdit);
+
+    (function () {
+        const type = "@Model.Type";
+        const q = document.getElementById('quantityFields');
+        if (type === "Quantity") { q.style.display = 'block'; }
+        else { q.style.display = 'none'; }
+    })();
+</script>
+}

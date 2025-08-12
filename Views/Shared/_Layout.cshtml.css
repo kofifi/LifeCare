@@ -18,7 +18,7 @@ a.navbar-brand {
 }
 
 a {
-  color: var(--clr-primary-a30);
+  color: var(--clr-primary-a40);
 }
 
 .navbar-nav .nav-link {
@@ -28,14 +28,14 @@ a {
 .btn-primary {
   color: var(--clr-light-a0);
   background-color: var(--clr-primary-a20);
-  border-color: var(--clr-primary-a30);
+  border-color: var(--clr-primary-a40);
 }
 
 .nav-pills .nav-link.active,
 .nav-pills .show > .nav-link {
   color: var(--clr-light-a0);
   background-color: var(--clr-primary-a20);
-  border-color: var(--clr-primary-a30);
+  border-color: var(--clr-primary-a40);
 }
 
 .border-top {

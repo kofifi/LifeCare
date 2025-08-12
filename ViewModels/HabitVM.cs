@@ -17,4 +17,5 @@ public class HabitVM
     public string? Unit { get; set; }
     public int? TargetQuantity { get; set; }
     public int? CategoryId { get; set; }
+    public int Order { get; set; }
 }
