@@ -1,15 +1,22 @@
 ﻿@model LifeCare.ViewModels.HabitVM
+@using LifeCare.Models
 @{
 ViewData["Title"] = "Szczegóły nawyku";
-var categories = ViewBag.Categories as List<Category>;
 var color = Model.Color;
 var icon = Model.Icon;
 }
 
-<div class="container py-4">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/Chart.min.css"/>
+<link rel="stylesheet" href="~/css/habits.details.css" asp-append-version="true"/>
 
+<div class="container py-4" id="habit-root"
+     data-habit-id="@Model.Id"
+     data-type="@Model.Type"
+     data-target="@Model.TargetQuantity"
+     data-color="@Model.Color">
+
+    <!-- Header z opcjami -->
     <div class="position-relative mb-4">
-        <!-- Menu opcji -->
         <div class="position-absolute top-0 end-0">
             <div class="dropdown">
                 <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Opcje">
@@ -22,13 +29,10 @@ var icon = Model.Icon;
                         </button>
                     </li>
                     <li>
-                        <form method="post" action="@Url.Action("DeleteConfirmed", "Habits", new { id = Model.Id })"
-                              onsubmit="return confirm('Czy na pewno chcesz usunąć ten nawyk?');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="dropdown-item text-danger">
-                                <i class="fa fa-trash me-2"></i>Usuń
-                            </button>
-                        </form>
+                        <button type="button" class="dropdown-item text-danger"
+                                data-bs-toggle="modal" data-bs-target="#habitDeleteModal">
+                            <i class="fa fa-trash me-2"></i>Usuń
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -40,103 +44,27 @@ var icon = Model.Icon;
         </div>
     </div>
 
-    <div id="editCard" class="card shadow-sm mb-4" style="display:none;">
-        <div class="card-header">
-            <strong style="color: black">Edytuj nawyk</strong>
-        </div>
-        <div class="card-body">
-            <form asp-action="Edit" asp-controller="Habits" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="Id" />
+    <!-- Edycja (partial) -->
+    @await Html.PartialAsync("_HabitEditForm", Model)
 
-                <div class="mb-3 row">
-                    <label class="col-sm-2 col-form-label">Kategoria</label>
-                    <div class="col-sm-10">
-                        <select class="form-select"
-                                asp-for="CategoryId"
-                                asp-items="@(new SelectList(categories ?? new List<Category>(), "Id", "Name", Model.CategoryId))">
-                            <option value="">(brak)</option>
-                        </select>
-                    </div>
-                </div>
+    <!-- Statystyki (partial) -->
+    @await Html.PartialAsync("_HabitStats")
 
-                <div class="mb-3 row">
-                    <label class="col-sm-2 col-form-label">Nazwa</label>
-                    <div class="col-sm-10">
-                        <input class="form-control" asp-for="Name" />
-                        <span class="text-danger" asp-validation-for="Name"></span>
-                    </div>
-                </div>
+    <!-- Koło (partial) -->
+    @await Html.PartialAsync("_HabitPieChart")
 
-                <div class="mb-3 row">
-                    <label class="col-sm-2 col-form-label">Kolor / Ikona</label>
-                    <div class="col-sm-10">
-                        <div class="row g-2">
-                            <div class="col-md-4">
-                                <input type="color" class="form-control form-control-color w-100" asp-for="Color" title="Wybierz kolor" />
-                            </div>
-                            <div class="col-md-8">
-                                <input class="form-control" asp-for="Icon" placeholder="np. fa-dumbbell, fa-book, fa-heart" />
-                            </div>
-                        </div>
-                        <small class="text-muted">Użyj klas Font Awesome, np. <code>fa-book</code>.</small>
-                    </div>
-                </div>
+    <!-- Tygodniowy bar (partial) -->
+    @await Html.PartialAsync("_HabitWeekChart")
 
-                <!-- Typ -->
-                <div class="mb-3 row">
-                    <label class="col-sm-2 col-form-label">Typ</label>
-                    <div class="col-sm-10">
-                        <input type="text" class="form-control" value="@Model.Type" readonly />
-                    </div>
-                </div>
+    <!-- Kalendarz (partial) -->
+    @await Html.PartialAsync("_HabitCalendar")
 
-                <div id="quantityFields">
-                    <div class="mb-3 row">
-                        <label class="col-sm-2 col-form-label">Jednostka</label>
-                        <div class="col-sm-10">
-                            <input class="form-control" asp-for="Unit" placeholder="np. minuty, strony" />
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-sm-2 col-form-label">Cel (ilość)</label>
-                        <div class="col-sm-10">
-                            <input type="number" class="form-control" asp-for="TargetQuantity" min="0" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save me-2"></i>Zapisz zmiany
-                    </button>
-                    <button type="button" id="cancelEditBtn2" class="btn btn-outline-secondary">Anuluj</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <!-- Modal usuwania (partial) -->
+    @await Html.PartialAsync("_HabitDeleteModal", Model)
 </div>
 
 @section Scripts {
 <partial name="_ValidationScriptsPartial" />
-
-<script>
-    const editCard = document.getElementById('editCard');
-    const toggleBtn = document.getElementById('toggleEditBtn');
-    const cancel2 = document.getElementById('cancelEditBtn2');
-
-    function showEdit() { editCard.style.display = 'block'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
-    function hideEdit() { editCard.style.display = 'none'; }
-
-    if (toggleBtn) toggleBtn.addEventListener('click', showEdit);
-    if (cancel2) cancel2.addEventListener('click', hideEdit);
-
-    (function () {
-        const type = "@Model.Type";
-        const q = document.getElementById('quantityFields');
-        if (type === "Quantity") { q.style.display = 'block'; }
-        else { q.style.display = 'none'; }
-    })();
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="~/js/habits.details.js" asp-append-version="true"></script>
 }
