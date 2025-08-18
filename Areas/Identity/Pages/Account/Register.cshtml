@@ -6,103 +6,112 @@
 <h1 class="text-center mb-3">@ViewData["Title"]</h1>
 
 <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="container">
-    <div class="row justify-content-center gx-4">
+    <div class="row justify-content-center gx-4 gy-4">
+        <!-- Dane logowania -->
+        <div class="col-12 col-md-6">
+            <h2 class="h5 mb-3">Dane logowania</h2>
 
-    <!-- Dane logowania -->
-    <div class="col-12 col-md-6 mb-4 mb-md-0 d-flex flex-column">
-        <h2 class="h5">Dane logowania</h2>
-        <hr />
-        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
 
-        <div class="mb-3">
-            <label asp-for="Input.Login" class="form-label">Login</label>
-            <input asp-for="Input.Login" class="form-control" />
-            <span asp-validation-for="Input.Login" class="text-danger"></span>
+            <div class="mb-3">
+                <label asp-for="Input.Login" class="form-label">Login</label>
+                <input asp-for="Input.Login" class="form-control" />
+                <span asp-validation-for="Input.Login" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label">Email</label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Password" class="form-label">Hasło</label>
+                <input asp-for="Input.Password" class="form-control" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ConfirmPassword" class="form-label">Powtórz hasło</label>
+                <input asp-for="Input.ConfirmPassword" class="form-control" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-3">
+                <input asp-for="Input.EnableProfile" class="form-check-input" type="checkbox" id="Input_EnableProfile" />
+                <label class="form-check-label" asp-for="Input.EnableProfile">
+                    Czy chcesz podać dane do profilu (wiek, waga, cel itd.)?
+                </label>
+            </div>
+
+            <!-- Desktop & tablet button -->
+            <div id="registerBtnWrapper" class="mt-3">
+                <button id="registerSubmit" type="submit" class="btn btn-lg btn-primary w-100 d-none d-md-block">
+                    Rejestruj
+                </button>
+            </div>
         </div>
 
-        <div class="mb-3">
-            <label asp-for="Input.Email" class="form-label">Email</label>
-            <input asp-for="Input.Email" class="form-control" />
-            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        <!-- Dane profilu -->
+        <div id="profileSection" class="col-12 col-md-6 @(Model.Input?.EnableProfile == true ? string.Empty : "d-none")">
+            <h2 class="h5 mb-3">Dane profilu</h2>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Input.Age" class="form-label">Wiek</label>
+                    <input asp-for="Input.Age" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Gender" class="form-label">Płeć</label>
+                    <select asp-for="Input.Gender" class="form-select">
+                        <option value="">Wybierz</option>
+                        <option value="Kobieta">Kobieta</option>
+                        <option value="Mężczyzna">Mężczyzna</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Weight" class="form-label">Waga (kg)</label>
+                    <input asp-for="Input.Weight" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Height" class="form-label">Wzrost (cm)</label>
+                    <input asp-for="Input.Height" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.Goal" class="form-label">Cel</label>
+                    <select asp-for="Input.Goal" class="form-select" id="goalSelect">
+                        <option value="">Wybierz</option>
+                        <option value="Zwiększyć wagę">Zwiększyć wagę</option>
+                        <option value="Zmniejszyć wagę">Zmniejszyć wagę</option>
+                        <option value="Utrzymać wagę">Utrzymać wagę</option>
+                    </select>
+                </div>
+                <div class="col-md-6" id="targetWeightGroup" style="display: none;">
+                    <label asp-for="Input.TargetWeight" class="form-label">Waga docelowa (kg)</label>
+                    <input asp-for="Input.TargetWeight" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="Input.ActivityLevel" class="form-label">Aktywność fizyczna</label>
+                    <select asp-for="Input.ActivityLevel" class="form-select">
+                        <option value="">Wybierz poziom</option>
+                        <option value="Bardzo niski">Bardzo niski</option>
+                        <option value="Niski">Niski</option>
+                        <option value="Średni">Średni</option>
+                        <option value="Wysoki">Wysoki</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
-        <div class="mb-3">
-            <label asp-for="Input.Password" class="form-label">Hasło</label>
-            <input asp-for="Input.Password" class="form-control" />
-            <span asp-validation-for="Input.Password" class="text-danger"></span>
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="Input.ConfirmPassword" class="form-label">Powtórz hasło</label>
-            <input asp-for="Input.ConfirmPassword" class="form-control" />
-            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-        </div>
-
-        <div class="form-check mb-3">
-            <input asp-for="Input.EnableProfile" class="form-check-input" type="checkbox" />
-            <label class="form-check-label" asp-for="Input.EnableProfile">
-                Czy chcesz podać dane do profilu (wiek, waga, cel itd.)?
-            </label>
-        </div>
+        <!-- Spacer for mobile action bar -->
+        <div class="mobile-sticky-spacer d-md-none"></div>
     </div>
 
-    <!-- Dane profilu -->
-    <div id="profileSection" class="col-12 col-md-6 d-flex flex-column @(Model.Input?.EnableProfile == true ? string.Empty : "d-none")">
-        <h2 class="h5">Dane profilu</h2>
-        <hr />
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label asp-for="Input.Age" class="form-label">Wiek</label>
-                <input asp-for="Input.Age" class="form-control" />
-            </div>
-            <div class="col-md-6">
-                <label asp-for="Input.Gender" class="form-label">Płeć</label>
-                <select asp-for="Input.Gender" class="form-control">
-                    <option value="">Wybierz</option>
-                    <option value="Kobieta">Kobieta</option>
-                    <option value="Mężczyzna">Mężczyzna</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label asp-for="Input.Weight" class="form-label">Waga (kg)</label>
-                <input asp-for="Input.Weight" class="form-control" />
-            </div>
-            <div class="col-md-6">
-                <label asp-for="Input.Height" class="form-label">Wzrost (cm)</label>
-                <input asp-for="Input.Height" class="form-control" />
-            </div>
-            <div class="col-md-6">
-                <label asp-for="Input.Goal" class="form-label">Cel</label>
-                <select asp-for="Input.Goal" class="form-control" id="goalSelect">
-                    <option value="">Wybierz</option>
-                    <option value="Zwiększyć wagę">Zwiększyć wagę</option>
-                    <option value="Zmniejszyć wagę">Zmniejszyć wagę</option>
-                    <option value="Utrzymać wagę">Utrzymać wagę</option>
-                </select>
-            </div>
-            <div class="col-md-6" id="targetWeightGroup" style="display: none;">
-                <label asp-for="Input.TargetWeight" class="form-label">Waga docelowa (kg)</label>
-                <input asp-for="Input.TargetWeight" class="form-control" />
-            </div>
-            <div class="col-12">
-                <label asp-for="Input.ActivityLevel" class="form-label">Aktywność fizyczna</label>
-                <select asp-for="Input.ActivityLevel" class="form-control">
-                    <option value="">Wybierz poziom</option>
-                    <option value="Bardzo niski">Bardzo niski</option>
-                    <option value="Niski">Niski</option>
-                    <option value="Średni">Średni</option>
-                    <option value="Wysoki">Wysoki</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <!-- Przycisk -->
-    <div id="registerBtnWrapper" class="col-12 col-md-6 mx-auto mt-4">
-        <button id="registerSubmit" type="submit" class="btn btn-lg btn-primary w-100">
+    <!-- Mobile sticky submit -->
+    <div class="d-md-none action-bar">
+        <button id="registerSubmitMobile" type="submit" class="btn btn-lg btn-primary w-100">
             Rejestruj
         </button>
-    </div>
     </div>
 </form>
 
@@ -114,25 +123,17 @@
             const profileSection = document.getElementById("profileSection");
             const goalSelect = document.getElementById("goalSelect");
             const targetWeightGroup = document.getElementById("targetWeightGroup");
-            const btnWrapper = document.getElementById("registerBtnWrapper");
 
             function toggleProfileSection() {
-                const show = checkbox.checked;
-
-                if (profileSection)
-                    profileSection.classList.toggle("d-none", !show);
-
-                if (btnWrapper) {
-                    btnWrapper.classList.toggle("col-12", show);
-                    btnWrapper.classList.toggle("col-md-6", !show);
-                }
+                if (!checkbox || !profileSection) return;
+                profileSection.classList.toggle("d-none", !checkbox.checked);
             }
 
             function toggleTargetWeight() {
-                if (goalSelect && targetWeightGroup) {
-                    const val = goalSelect.value;
-                    targetWeightGroup.style.display = (val === "Zwiększyć wagę" || val === "Zmniejszyć wagę") ? "block" : "none";
-                }
+                if (!goalSelect || !targetWeightGroup) return;
+                const val = goalSelect.value;
+                const show = (val === "Zwiększyć wagę" || val === "Zmniejszyć wagę");
+                targetWeightGroup.style.display = show ? "block" : "none";
             }
 
             if (checkbox) checkbox.addEventListener("change", toggleProfileSection);

@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "MgrHH/4nt371q9nx5jajWevLiwDLcEyJAqdFbTyjELM=",
+  "Hash": "RTOrGv0PxubrKrx9CcQtIijWnF2LBN2WYixUtjsStfI=",
   "Source": "LifeCare",
   "BasePath": "_content/LifeCare",
   "Mode": "Default",
@@ -31,8 +31,8 @@
       "RelatedAsset": "",
       "AssetTraitName": "ScopedCss",
       "AssetTraitValue": "ApplicationBundle",
-      "Fingerprint": "fn164vnu9u",
-      "Integrity": "JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg=",
+      "Fingerprint": "ulslarwztb",
+      "Integrity": "Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "C:\\GithubRepos\\LifeCare\\obj\\Debug\\net8.0\\scopedcss\\bundle\\LifeCare.styles.css"
@@ -52,8 +52,8 @@
       "RelatedAsset": "",
       "AssetTraitName": "ScopedCss",
       "AssetTraitValue": "ProjectBundle",
-      "Fingerprint": "fn164vnu9u",
-      "Integrity": "JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg=",
+      "Fingerprint": "ulslarwztb",
+      "Integrity": "Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "C:\\GithubRepos\\LifeCare\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\LifeCare.bundle.scp.css"
@@ -73,8 +73,8 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "f4pjmzk5ly",
-      "Integrity": "78dnhbnpygxKIN+Z8ooZnfznlybQuu1vmNcoGF0EEt0=",
+      "Fingerprint": "5evsrsxx6m",
+      "Integrity": "7cin2MSlmsgAOD2by6Ub067dMLUNLFqbTSZz/gpvgmE=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\site.css"
@@ -5269,6 +5269,51 @@
   ],
   "Endpoints": [
     {
+      "Route": "css/site.5evsrsxx6m.css",
+      "AssetFile": "C:\\GithubRepos\\LifeCare\\wwwroot\\css\\site.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "4410"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"7cin2MSlmsgAOD2by6Ub067dMLUNLFqbTSZz/gpvgmE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 Aug 2025 11:10:25 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "5evsrsxx6m"
+        },
+        {
+          "Name": "label",
+          "Value": "css/site.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-7cin2MSlmsgAOD2by6Ub067dMLUNLFqbTSZz/gpvgmE="
+        }
+      ]
+    },
+    {
       "Route": "css/site.css",
       "AssetFile": "C:\\GithubRepos\\LifeCare\\wwwroot\\css\\site.css",
       "Selectors": [],
@@ -5279,7 +5324,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "2302"
+          "Value": "4410"
         },
         {
           "Name": "Content-Type",
@@ -5287,11 +5332,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"78dnhbnpygxKIN+Z8ooZnfznlybQuu1vmNcoGF0EEt0=\""
+          "Value": "\"7cin2MSlmsgAOD2by6Ub067dMLUNLFqbTSZz/gpvgmE=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 12 Jul 2025 19:58:35 GMT"
+          "Value": "Mon, 18 Aug 2025 11:10:25 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -5301,52 +5346,7 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-78dnhbnpygxKIN+Z8ooZnfznlybQuu1vmNcoGF0EEt0="
-        }
-      ]
-    },
-    {
-      "Route": "css/site.f4pjmzk5ly.css",
-      "AssetFile": "C:\\GithubRepos\\LifeCare\\wwwroot\\css\\site.css",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "2302"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"78dnhbnpygxKIN+Z8ooZnfznlybQuu1vmNcoGF0EEt0=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Sat, 12 Jul 2025 19:58:35 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "max-age=31536000, immutable"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "fingerprint",
-          "Value": "f4pjmzk5ly"
-        },
-        {
-          "Name": "label",
-          "Value": "css/site.css"
-        },
-        {
-          "Name": "integrity",
-          "Value": "sha256-78dnhbnpygxKIN+Z8ooZnfznlybQuu1vmNcoGF0EEt0="
+          "Value": "sha256-7cin2MSlmsgAOD2by6Ub067dMLUNLFqbTSZz/gpvgmE="
         }
       ]
     },
@@ -22915,7 +22915,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1625"
+          "Value": "2899"
         },
         {
           "Name": "Content-Type",
@@ -22923,11 +22923,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg=\""
+          "Value": "\"Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 12 Jul 2025 19:58:35 GMT"
+          "Value": "Mon, 18 Aug 2025 11:19:21 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -22937,97 +22937,7 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg="
-        }
-      ]
-    },
-    {
-      "Route": "LifeCare.fn164vnu9u.bundle.scp.css",
-      "AssetFile": "C:\\GithubRepos\\LifeCare\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\LifeCare.bundle.scp.css",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "1625"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Sat, 12 Jul 2025 19:58:35 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "max-age=31536000, immutable"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "fingerprint",
-          "Value": "fn164vnu9u"
-        },
-        {
-          "Name": "label",
-          "Value": "LifeCare.bundle.scp.css"
-        },
-        {
-          "Name": "integrity",
-          "Value": "sha256-JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg="
-        }
-      ]
-    },
-    {
-      "Route": "LifeCare.fn164vnu9u.styles.css",
-      "AssetFile": "C:\\GithubRepos\\LifeCare\\obj\\Debug\\net8.0\\scopedcss\\bundle\\LifeCare.styles.css",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "1625"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/css"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Sat, 12 Jul 2025 19:58:35 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "max-age=31536000, immutable"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "fingerprint",
-          "Value": "fn164vnu9u"
-        },
-        {
-          "Name": "label",
-          "Value": "LifeCare.styles.css"
-        },
-        {
-          "Name": "integrity",
-          "Value": "sha256-JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg="
+          "Value": "sha256-Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac="
         }
       ]
     },
@@ -23042,7 +22952,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "1625"
+          "Value": "2899"
         },
         {
           "Name": "Content-Type",
@@ -23050,11 +22960,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg=\""
+          "Value": "\"Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 12 Jul 2025 19:58:35 GMT"
+          "Value": "Mon, 18 Aug 2025 11:19:21 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -23064,7 +22974,97 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-JWKUzYmkDF7boDCpHmF8jXNWSzzztGcpphV73XnydWg="
+          "Value": "sha256-Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac="
+        }
+      ]
+    },
+    {
+      "Route": "LifeCare.ulslarwztb.bundle.scp.css",
+      "AssetFile": "C:\\GithubRepos\\LifeCare\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\LifeCare.bundle.scp.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2899"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 Aug 2025 11:19:21 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "ulslarwztb"
+        },
+        {
+          "Name": "label",
+          "Value": "LifeCare.bundle.scp.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac="
+        }
+      ]
+    },
+    {
+      "Route": "LifeCare.ulslarwztb.styles.css",
+      "AssetFile": "C:\\GithubRepos\\LifeCare\\obj\\Debug\\net8.0\\scopedcss\\bundle\\LifeCare.styles.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2899"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 18 Aug 2025 11:19:21 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "ulslarwztb"
+        },
+        {
+          "Name": "label",
+          "Value": "LifeCare.styles.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-Etrs7EwFESgMeRlJ6HX0/SFaVzFQGq9Y9ry2NCjyAac="
         }
       ]
     }

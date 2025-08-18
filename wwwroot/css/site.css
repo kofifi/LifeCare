@@ -3,96 +3,147 @@
   --clr-dark-a0: #000000;
   --clr-light-a0: #ffffff;
 
-  /** Theme primary colors */
-  --clr-primary-a0: #9f6706;
-  --clr-primary-a10: #ac772a;
-  --clr-primary-a20: #b88745;
-  --clr-primary-a30: #c4975f;
-  --clr-primary-a40: #cfa878;
-  --clr-primary-a50: #dab992;
+  /** Theme primary colors (blue) */
+  --clr-primary-a0: #003366;
+  --clr-primary-a10: #004080;
+  --clr-primary-a20: #0059b3;
+  --clr-primary-a30: #0073e6; /* main */
+  --clr-primary-a40: #3399ff; /* bright accent */
+  --clr-primary-a50: #66b3ff;
 
-  /** Theme surface colors */
-  --clr-surface-a0: #121212;
-  --clr-surface-a10: #282828;
-  --clr-surface-a20: #3f3f3f;
-  --clr-surface-a30: #575757;
-  --clr-surface-a40: #717171;
-  --clr-surface-a50: #8b8b8b;
+  /** Theme surface colors (dark grays for contrast) */
+  --clr-surface-a0: #0d0d0d;
+  --clr-surface-a10: #1a1a1a;
+  --clr-surface-a20: #2a2a2a;
+  --clr-surface-a30: #3d3d3d;
+  --clr-surface-a40: #555555;
+  --clr-surface-a50: #707070;
 
-  /** Theme tonal surface colors */
-  --clr-surface-tonal-a0: #2d2215;
-  --clr-surface-tonal-a10: #42372a;
-  --clr-surface-tonal-a20: #574c41;
-  --clr-surface-tonal-a30: #6d6359;
-  --clr-surface-tonal-a40: #847b73;
-  --clr-surface-tonal-a50: #9b948d;
+  /** Theme tonal surface colors (cooler tones to match blue) */
+  --clr-surface-tonal-a0: #1a222d;
+  --clr-surface-tonal-a10: #243344;
+  --clr-surface-tonal-a20: #2e445c;
+  --clr-surface-tonal-a30: #3a5575;
+  --clr-surface-tonal-a40: #4d6a91;
+  --clr-surface-tonal-a50: #5f80ac;
 
   /* Bootstrap variable overrides */
   --bs-body-bg: var(--clr-surface-a10);
   --bs-body-color: var(--clr-light-a0);
   --bs-primary: var(--clr-primary-a30);
-  --bs-primary-rgb: 196, 151, 95;
+  --bs-primary-rgb: 0, 115, 230;
+
+  /* Soft design tokens */
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+
+  --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.25);
+  --shadow-2: 0 10px 30px rgba(0, 115, 230, 0.18);
+  --shadow-soft: 0 2px 10px rgba(0,0,0,0.15);
+
+  --border-soft: 1px solid rgba(255, 255, 255, 0.06);
+  --field-bg: var(--clr-surface-a20);
+  --field-border: 1px solid rgba(255, 255, 255, 0.08);
+  --field-border-focus: 1px solid rgba(102, 179, 255, 0.55);
 }
 
-html {
-  font-size: 14px;
-  position: relative;
-  min-height: 100%;
-  height: 100%;
+html, body {
+  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg);
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+/* ===== Soft cards, inputs, headings ===================================== */
+.soft-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  background-color: var(--clr-surface-a20);
+  border: var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 1.25rem;
 }
 
-.btn:focus,
-.btn:active:focus,
-.btn-link.nav-link:focus,
+.divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+          90deg,
+          rgba(255,255,255,0.06),
+          rgba(255,255,255,0.12),
+          rgba(255,255,255,0.06)
+  );
+  margin: 0.5rem 0 1rem;
+  border-radius: 999px;
+}
+
+.form-control,
+.form-select {
+  background-color: var(--field-bg);
+  border: var(--field-border);
+  border-radius: var(--radius-md);
+  color: var(--bs-body-color);
+  transition: box-shadow .18s ease, border-color .18s ease, transform .08s ease;
+}
+
 .form-control:focus,
-.form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem var(--clr-light-a0), 0 0 0 0.25rem var(--clr-primary-a20);
+.form-select:focus {
+  outline: none;
+  border: var(--field-border-focus);
+  box-shadow: 0 0 0 6px rgba(0, 115, 230, 0.15);
+  transform: translateY(-1px);
 }
 
-body {
-  margin-bottom: 0;
-  color: var(--clr-light-a0);
-  background-color: var(--clr-surface-a10);
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
+.form-check-input { border-radius: 6px; }
+.form-check-input:focus { box-shadow: 0 0 0 6px rgba(0, 115, 230, 0.15); }
 
-footer {
-  margin-top: auto;
-}
+h2.h5 { letter-spacing: .2px; }
+.form-label { opacity: .95; font-weight: 500; }
 
-/* Override Bootstrap button colors with theme variables */
+/* ===== Buttons (gradient + glow, rounded) =============================== */
+.btn { border-radius: var(--radius-md); }
+.btn-lg { border-radius: var(--radius-lg); }
+
 .btn-primary {
   color: var(--clr-light-a0);
-  background-color: var(--clr-primary-a20);
-  border-color: var(--clr-primary-a30);
+  background: linear-gradient(135deg, var(--clr-primary-a30), var(--clr-primary-a40));
+  border: none;
+  box-shadow: var(--shadow-2);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
 }
-
 .btn-primary:hover,
 .btn-primary:focus {
-  color: var(--clr-light-a0);
-  background-color: var(--clr-primary-a30);
-  border-color: var(--clr-primary-a40);
+  background: linear-gradient(135deg, var(--clr-primary-a40), var(--clr-primary-a50));
+  box-shadow: 0 14px 36px rgba(51, 153, 255, 0.28);
+  transform: translateY(-2px);
+  filter: saturate(1.05);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 22px rgba(0, 89, 179, 0.28);
+}
+.btn-primary:disabled {
+  background: linear-gradient(135deg, var(--clr-primary-a20), var(--clr-primary-a30));
+  box-shadow: none;
+  opacity: 0.7;
 }
 
-.btn-primary:active,
-.btn-primary.active,
-.show > .btn-primary.dropdown-toggle {
-  color: var(--clr-light-a0);
-  background-color: var(--clr-primary-a40);
-  border-color: var(--clr-primary-a50);
+/* ===== Mobile action bar (blurred, rounded, above footer) =============== */
+.action-bar {
+  position: sticky;
+  bottom: 70px; /* adjust to your footer height */
+  z-index: 1030;
+  margin: 0 auto;
+  max-width: 720px;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  background-color: rgba(10, 14, 18, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-1);
 }
 
-.btn-primary:disabled,
-.btn-primary.disabled {
-  color: var(--clr-light-a0);
-  background-color: var(--clr-primary-a20);
-  border-color: var(--clr-primary-a30);
+/* Prevent overlap with the action bar on small screens */
+@media (max-width: 767.98px) {
+  .mobile-sticky-spacer { height: 90px; }
 }
+
