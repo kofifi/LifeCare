@@ -4,7 +4,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"] - LifeCare</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/LifeCare.styles.css" asp-append-version="true"/>
@@ -36,11 +36,13 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="~/images/profile-placeholder.png" alt="Profil" class="rounded-circle me-2" style="width:32px; height:32px;" />
+                                <img src="~/images/profile-placeholder.png" alt="Profil" class="rounded-circle me-2" style="width:32px; height:32px;"/>
                                 <span>@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Profil</a></li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Profil</a>
+                                </li>
                                 <li>
                                     <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post">
                                         <button type="submit" class="dropdown-item">Wyloguj</button>
@@ -73,6 +75,10 @@
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
+
+@* Globalna obsługa CategoryModal - JEDEN raz dla całej aplikacji *@
+<script src="~/js/site-category-modal.js" asp-append-version="true"></script>
+
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
