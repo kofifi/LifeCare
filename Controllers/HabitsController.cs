@@ -86,7 +86,6 @@ namespace LifeCare.Controllers
         {
             var userId = _userManager.GetUserId(User);
             var habit = await _habitService.GetHabitByIdAsync(id, userId);
-
             if (habit == null) return NotFound();
 
             ViewBag.Categories = await _habitService.GetUserCategoriesAsync(userId);
@@ -105,8 +104,14 @@ namespace LifeCare.Controllers
                 return View(habitVM);
             }
 
-            await _habitService.UpdateHabitAsync(habitVM, userId);
-            return RedirectToAction(nameof(Index));
+            // opcjonalna weryfikacja właściciela
+            var existing = await _habitService.GetHabitByIdAsync(habitVM.Id, userId);
+            if (existing == null) return NotFound();
+
+            await _habitService.UpdateHabitAsync(habitVM, userId);  // << bez var updated
+
+            TempData["Toast.Success"] = "Zaktualizowano nawyk.";
+            return RedirectToAction(nameof(Details), new { id = habitVM.Id });
         }
 
         [HttpGet]

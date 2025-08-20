@@ -2,8 +2,8 @@
 @using System.Linq
 
 @{
-    ViewData["Title"] = "Twoje nawyki";
-    var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
+ViewData["Title"] = "Twoje nawyki";
+var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
 }
 
 <!DOCTYPE html>
@@ -40,10 +40,10 @@
             <option value="">Wszystkie kategorie</option>
             @if (categories != null)
             {
-                foreach (var category in categories)
-                {
-                    <option value="@category.Id">@category.Name</option>
-                }
+            foreach (var category in categories)
+            {
+            <option value="@category.Id">@category.Name</option>
+            }
             }
         </select>
     </div>
@@ -51,28 +51,28 @@
     <div class="d-flex flex-column gap-3" id="habit-list">
         @foreach (var habit in Model.OrderBy(h => h.Order))
         {
-            <div class="habit-card" data-id="@habit.Id" data-category-id="@habit.CategoryId" data-target="@habit.TargetQuantity" data-unit="@habit.Unit" data-color="@habit.Color">
-                <div class="card d-flex flex-row align-items-center p-3" style="border-left: 10px solid @habit.Color;">
-                    <i class="me-3 fa @habit.Icon fa-2x" style="color: @habit.Color;"></i>
-                    <div class="flex-grow-1">
-                        <a asp-action="Details" asp-route-id="@habit.Id" class="text-decoration-none text-dark">
-                            <strong>@habit.Name</strong><br/>
-                            <small>@habit.Description</small>
-                        </a>
-                    </div>
-                    <div class="text-end">
-                        @if (habit.Type == LifeCare.Models.HabitType.Quantity)
-                        {
-                            <span class="habit-progress me-2" data-habit-id="@habit.Id" style="font-size: 0.9em; color: gray;">0/@habit.TargetQuantity</span>
-                            <button class="btn btn-outline-primary btn-sm">+</button>
-                        }
-                        else
-                        {
-                            <input type="checkbox" class="form-check-input"/>
-                        }
-                    </div>
+        <div class="habit-card" data-id="@habit.Id" data-category-id="@habit.CategoryId" data-target="@habit.TargetQuantity" data-unit="@habit.Unit" data-color="@habit.Color">
+            <div class="card d-flex flex-row align-items-center p-3" style="border-left: 10px solid @habit.Color;">
+                <i class="me-3 fa @habit.Icon fa-2x" style="color: @habit.Color;"></i>
+                <div class="flex-grow-1">
+                    <a asp-action="Details" asp-route-id="@habit.Id" class="text-decoration-none text-dark">
+                        <strong>@habit.Name</strong><br/>
+                        <small>@habit.Description</small>
+                    </a>
+                </div>
+                <div class="text-end">
+                    @if (habit.Type == LifeCare.Models.HabitType.Quantity)
+                    {
+                    <span class="habit-progress me-2" data-habit-id="@habit.Id" style="font-size: 0.9em; color: gray;">0/@habit.TargetQuantity</span>
+                    <button class="btn btn-outline-primary btn-sm">+</button>
+                    }
+                    else
+                    {
+                    <input type="checkbox" class="form-check-input"/>
+                    }
                 </div>
             </div>
+        </div>
         }
     </div>
 </div>
@@ -105,6 +105,14 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
+    // helper lokalnej daty
+    function ymdLocal(d = new Date()) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
     let selectedHabitId = null;
     let selectedDate = new Date();
     let weekOffset = 0;
@@ -146,7 +154,7 @@
             d.setDate(d.getDate() + i);
             const btn = document.createElement("button");
             btn.className = "btn btn-outline-primary mx-1 day-button";
-            btn.dataset.date = d.toISOString().split('T')[0];
+            btn.dataset.date = ymdLocal(d); // lokalna data
             btn.textContent = d.toLocaleDateString('pl-PL', { weekday: 'short', day: '2-digit', month: '2-digit' });
 
             if (d.toDateString() === selectedDate.toDateString()) {
@@ -156,6 +164,7 @@
             btn.addEventListener("click", function () {
                 document.querySelectorAll(".day-button").forEach(b => b.classList.remove("active"));
                 this.classList.add("active");
+                // dataset.date to 'YYYY-MM-DD'; tworzymy Date z tej daty (UTC baseline), OK
                 selectedDate = new Date(this.dataset.date);
                 loadEntriesForDate(this.dataset.date);
             });
@@ -163,7 +172,7 @@
             container.appendChild(btn);
         }
 
-        loadEntriesForDate(selectedDate.toISOString().split('T')[0]);
+        loadEntriesForDate(ymdLocal(selectedDate));
     }
 
     document.getElementById("prevWeek").addEventListener("click", () => {
@@ -223,7 +232,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     habitId: selectedHabitId,
-                    date: selectedDate.toISOString().split('T')[0],
+                    date: ymdLocal(selectedDate), // lokalna data
                     completed: true,
                     quantity: quantity
                 })
@@ -231,7 +240,7 @@
 
             if (res.ok) {
                 bootstrap.Modal.getInstance(document.getElementById("quantityModal")).hide();
-                loadEntriesForDate(selectedDate.toISOString().split('T')[0]);
+                loadEntriesForDate(ymdLocal(selectedDate));
             } else {
                 alert('Wystąpił błąd podczas zapisu.');
             }
@@ -254,7 +263,7 @@
         if (e.target.type === 'checkbox' && e.target.closest('.habit-card')) {
             const card = e.target.closest('.habit-card');
             const habitId = parseInt(card.dataset.id);
-            saveEntry(habitId, selectedDate.toISOString().split('T')[0], e.target.checked);
+            saveEntry(habitId, ymdLocal(selectedDate), e.target.checked); // lokalna data
         }
     });
 

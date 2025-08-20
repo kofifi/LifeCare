@@ -1,5 +1,4 @@
-﻿// EDIT toggle + ilościowe pola
-(function () {
+﻿(function () {
     const editCard = document.getElementById('editCard');
     const toggleBtn = document.getElementById('toggleEditBtn');
     const cancel2 = document.getElementById('cancelEditBtn2');
@@ -16,14 +15,18 @@
     if (q) q.style.display = (type === "Quantity") ? 'block' : 'none';
 })();
 
-// ----------- Dane kontekstowe -----------
 const root = document.getElementById('habit-root');
 const habitId = +root.dataset.habitId;
 const habitType = root.dataset.type;
 const target = +(root.dataset.target || 0);
 const isQuantity = habitType === "Quantity";
 
-// Helpers
+function ymdLocal(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
 function mondayOf(date) {
     const d = new Date(date);
     const day = (d.getDay() + 6) % 7;
@@ -31,9 +34,10 @@ function mondayOf(date) {
     d.setDate(d.getDate() - day);
     return d;
 }
-function fmt(d){ return d.toISOString().split('T')[0]; }
+function fmt(d){ return ymdLocal(d); }
 
-// ----------- STATYSTYKI + PIECZART -----------
+let pieChart;
+
 async function loadStats() {
     const res = await fetch(`/Habits/HabitStats?habitId=${habitId}`);
     if (!res.ok) return;
@@ -42,16 +46,23 @@ async function loadStats() {
     const statsRow = document.getElementById('statsRow');
     if (statsRow) statsRow.style.display = 'flex';
 
-    document.getElementById('overallPercent').innerText = Math.round(s.overallPercent) + '%';
-    document.getElementById('currentStreak').innerText = s.currentStreak;
-    document.getElementById('bestStreak').innerText = s.bestStreak;
-    document.getElementById('totalSessions').innerText = s.total;
-    document.getElementById('completedSessions').innerText = s.completed;
-    document.getElementById('skippedSessions').innerText = s.skipped;
+    const elOverall = document.getElementById('overallPercent');
+    if (elOverall) elOverall.innerText = Math.round(s.overallPercent) + '%';
+    const elCur = document.getElementById('currentStreak');
+    if (elCur) elCur.innerText = s.currentStreak;
+    const elBest = document.getElementById('bestStreak');
+    if (elBest) elBest.innerText = s.bestStreak;
+    const elTotal = document.getElementById('totalSessions');
+    if (elTotal) elTotal.innerText = s.total;
+    const elComp = document.getElementById('completedSessions');
+    if (elComp) elComp.innerText = s.completed;
+    const elSkip = document.getElementById('skippedSessions');
+    if (elSkip) elSkip.innerText = s.skipped;
 
     const ctxP = document.getElementById('pieChart');
-    if (ctxP) {
-        new Chart(ctxP, {
+    if (ctxP && window.Chart) {
+        if (pieChart) pieChart.destroy();
+        pieChart = new Chart(ctxP, {
             type: 'pie',
             data: {
                 labels: ['Ukończone', 'Nieukończone'],
@@ -68,7 +79,6 @@ async function loadStats() {
     }
 }
 
-// ----------- WYKRES TYGODNIOWY -----------
 let weekAnchor = new Date();
 const weekLabel = document.getElementById('weekLabel');
 let weekChart;
@@ -89,7 +99,7 @@ async function loadWeek() {
         const d = new Date(mon); d.setDate(d.getDate()+i);
         const key = fmt(d);
         labels.push(d.toLocaleDateString('pl-PL', {weekday:'short'}));
-        const e = data.find(x => x.date.startsWith(key));
+        const e = data.find(x => (x.date || '').startsWith(key));
         if (isQuantity) {
             const q = e?.quantity ?? 0;
             values.push(q);
@@ -99,7 +109,7 @@ async function loadWeek() {
     }
 
     const ctx = document.getElementById('weekChart');
-    if (!ctx) return;
+    if (!ctx || !window.Chart) return;
     if (weekChart) weekChart.destroy();
 
     weekChart = new Chart(ctx, {
@@ -136,7 +146,6 @@ async function loadWeek() {
 document.getElementById('prevWeek')?.addEventListener('click', ()=>{ weekAnchor.setDate(weekAnchor.getDate()-7); loadWeek(); });
 document.getElementById('nextWeek')?.addEventListener('click', ()=>{ weekAnchor.setDate(weekAnchor.getDate()+7); loadWeek(); });
 
-// ----------- KALENDARZ -----------
 const monthLabel = document.getElementById('monthLabel');
 const monthBody = document.getElementById('monthBody');
 let monthAnchor = new Date();
@@ -181,9 +190,20 @@ async function loadMonth() {
 document.getElementById('prevMonth')?.addEventListener('click', ()=>{ monthAnchor.setMonth(monthAnchor.getMonth()-1); loadMonth(); });
 document.getElementById('nextMonth')?.addEventListener('click', ()=>{ monthAnchor.setMonth(monthAnchor.getMonth()+1); loadMonth(); });
 
-// ----------- INIT -----------
 (async function init(){
     await loadStats();
     await loadWeek();
     await loadMonth();
 })();
+
+window.HabitsDetails = window.HabitsDetails || {};
+window.HabitsDetails.refreshAll = async function () {
+    await loadStats();
+    await loadWeek();
+    await loadMonth();
+};
+
+window.addEventListener('habit:entry-updated', function (e) {
+    if (e?.detail?.habitId && e.detail.habitId !== habitId) return;
+    window.HabitsDetails.refreshAll();
+});

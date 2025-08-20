@@ -1,0 +1,108 @@
+﻿@model LifeCare.ViewModels.HabitVM
+@using LifeCare.Models
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Edytuj nawyk";
+    var categories = ViewBag.Categories as List<Category>;
+}
+
+@await Html.PartialAsync("_CategoryModal", new LifeCare.ViewModels.CategoryVM())
+
+<h2 class="mb-4">Edytuj nawyk</h2>
+
+<form asp-action="Edit" asp-controller="Habits" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="Type" />
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Nazwa</label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3" id="descriptionWrapper" style="display:@(string.IsNullOrWhiteSpace(Model.Description) ? "none" : "block")">
+        <label asp-for="Description" class="form-label">Opis</label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+
+    <button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="toggleDescription">
+        <i class="fa fa-@(string.IsNullOrWhiteSpace(Model.Description) ? "plus" : "minus")"></i>
+        @(string.IsNullOrWhiteSpace(Model.Description) ? " Dodaj opis" : " Ukryj opis")
+    </button>
+
+    <div class="mb-3">
+        <label asp-for="Color" class="form-label">Kolor</label>
+        <input asp-for="Color" type="color" class="form-control form-control-color" />
+    </div>
+
+    @await Html.PartialAsync("_IconPicker", new LifeCare.ViewModels.IconPickerVM {
+        ContainerId = "habitIconPickerEdit",
+        ForId = "Icon",
+        ForName = "Icon",
+        Selected = Model.Icon,
+        StartCollapsed = true,
+        Label = "Ikona"
+    })
+
+    <div class="mb-3">
+        <label class="form-label">Typ</label>
+        <input type="text" class="form-control" value="@Model.Type" readonly />
+    </div>
+
+    <div class="mb-3" id="quantityFields" style="display:@(Model.Type == LifeCare.Models.HabitType.Quantity ? "block" : "none")">
+        <label asp-for="TargetQuantity" class="form-label">Docelowa ilość</label>
+        <input asp-for="TargetQuantity" type="number" class="form-control" placeholder="np. 50" min="0" />
+
+        <label asp-for="Unit" class="form-label mt-2">Jednostka</label>
+        <input asp-for="Unit" class="form-control" placeholder="np. strony, minuty" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CategoryId" class="form-label">Kategoria</label>
+        <div class="input-group">
+            <select asp-for="CategoryId"
+                    id="editCategorySelect"
+                    class="form-select"
+                    asp-items="@(new SelectList(categories ?? new List<Category>(), "Id", "Name", Model.CategoryId))">
+                <option value="">(brak)</option>
+            </select>
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary ms-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#categoryModal"
+                    data-target-select="editCategorySelect">
+                <i class="fa fa-plus"></i> Nowa
+            </button>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save me-2"></i>Zapisz zmiany
+        </button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Anuluj</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('toggleDescription').addEventListener('click', function () {
+            const desc = document.getElementById('descriptionWrapper');
+            const isVisible = desc.style.display !== 'none';
+            desc.style.display = isVisible ? 'none' : 'block';
+            this.innerHTML = isVisible
+                ? '<i class="fa fa-plus"></i> Dodaj opis'
+                : '<i class="fa fa-minus"></i> Ukryj opis';
+        });
+
+        (function () {
+            const isQuantity = '@Model.Type' === 'Quantity' || '@((int)Model.Type)' === '1';
+            document.getElementById('quantityFields').style.display = isQuantity ? 'block' : 'none';
+        })();
+    </script>
+}
