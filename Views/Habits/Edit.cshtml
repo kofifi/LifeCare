@@ -3,8 +3,8 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    ViewData["Title"] = "Edytuj nawyk";
-    var categories = ViewBag.Categories as List<Category>;
+ViewData["Title"] = "Edytuj nawyk";
+var categories = ViewBag.Categories as List<Category>;
 }
 
 @await Html.PartialAsync("_CategoryModal", new LifeCare.ViewModels.CategoryVM())
@@ -13,18 +13,19 @@
 
 <form asp-action="Edit" asp-controller="Habits" method="post">
     @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="Id" />
-    <input type="hidden" asp-for="Type" />
+    <input type="hidden" asp-for="Id"/>
+    <input type="hidden" asp-for="Type"/>
 
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="mb-3">
         <label asp-for="Name" class="form-label">Nazwa</label>
-        <input asp-for="Name" class="form-control" />
+        <input asp-for="Name" class="form-control"/>
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
-    <div class="mb-3" id="descriptionWrapper" style="display:@(string.IsNullOrWhiteSpace(Model.Description) ? "none" : "block")">
+    <div class="mb-3" id="descriptionWrapper"
+         style="display:@(string.IsNullOrWhiteSpace(Model.Description) ? "none" : "block")">
         <label asp-for="Description" class="form-label">Opis</label>
         <textarea asp-for="Description" class="form-control" rows="3"></textarea>
     </div>
@@ -36,29 +37,30 @@
 
     <div class="mb-3">
         <label asp-for="Color" class="form-label">Kolor</label>
-        <input asp-for="Color" type="color" class="form-control form-control-color" />
+        <input asp-for="Color" type="color" class="form-control form-control-color"/>
     </div>
 
     @await Html.PartialAsync("_IconPicker", new LifeCare.ViewModels.IconPickerVM {
-        ContainerId = "habitIconPickerEdit",
-        ForId = "Icon",
-        ForName = "Icon",
-        Selected = Model.Icon,
-        StartCollapsed = true,
-        Label = "Ikona"
+    ContainerId = "habitIconPickerEdit",
+    ForId = "Icon",
+    ForName = "Icon",
+    Selected = Model.Icon,
+    StartCollapsed = true,
+    Label = "Ikona"
     })
 
     <div class="mb-3">
         <label class="form-label">Typ</label>
-        <input type="text" class="form-control" value="@Model.Type" readonly />
+        <input type="text" class="form-control" value="@Model.Type" readonly/>
     </div>
 
-    <div class="mb-3" id="quantityFields" style="display:@(Model.Type == LifeCare.Models.HabitType.Quantity ? "block" : "none")">
+    <div class="mb-3" id="quantityFields"
+         style="display:@(Model.Type == LifeCare.Models.HabitType.Quantity ? "block" : "none")">
         <label asp-for="TargetQuantity" class="form-label">Docelowa ilość</label>
-        <input asp-for="TargetQuantity" type="number" class="form-control" placeholder="np. 50" min="0" />
+        <input asp-for="TargetQuantity" type="number" class="form-control" placeholder="np. 50" min="0"/>
 
         <label asp-for="Unit" class="form-label mt-2">Jednostka</label>
-        <input asp-for="Unit" class="form-control" placeholder="np. strony, minuty" />
+        <input asp-for="Unit" class="form-control" placeholder="np. strony, minuty"/>
     </div>
 
     <div class="mb-3">
@@ -89,20 +91,38 @@
 </form>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-        document.getElementById('toggleDescription').addEventListener('click', function () {
-            const desc = document.getElementById('descriptionWrapper');
-            const isVisible = desc.style.display !== 'none';
-            desc.style.display = isVisible ? 'none' : 'block';
-            this.innerHTML = isVisible
-                ? '<i class="fa fa-plus"></i> Dodaj opis'
-                : '<i class="fa fa-minus"></i> Ukryj opis';
-        });
+<partial name="_ValidationScriptsPartial"/>
+<script>
+    document.getElementById('toggleDescription').addEventListener('click', function () {
+        const desc = document.getElementById('descriptionWrapper');
+        const isVisible = desc.style.display !== 'none';
+        desc.style.display = isVisible ? 'none' : 'block';
+        this.innerHTML = isVisible
+            ? '<i class="fa fa-plus"></i> Dodaj opis'
+            : '<i class="fa fa-minus"></i> Ukryj opis';
+    });
 
-        (function () {
-            const isQuantity = '@Model.Type' === 'Quantity' || '@((int)Model.Type)' === '1';
-            document.getElementById('quantityFields').style.display = isQuantity ? 'block' : 'none';
-        })();
-    </script>
+    (function () {
+        const isQuantity = '@Model.Type' === 'Quantity' || '@((int)Model.Type)' === '1';
+        document.getElementById('quantityFields').style.display = isQuantity ? 'block' : 'none';
+    })();
+</script>
+}
+
+@section Styles {
+<style>
+    /* Dark theme dla pól readonly/disabled w tym widoku */
+    .form-control[readonly],
+    .form-control:disabled,
+    .form-select:disabled {
+        background-color: var(--field-bg) !important; /* np. var(--clr-surface-a20) */
+        color: var(--bs-body-color) !important; /* jasny tekst */
+        border: var(--field-border) !important; /* spójna ramka */
+        opacity: 1; /* bez przygaszenia */
+    }
+
+    input[type=number]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+    }
+</style>
 }

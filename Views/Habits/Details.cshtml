@@ -23,7 +23,7 @@ var icon = Model.Icon;
                 <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Opcje">
                     <i class="fa fa-ellipsis-vertical"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
                     <li>
                         <a class="dropdown-item"
                            asp-controller="Habits"
@@ -276,3 +276,69 @@ var icon = Model.Icon;
     })();
 </script>
 }
+
+@section Styles {
+<style>
+    /* Karty w Details – ciemne tło, jasny tekst */
+    #habit-root .card {
+        background: var(--clr-surface-a20);
+        border: var(--border-soft);
+        color: var(--bs-body-color);
+        box-shadow: var(--shadow-soft);
+    }
+    #habit-root .card .card-body { background: transparent; }
+
+    #habit-root .btn-light {
+        background-color: var(--clr-surface-a30) !important;
+        color: var(--clr-light-a0) !important;
+        border-color: rgba(255,255,255,.12) !important;
+    }
+    
+    /* „light” przycisk używany jako label (np. month/week label) */
+    #habit-root .btn-light {
+        --bs-btn-bg: var(--clr-surface-a30);
+        --bs-btn-color: var(--clr-light-a0);
+        --bs-btn-border-color: rgba(255,255,255,0.08);
+        --bs-btn-hover-bg: var(--clr-surface-a40);
+        --bs-btn-hover-border-color: rgba(255,255,255,0.12);
+    }
+
+    /* Tabela kalendarza – ciemne nagłówki i ciemne komórki */
+    #habit-root .table {
+        --bs-table-bg: transparent;
+        --bs-table-color: var(--clr-light-a0);
+        color: var(--clr-light-a0);
+    }
+    #habit-root .table thead,
+    #habit-root .table thead.table-light {
+        --bs-table-bg: var(--clr-surface-a30);
+        --bs-table-color: var(--clr-light-a0);
+        background-color: var(--clr-surface-a30);
+        color: var(--clr-light-a0);
+    }
+    #habit-root .table-bordered {
+        border-color: rgba(255,255,255,0.12);
+    }
+    #habit-root .table-bordered > :not(caption) > * {
+        border-color: rgba(255,255,255,0.12);
+    }
+    #habit-root .table-bordered > :not(caption) > * > * {
+        border-color: rgba(255,255,255,0.12);
+        background-color: var(--clr-surface-a20);
+    }
+
+    /* Opakowanie canvasa, żeby wykres nie „wisiał” na jasnym */
+    #habit-root .chart-wrap-sm {
+        background: var(--clr-surface-a20);
+        border: var(--border-soft);
+        border-radius: var(--radius-md);
+        padding: .75rem;
+    }
+
+    /* Odrobinę kontrastu dla badge-warning z czarnym tekstem */
+    #habit-root .badge.bg-warning.text-dark {
+        color: #111 !important;
+    }
+</style>
+}
+
