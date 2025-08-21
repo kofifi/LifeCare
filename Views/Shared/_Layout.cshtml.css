@@ -1,64 +1,100 @@
-﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
+﻿/* ==============================================================
+   LifeCare Layout Styling (Navbar + Footer)
+   ============================================================== */
 
 html, body {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--clr-surface-a10);
+  color: var(--clr-light-a0);
 }
 
+/* Navbar Brand */
 a.navbar-brand {
   white-space: normal;
   text-align: center;
   word-break: break-all;
   color: var(--clr-primary-a40);
+  font-weight: 600;
+}
+a.navbar-brand:hover {
+  color: var(--clr-primary-a50);
 }
 
+/* Navbar */
 #mainNav {
-  background-color: var(--clr-surface-tonal-a20);
-  border-bottom-color: var(--clr-surface-a30);
-}
-
-a {
-  color: var(--clr-primary-a40);
+  border-bottom: none;            /* remove white line */
 }
 
 .navbar-nav .nav-link {
+  color: rgba(255,255,255,0.85);
+  transition: color .2s ease, opacity .2s ease;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus {
+  color: var(--clr-primary-a40);
+}
+.navbar-nav .nav-link.active {
+  color: var(--clr-primary-a50);
+}
+
+/* Dropdown */
+.dropdown-menu {
+  background-color: var(--clr-surface-a20);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+.dropdown-item {
+  color: var(--clr-light-a0);
+}
+.dropdown-item:hover {
+  background-color: var(--clr-surface-a30);
   color: var(--clr-light-a0);
 }
 
+/* Primary button (blue gradient + glow) */
 .btn-primary {
   color: var(--clr-light-a0);
-  background-color: var(--clr-primary-a20);
-  border-color: var(--clr-primary-a40);
+  background: linear-gradient(135deg, var(--clr-primary-a30), var(--clr-primary-a40));
+  border: none;
+  box-shadow: 0 6px 20px rgba(0,115,230,0.25);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
 }
-
-.nav-pills .nav-link.active,
-.nav-pills .show > .nav-link {
-  color: var(--clr-light-a0);
-  background-color: var(--clr-primary-a20);
-  border-color: var(--clr-primary-a40);
+.btn-primary:hover,
+.btn-primary:focus {
+  background: linear-gradient(135deg, var(--clr-primary-a40), var(--clr-primary-a50));
+  box-shadow: 0 12px 30px rgba(51,153,255,0.35);
+  transform: translateY(-2px);
 }
-
-.border-top {
-  border-top: 1px solid var(--clr-surface-a30);
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px rgba(0,89,179,0.35);
 }
-.border-bottom {
-  border-bottom: 1px solid var(--clr-surface-a30);
-}
-
-.box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
-}
-
-button.accept-policy {
-  font-size: 1rem;
-  line-height: inherit;
+.btn-primary:disabled {
+  background: linear-gradient(135deg, var(--clr-primary-a20), var(--clr-primary-a30));
+  opacity: 0.65;
 }
 
 .footer {
   margin-top: auto;
   width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
-  background-color: var(--clr-surface-a20);
-  color: var(--clr-light-a0);
+  border-top: none;               /* remove white line */
+  color: rgba(255,255,255,0.85);
+  padding: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.footer .text-muted {
+  color: rgba(255,255,255,0.6) !important; /* override Bootstrap muted gray */
+}
+
+.footer a {
+  color: var(--clr-primary-a40);
+  text-decoration: none;
+  transition: color .2s ease;
+}
+.footer a:hover {
+  color: var(--clr-primary-a50);
+  text-decoration: underline;
 }

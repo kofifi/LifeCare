@@ -2,50 +2,50 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
 @{
-    var containerId  = Model.ContainerId ?? "iconPicker";
-    var hiddenId     = Model.ForId      ?? "Icon";
-    var hiddenName   = Model.ForName    ?? "Icon";
-    var selected     = Model.Selected   ?? "";
-    var startCollapsed = Model.StartCollapsed;
+var containerId    = Model.ContainerId ?? "iconPicker";
+var hiddenId       = Model.ForId      ?? "Icon";
+var hiddenName     = Model.ForName    ?? "Icon";
+var selected       = Model.Selected   ?? "";
+var startCollapsed = Model.StartCollapsed;
 
-    // Duża lista ikon Font Awesome (solid) – bez nazw, tylko klasy
-    var icons = new[]
-    {
-        // sport / zdrowie
-        "fa-dumbbell","fa-person-running","fa-bicycle","fa-heart","fa-heart-circle-check","fa-spa","fa-water","fa-bed","fa-apple-whole",
-        // nauka / praca
-        "fa-book","fa-book-open","fa-graduation-cap","fa-laptop","fa-keyboard","fa-pen","fa-pencil","fa-code","fa-briefcase",
-        // czas / organizacja
-        "fa-clock","fa-hourglass-half","fa-calendar","fa-calendar-check","fa-list-check","fa-bullseye","fa-flag-checkered","fa-stopwatch",
-        // lifestyle / nawyki dnia
-        "fa-seedling","fa-mug-hot","fa-utensils","fa-plate-wheat","fa-shower","fa-soap","fa-tooth","fa-jug-detergent","fa-broom","fa-recycle",
-        // well-being / emocje
-        "fa-face-smile","fa-face-grin-stars","fa-face-laugh","fa-brain","fa-moon","fa-sun","fa-star","fa-hand-holding-heart","fa-peace",
-        // hobby / rozrywka
-        "fa-music","fa-guitar","fa-film","fa-camera","fa-gamepad","fa-chess-knight","fa-palette","fa-bookmark",
-        // dom / ekologia
-        "fa-house","fa-tree","fa-leaf","fa-lightbulb","fa-plug","fa-fire","fa-bolt",
-        // cele / motywacja
-        "fa-check","fa-check-double","fa-trophy","fa-mountain","fa-route","fa-compass","fa-map","fa-road",
-        // jedzenie / woda
-        "fa-glass-water","fa-bottle-water","fa-carrot","fa-bread-slice","fa-egg","fa-fish","fa-ice-cream","fa-seedling",
-        // med / mindfulness
-        "fa-notes-medical","fa-stethoscope","fa-yin-yang","fa-heart-pulse","fa-spa",
-        // sen / regeneracja
-        "fa-bed","fa-person-praying","fa-cloud-moon","fa-person-walking"
-    };
+var icons = new[]
+{
+// sport / zdrowie
+"fa-dumbbell","fa-person-running","fa-bicycle","fa-heart","fa-heart-circle-check","fa-spa","fa-water","fa-bed","fa-apple-whole",
+// nauka / praca
+"fa-book","fa-book-open","fa-graduation-cap","fa-laptop","fa-keyboard","fa-pen","fa-pencil","fa-code","fa-briefcase",
+// czas / organizacja
+"fa-clock","fa-hourglass-half","fa-calendar","fa-calendar-check","fa-list-check","fa-bullseye","fa-flag-checkered","fa-stopwatch",
+// lifestyle / nawyki dnia
+"fa-seedling","fa-mug-hot","fa-utensils","fa-plate-wheat","fa-shower","fa-soap","fa-tooth","fa-jug-detergent","fa-broom","fa-recycle",
+// well-being / emocje
+"fa-face-smile","fa-face-grin-stars","fa-face-laugh","fa-brain","fa-moon","fa-sun","fa-star","fa-hand-holding-heart","fa-peace",
+// hobby / rozrywka
+"fa-music","fa-guitar","fa-film","fa-camera","fa-gamepad","fa-chess-knight","fa-palette","fa-bookmark",
+// dom / ekologia
+"fa-house","fa-tree","fa-leaf","fa-lightbulb","fa-plug","fa-fire","fa-bolt",
+// cele / motywacja
+"fa-check","fa-check-double","fa-trophy","fa-mountain","fa-route","fa-compass","fa-map","fa-road",
+// jedzenie / woda
+"fa-glass-water","fa-bottle-water","fa-carrot","fa-bread-slice","fa-egg","fa-fish","fa-ice-cream","fa-seedling",
+// med / mindfulness
+"fa-notes-medical","fa-stethoscope","fa-yin-yang","fa-heart-pulse","fa-spa",
+// sen / regeneracja
+"fa-bed","fa-person-praying","fa-cloud-moon","fa-person-walking"
+};
 }
 
 <div id="@containerId" class="mb-3" data-iconpicker-root>
     @if (!string.IsNullOrWhiteSpace(Model.Label))
     {
-        <label class="form-label">@Model.Label</label>
+    <label class="form-label">@Model.Label</label>
     }
 
     <!-- Podgląd i przycisk -->
     <div class="d-flex align-items-center gap-2 mb-2">
         <span class="text-muted">Wybrana:</span>
-        <i class="fa @(string.IsNullOrWhiteSpace(selected) ? "fa-circle-question" : selected)" id="@($"{containerId}_preview")"></i>
+        <i class="fa @(string.IsNullOrWhiteSpace(selected) ? "fa-circle-question" : selected) icon-preview"
+           id="@($"{containerId}_preview")"></i>
         <button type="button" class="btn btn-sm btn-outline-secondary" id="@($"{containerId}_toggleBtn")">
             <i class="fa fa-icons me-1"></i> Wybierz ikonę
         </button>
@@ -55,94 +55,124 @@
     <input type="hidden" id="@hiddenId" name="@hiddenName" value="@selected" />
 
     <!-- Siatka ikon -->
-    <div class="icon-grid border rounded p-2 @(startCollapsed ? "d-none" : "")" id="@($"{containerId}_grid")" aria-label="Wybór ikony">
+    <div class="icon-grid border rounded p-2 @(startCollapsed ? "d-none" : "")"
+         id="@($"{containerId}_grid")"
+         aria-label="Wybór ikony">
         @foreach (var cls in icons)
         {
-            var isActive = selected == cls ? "active" : "";
-            <button type="button"
-                    class="icon-option @isActive"
-                    data-icon="@cls"
-                    title="@cls.Replace("fa-","")"
-                    aria-label="@cls.Replace("fa-","")">
-                <i class="fa @cls" aria-hidden="true"></i>
-            </button>
+        var isActive = selected == cls ? "active" : "";
+        <button type="button"
+                class="icon-option @isActive"
+                data-icon="@cls"
+                title="@cls.Replace("fa-","")"
+                aria-label="@cls.Replace("fa-","")">
+            <i class="fa @cls" aria-hidden="true"></i>
+        </button>
         }
     </div>
 
-    <small class="text-muted d-block mt-1">Kliknij ikonę, aby wybrać. Siatka zamknie się automatycznie.</small>
+    <small class="text-muted d-block mt-1">
+        Kliknij ikonę, aby wybrać. Siatka zamknie się automatycznie.
+    </small>
 </div>
 
-<!-- STYLE (osadzone w partialu — brak sekcji Script w partialach) -->
+<!-- STYLE (dark theme dla pickera) -->
 <style>
+    [data-iconpicker-root] { color: var(--bs-body-color, #fff); }
+
+    [data-iconpicker-root] .icon-preview {
+        color: var(--clr-light-a0, #fff);
+        font-size: 1.05rem;
+    }
+
     [data-iconpicker-root] .icon-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
         gap: .5rem;
         max-height: 260px;
         overflow: auto;
-        background: #fff;
+
+        /* DARK tło + obramowanie z Twoich tokenów */
+        background: var(--clr-surface-a20, #2a2a2a);
+        border: 1px solid rgba(255,255,255,0.08) !important;
     }
+
     [data-iconpicker-root] .icon-option {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         height: 56px; width: 56px;
-        border: 1px solid rgba(0,0,0,.125);
+        border: 1px solid rgba(255,255,255,.08);
         border-radius: .5rem;
-        background: #f8f9fa;
+        background: var(--clr-surface-a10, #1a1a1a);
         cursor: pointer;
-        transition: transform .05s ease-in-out, box-shadow .1s ease-in-out, background .1s ease-in-out;
+        transition: transform .05s ease-in-out, box-shadow .1s ease-in-out, background .1s ease-in-out, border-color .1s ease-in-out;
     }
-    [data-iconpicker-root] .icon-option:hover { background: #f1f3f5; }
+
+    [data-iconpicker-root] .icon-option:hover {
+        background: var(--clr-surface-a30, #3d3d3d);
+        border-color: rgba(255,255,255,.14);
+    }
+
+    [data-iconpicker-root] .icon-option:focus-visible {
+        outline: 2px solid var(--clr-primary-a40, #3399ff);
+        outline-offset: 1px;
+    }
+
     [data-iconpicker-root] .icon-option.active {
-        outline: 2px solid var(--bs-primary);
-        box-shadow: 0 0 0 2px rgba(13,110,253,.25) inset;
-        background: #e7f1ff;
+        outline: 2px solid var(--clr-primary-a40, #3399ff);
+        box-shadow: 0 0 0 2px rgba(51,153,255,.18) inset;
+        background: var(--clr-surface-tonal-a10, #243344);
+        border-color: rgba(51,153,255,.35);
     }
-    [data-iconpicker-root] .icon-option i { font-size: 22px; }
+
+    [data-iconpicker-root] .icon-option i {
+        font-size: 22px;
+        color: var(--clr-light-a0, #fff); /* BIAŁE IKONY */
+    }
 </style>
 
-<!-- SCRIPT (samoinicjalizujący się, odporny na wielokrotne użycia) -->
+<!-- SCRIPT (samoinicjalizujący się) -->
 <script>
-(function(){
-    const root = document.getElementById('@containerId');
-    if (!root || root.dataset.initialized === '1') return;
-    root.dataset.initialized = '1';
+    (function(){
+        const root    = document.getElementById('@containerId');
+        if (!root || root.dataset.initialized === '1') return;
+        root.dataset.initialized = '1';
 
-    const grid     = document.getElementById('@(containerId + "_grid")');
-    const preview  = document.getElementById('@(containerId + "_preview")');
-    const toggle   = document.getElementById('@(containerId + "_toggleBtn")');
-    const hidden   = document.getElementById('@hiddenId');
+        const grid    = document.getElementById('@(containerId + "_grid")');
+        const preview = document.getElementById('@(containerId + "_preview")');
+        const toggle  = document.getElementById('@(containerId + "_toggleBtn")');
+        const hidden  = document.getElementById('@hiddenId');
 
-    if (!grid || !preview || !toggle || !hidden) return;
+        if (!grid || !preview || !toggle || !hidden) return;
 
-    // Toggle widoczności siatki
-    toggle.addEventListener('click', () => {
-        grid.classList.toggle('d-none');
-    });
+        // Toggle widoczności siatki
+        toggle.addEventListener('click', () => {
+            grid.classList.toggle('d-none');
+        });
 
-    // Delegacja: kliknięcie w ikonę
-    grid.addEventListener('click', (e) => {
-        const btn = e.target.closest('.icon-option');
-        if (!btn) return;
+        // Delegacja: kliknięcie w ikonę
+        grid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.icon-option');
+            if (!btn) return;
 
-        const ic = btn.getAttribute('data-icon');
-        hidden.value = ic;
-        preview.className = 'fa ' + ic;
+            const ic = btn.getAttribute('data-icon');
+            hidden.value = ic;
+            preview.className = 'fa ' + ic + ' icon-preview';
 
-        grid.querySelectorAll('.icon-option').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+            grid.querySelectorAll('.icon-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
 
-        // Schowaj siatkę po wyborze
-        grid.classList.add('d-none');
-    });
+            // Schowaj siatkę po wyborze
+            grid.classList.add('d-none');
+        });
 
-    // Jeśli jest wstępnie wybrana ikona, ustaw aktywną ramkę
-    const initial = (hidden.value || '').trim();
-    if (initial) {
-        const active = grid.querySelector(`.icon-option[data-icon="${initial}"]`);
-        if (active) active.classList.add('active');
-        preview.className = 'fa ' + initial;
-    }
-})();
+        // Jeśli jest wstępnie wybrana ikona, ustaw aktywną ramkę
+        const initial = (hidden.value || '').trim();
+        if (initial) {
+            const active = grid.querySelector(`.icon-option[data-icon="${initial}"]`);
+            if (active) active.classList.add('active');
+            preview.className = 'fa ' + initial + ' icon-preview';
+        }
+    })();
 </script>
