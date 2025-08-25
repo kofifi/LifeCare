@@ -147,3 +147,42 @@ h2.h5 { letter-spacing: .2px; }
   .mobile-sticky-spacer { height: 90px; }
 }
 
+/* Ciemny wygląd dla input[type=color] zgodny z motywem */
+input[type="color"].form-control-color {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 2.5rem;
+  padding: .25rem;
+  background-color: var(--field-bg);
+  border: var(--field-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  color-scheme: dark; /* hint dla przeglądarki na ciemny motyw kontrolek */
+}
+
+input[type="color"].form-control-color:focus {
+  outline: none;
+  border: var(--field-border-focus);
+  box-shadow: 0 0 0 6px rgba(0,115,230,.15);
+  transform: translateY(-1px);
+}
+
+/* WebKit/Blink – ciemny wrapper i ramka swatcha */
+input[type="color"].form-control-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+  background: var(--field-bg);
+  border-radius: calc(var(--radius-md) - 2px);
+}
+
+input[type="color"].form-control-color::-webkit-color-swatch {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: calc(var(--radius-md) - 3px);
+}
+
+/* Firefox */
+input[type="color"].form-control-color::-moz-color-swatch {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: calc(var(--radius-md) - 3px);
+  background-clip: padding-box;
+}
+

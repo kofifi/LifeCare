@@ -1,0 +1,278 @@
+﻿@model IEnumerable<LifeCare.ViewModels.HabitVM>
+@using System.Linq
+
+@{
+ViewData["Title"] = "Twoje nawyki";
+var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Twoje nawyki</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fa fa-plus"></i>
+        </a>
+    </div>
+
+    <!-- Kalendarz z przyciskami do zmiany tygodnia -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <button id="prevWeek" class="btn btn-outline-secondary">&laquo;</button>
+        <div class="d-flex overflow-auto mx-2" id="calendar-scroll"></div>
+        <button id="nextWeek" class="btn btn-outline-secondary">&raquo;</button>
+    </div>
+
+    <div class="mb-3">
+        <select class="form-select" id="categoryFilter">
+            <option value="">Wszystkie kategorie</option>
+            @if (categories != null)
+            {
+            foreach (var category in categories)
+            {
+            <option value="@category.Id">@category.Name</option>
+            }
+            }
+        </select>
+    </div>
+
+    <div class="d-flex flex-column gap-3" id="habit-list">
+        @foreach (var habit in Model.OrderBy(h => h.Order))
+        {
+        <div class="habit-card"
+             data-id="@habit.Id"
+             data-category-id="@habit.CategoryId"
+             data-target="@habit.TargetQuantity"
+             data-unit="@habit.Unit"
+             data-color="@habit.Color">
+
+            <div class="soft-card d-flex flex-row align-items-center"
+                 style="border-left: 10px solid @habit.Color;">
+                <i class="me-3 fa @habit.Icon fa-2x" style="color: @habit.Color;"></i>
+
+                <div class="flex-grow-1 text-light">
+                    <a asp-action="Details"
+                       asp-route-id="@habit.Id"
+                       class="text-decoration-none text-light">
+                        <strong>@habit.Name</strong><br/>
+                        <small>@habit.Description</small>
+                    </a>
+                </div>
+
+                <div class="text-end">
+                    @if (habit.Type == LifeCare.Models.HabitType.Quantity)
+                    {
+                    <span class="habit-progress me-2"
+                          data-habit-id="@habit.Id"
+                          style="font-size: 0.9em; color: gray;">0/@habit.TargetQuantity</span>
+                    <button class="btn btn-outline-primary btn-sm">+</button>
+                    }
+                    else
+                    {
+                    <input type="checkbox" class="form-check-input"/>
+                    }
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="quantityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj wykonanie</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong id="modalHabitName"></strong>
+                </p>
+                <p>Jednostka: <span id="modalUnit"></span></p>
+                <div class="mb-3">
+                    <label for="modalQuantityInput" class="form-label">Ilość wykonana dziś</label>
+                    <input type="number" class="form-control" id="modalQuantityInput" min="0"/>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmQuantityBtn" class="btn btn-success">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    // helper lokalnej daty
+    function ymdLocal(d = new Date()) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    let selectedHabitId = null;
+    let selectedDate = new Date();
+    let weekOffset = 0;
+
+    new Sortable(document.getElementById('habit-list'), {
+        animation: 150,
+        onEnd: function () {
+            const order = Array.from(document.querySelectorAll('.habit-card'))
+                .map(el => el.getAttribute('data-id'));
+
+            fetch('/Habits/UpdateOrder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(order)
+            }).then(res => {
+                if (!res.ok) alert('Błąd zapisu kolejności');
+            });
+        }
+    });
+
+    document.getElementById("categoryFilter").addEventListener("change", function () {
+        const selected = this.value;
+        document.querySelectorAll(".habit-card").forEach(el => {
+            el.style.display = (!selected || el.dataset.categoryId === selected) ? "block" : "none";
+        });
+    });
+
+    function renderCalendar() {
+        const container = document.getElementById("calendar-scroll");
+        container.innerHTML = "";
+
+        const baseDate = new Date();
+        baseDate.setDate(baseDate.getDate() + weekOffset * 7);
+        const monday = new Date(baseDate);
+        monday.setDate(monday.getDate() - (monday.getDay() + 6) % 7); // poniedziałek
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(d.getDate() + i);
+            const btn = document.createElement("button");
+            btn.className = "btn btn-outline-primary mx-1 day-button";
+            btn.dataset.date = ymdLocal(d); // lokalna data
+            btn.textContent = d.toLocaleDateString('pl-PL', { weekday: 'short', day: '2-digit', month: '2-digit' });
+
+            if (d.toDateString() === selectedDate.toDateString()) {
+                btn.classList.add("active");
+            }
+
+            btn.addEventListener("click", function () {
+                document.querySelectorAll(".day-button").forEach(b => b.classList.remove("active"));
+                this.classList.add("active");
+                // dataset.date to 'YYYY-MM-DD'; tworzymy Date z tej daty (UTC baseline), OK
+                selectedDate = new Date(this.dataset.date);
+                loadEntriesForDate(this.dataset.date);
+            });
+
+            container.appendChild(btn);
+        }
+
+        loadEntriesForDate(ymdLocal(selectedDate));
+    }
+
+    document.getElementById("prevWeek").addEventListener("click", () => {
+        weekOffset--;
+        renderCalendar();
+    });
+
+    document.getElementById("nextWeek").addEventListener("click", () => {
+        weekOffset++;
+        renderCalendar();
+    });
+
+    function loadEntriesForDate(date) {
+        fetch(`/Habits/GetEntries?date=${date}`)
+            .then(res => res.json())
+            .then(entries => {
+                document.querySelectorAll(".habit-card").forEach(card => {
+                    const id = parseInt(card.dataset.id);
+                    const entry = entries.find(e => e.habitId === id);
+                    const checkbox = card.querySelector('input[type=checkbox]');
+                    const progress = card.querySelector('.habit-progress');
+                    const target = parseFloat(card.getAttribute('data-target')) || 0;
+
+                    if (checkbox) {
+                        checkbox.checked = entry?.completed || false;
+                    }
+
+                    if (progress) {
+                        const quantity = entry?.quantity || 0;
+                        progress.innerHTML = `${quantity}/${target}`;
+                        progress.style.color = quantity >= target ? card.dataset.color : 'gray';
+                        if (quantity >= target) {
+                            progress.innerHTML += ' <i class="fa fa-check text-success"></i>';
+                        }
+                    }
+                });
+            });
+    }
+
+    function openQuantityModal(habitId, card, current, target) {
+        selectedHabitId = habitId;
+        const name = card.querySelector('strong').textContent;
+        const unit = card.getAttribute('data-unit') || "";
+
+        document.getElementById("modalHabitName").textContent = name;
+        document.getElementById("modalUnit").textContent = unit;
+        document.getElementById("modalQuantityInput").value = current;
+        const modal = new bootstrap.Modal(document.getElementById("quantityModal"));
+        modal.show();
+    }
+
+    document.getElementById("confirmQuantityBtn").addEventListener("click", async function () {
+        const quantity = parseFloat(document.getElementById("modalQuantityInput").value);
+        if (!isNaN(quantity)) {
+            const res = await fetch('/Habits/SaveEntry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    habitId: selectedHabitId,
+                    date: ymdLocal(selectedDate), // lokalna data
+                    completed: true,
+                    quantity: quantity
+                })
+            });
+
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById("quantityModal")).hide();
+                loadEntriesForDate(ymdLocal(selectedDate));
+            } else {
+                alert('Wystąpił błąd podczas zapisu.');
+            }
+        }
+    });
+
+    document.getElementById('habit-list').addEventListener('click', function (e) {
+        if (e.target.closest('button') && e.target.closest('.habit-card')) {
+            const button = e.target.closest('button');
+            const card = button.closest('.habit-card');
+            const habitId = parseInt(card.dataset.id);
+            const progress = card.querySelector('.habit-progress');
+            const quantity = parseFloat(progress?.textContent.split('/')[0]) || 0;
+            const target = parseFloat(card.dataset.target) || 0;
+            openQuantityModal(habitId, card, quantity, target);
+        }
+    });
+
+    document.getElementById('habit-list').addEventListener('change', function (e) {
+        if (e.target.type === 'checkbox' && e.target.closest('.habit-card')) {
+            const card = e.target.closest('.habit-card');
+            const habitId = parseInt(card.dataset.id);
+            saveEntry(habitId, ymdLocal(selectedDate), e.target.checked); // lokalna data
+        }
+    });
+
+    function saveEntry(habitId, date, completed, quantity = null) {
+        fetch('/Habits/SaveEntry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ habitId, date, completed, quantity })
+        });
+    }
+
+    renderCalendar();
+</script>

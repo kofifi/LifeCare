@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeCare.Migrations
 {
     [DbContext(typeof(LifeCareDbContext))]
-    [Migration("20250623161122_InitialCreateFixed")]
-    partial class InitialCreateFixed
+    [Migration("20250725165554_AddNullableFields")]
+    partial class AddNullableFields
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,7 +56,7 @@ namespace LifeCare.Migrations
                     b.ToTable("DailyStats");
                 });
 
-            modelBuilder.Entity("LifeCare.Models.Habit", b =>
+            modelBuilder.Entity("Habit", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -64,7 +64,87 @@ namespace LifeCare.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Unit")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Habits");
+                });
+
+            modelBuilder.Entity("HabitEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool?>("Completed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("HabitId")
+                        .HasColumnType("int");
+
+                    b.Property<float?>("Quantity")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HabitId");
+
+                    b.ToTable("HabitEntries");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.HabitCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Icon")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -80,31 +160,7 @@ namespace LifeCare.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Habits");
-                });
-
-            modelBuilder.Entity("LifeCare.Models.HabitEntry", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Completed")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("HabitId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HabitId");
-
-                    b.ToTable("HabitEntries");
+                    b.ToTable("HabitCategory");
                 });
 
             modelBuilder.Entity("LifeCare.Models.NutritionPlan", b =>
@@ -204,6 +260,10 @@ namespace LifeCare.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -258,6 +318,47 @@ namespace LifeCare.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("LifeCare.Models.UserProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActivityLevel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Age")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Goal")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<float?>("Height")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("TargetWeight")
+                        .HasColumnType("real");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<float?>("Weight")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("UserProfiles");
                 });
 
             modelBuilder.Entity("LifeCare.Models.WorkoutPlan", b =>
@@ -438,26 +539,44 @@ namespace LifeCare.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("LifeCare.Models.Habit", b =>
+            modelBuilder.Entity("Habit", b =>
                 {
+                    b.HasOne("LifeCare.Models.HabitCategory", "Category")
+                        .WithMany("Habits")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("LifeCare.Models.User", "User")
                         .WithMany("Habits")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Category");
+
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("LifeCare.Models.HabitEntry", b =>
+            modelBuilder.Entity("HabitEntry", b =>
                 {
-                    b.HasOne("LifeCare.Models.Habit", "Habit")
+                    b.HasOne("Habit", "Habit")
                         .WithMany("Entries")
                         .HasForeignKey("HabitId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Habit");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.HabitCategory", b =>
+                {
+                    b.HasOne("LifeCare.Models.User", "User")
+                        .WithMany("HabitCategories")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("LifeCare.Models.NutritionPlan", b =>
@@ -491,6 +610,17 @@ namespace LifeCare.Migrations
                         .IsRequired();
 
                     b.Navigation("Routine");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.UserProfile", b =>
+                {
+                    b.HasOne("LifeCare.Models.User", "User")
+                        .WithOne("Profile")
+                        .HasForeignKey("LifeCare.Models.UserProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("LifeCare.Models.WorkoutPlan", b =>
@@ -555,9 +685,14 @@ namespace LifeCare.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("LifeCare.Models.Habit", b =>
+            modelBuilder.Entity("Habit", b =>
                 {
                     b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.HabitCategory", b =>
+                {
+                    b.Navigation("Habits");
                 });
 
             modelBuilder.Entity("LifeCare.Models.Routine", b =>
@@ -567,9 +702,14 @@ namespace LifeCare.Migrations
 
             modelBuilder.Entity("LifeCare.Models.User", b =>
                 {
+                    b.Navigation("HabitCategories");
+
                     b.Navigation("Habits");
 
                     b.Navigation("NutritionPlans");
+
+                    b.Navigation("Profile")
+                        .IsRequired();
 
                     b.Navigation("Routines");
 

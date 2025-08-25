@@ -1,0 +1,27 @@
+﻿@model LifeCare.ViewModels.HabitVM
+
+<div class="modal fade" id="habitDeleteModal" tabindex="-1" aria-labelledby="habitDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="habitDeleteModalLabel">Usuń nawyk</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Czy na pewno chcesz usunąć nawyk
+                    <strong>@Model.Name</strong>? Tego działania nie można cofnąć.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <form method="post" action="@Url.Action("DeleteConfirmed", "Habits", new { id = Model.Id })" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-trash me-1"></i> Usuń
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

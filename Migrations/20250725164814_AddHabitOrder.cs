@@ -5,25 +5,25 @@
 namespace LifeCare.Migrations
 {
     /// <inheritdoc />
-    public partial class AddedDisplayNameToUser : Migration
+    public partial class AddHabitOrder : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "DisplayName",
-                table: "AspNetUsers",
-                type: "nvarchar(max)",
+            migrationBuilder.AddColumn<int>(
+                name: "Order",
+                table: "Habits",
+                type: "int",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: 0);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "DisplayName",
-                table: "AspNetUsers");
+                name: "Order",
+                table: "Habits");
         }
     }
 }
