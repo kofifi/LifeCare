@@ -1,3 +1,12 @@
-﻿bin/
-obj/
-.idea
+﻿# JetBrains
+.idea/
+
+# .NET build outputs (wszystkie poziomy, case-insensitive)
+**/[Bb]in/
+**/[Oo]bj/
+
+# (opcjonalnie)
+.vs/
+*.user
+*.suo
+*.DotSettings.user
