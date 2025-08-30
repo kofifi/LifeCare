@@ -1,32 +1,99 @@
 @model LifeCare.ViewModels.HomeDashboardVM
+@using System.Text.Json
 @{
     ViewData["Title"] = "Dashboard";
 }
 
 <section class="dashboard container py-4">
     <h2 class="mb-4 text-center">Dashboard</h2>
-    <div class="table-responsive">
-        <table class="table table-sm table-hover dashboard-table">
-            <thead>
-                <tr>
-                    <th scope="col">Metric</th>
-                    <th scope="col">Count</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Users</td>
-                    <td>@Model.UsersCount</td>
-                </tr>
-                <tr>
-                    <td>Habits</td>
-                    <td>@Model.HabitsCount</td>
-                </tr>
-                <tr>
-                    <td>Categories</td>
-                    <td>@Model.CategoriesCount</td>
-                </tr>
-            </tbody>
-        </table>
+
+    <!-- Metrics cards -->
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-6 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Users</h5>
+                    <p class="card-text display-6">@Model.UsersCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Habits</h5>
+                    <p class="card-text display-6">@Model.HabitsCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Categories</h5>
+                    <p class="card-text display-6">@Model.CategoriesCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Routines</h5>
+                    <p class="card-text display-6">@Model.RoutinesCount</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-6 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Habit Entries</h5>
+                    <p class="card-text display-6">@Model.HabitEntriesCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Avg Water Intake (L)</h5>
+                    <p class="card-text display-6">@Model.AvgWaterIntakeLast7Days</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Avg Steps</h5>
+                    <p class="card-text display-6">@Model.AvgStepsLast7Days</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Habit entries chart -->
+    <div class="row">
+        <div class="col">
+            <canvas id="habitEntriesChart"></canvas>
+        </div>
     </div>
 </section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('habitEntriesChart').getContext('2d');
+        const habitEntriesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(JsonSerializer.Serialize(Model.HabitEntriesLabels)),
+                datasets: [{
+                    label: 'Habit Entries (last 7 days)',
+                    data: @Html.Raw(JsonSerializer.Serialize(Model.HabitEntriesData)),
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            }
+        });
+    </script>
+}

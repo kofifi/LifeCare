@@ -11,25 +11,18 @@
   color: var(--clr-primary-a40);
 }
 
-.dashboard-table {
-  max-width: 600px;
-  margin: 0 auto;
+.dashboard .card {
   background-color: var(--clr-surface-a10);
   color: var(--clr-light-a0);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.dashboard-table th {
-  background-color: var(--clr-primary-a40);
-  color: var(--clr-light-a0);
   border: none;
 }
 
-.dashboard-table td {
-  border: none;
-}
-
-.news h3 {
+.dashboard .card-title {
   color: var(--clr-primary-a40);
+}
+
+.dashboard canvas {
+  background-color: var(--clr-surface-a10);
+  border-radius: var(--radius-md);
+  padding: 1rem;
 }

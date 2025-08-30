@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using LifeCare.Data;
 using LifeCare.Models;
@@ -24,11 +26,52 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
+        var startDate = DateTime.Today.AddDays(-6);
+
+        // Basic counts
+        var usersCount = await _context.Users.CountAsync();
+        var habitsCount = await _context.Habits.CountAsync();
+        var categoriesCount = await GetCategoriesCountAsync();
+        var routinesCount = await _context.Routines.CountAsync();
+        var habitEntriesCount = await _context.HabitEntries.CountAsync();
+
+        // Averages for the last 7 days
+        var avgWater = await _context.DailyStats
+            .Where(ds => ds.Date >= startDate)
+            .AverageAsync(ds => (double?)ds.WaterIntakeLiters) ?? 0;
+
+        var avgSteps = await _context.DailyStats
+            .Where(ds => ds.Date >= startDate)
+            .AverageAsync(ds => (double?)ds.Steps) ?? 0;
+
+        // Habit entries chart data
+        var habitEntriesByDate = await _context.HabitEntries
+            .Where(e => e.Date >= startDate)
+            .GroupBy(e => e.Date.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var labels = new List<string>();
+        var data = new List<int>();
+        for (var i = 0; i < 7; i++)
+        {
+            var date = startDate.AddDays(i).Date;
+            labels.Add(date.ToString("MMM dd"));
+            var entry = habitEntriesByDate.FirstOrDefault(e => e.Date == date);
+            data.Add(entry?.Count ?? 0);
+        }
+
         var model = new HomeDashboardVM
         {
-            UsersCount = await _context.Users.CountAsync(),
-            HabitsCount = await _context.Habits.CountAsync(),
-            CategoriesCount = await GetCategoriesCountAsync()
+            UsersCount = usersCount,
+            HabitsCount = habitsCount,
+            CategoriesCount = categoriesCount,
+            RoutinesCount = routinesCount,
+            HabitEntriesCount = habitEntriesCount,
+            AvgWaterIntakeLast7Days = Math.Round(avgWater, 2),
+            AvgStepsLast7Days = Math.Round(avgSteps, 2),
+            HabitEntriesLabels = labels,
+            HabitEntriesData = data
         };
 
         return View(model);
