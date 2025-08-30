@@ -186,3 +186,129 @@ input[type="color"].form-control-color::-moz-color-swatch {
   background-clip: padding-box;
 }
 
+/* ===== Habit details page styles ======================================== */
+/* Ensure small chart wrapper has consistent height */
+.chart-wrap-sm { height: 240px; }
+@media (min-width: 992px) {
+  .chart-wrap-sm { height: 200px; }
+}
+
+#habit-root .card {
+  background: var(--clr-surface-a20);
+  border: var(--border-soft);
+  color: var(--bs-body-color);
+  box-shadow: var(--shadow-soft);
+}
+#habit-root .card .card-body { background: transparent; }
+
+#habit-root .btn-light {
+  background-color: var(--clr-surface-a30) !important;
+  color: var(--clr-light-a0) !important;
+  border-color: rgba(255,255,255,.12) !important;
+  --bs-btn-bg: var(--clr-surface-a30);
+  --bs-btn-color: var(--clr-light-a0);
+  --bs-btn-border-color: rgba(255,255,255,0.08);
+  --bs-btn-hover-bg: var(--clr-surface-a40);
+  --bs-btn-hover-border-color: rgba(255,255,255,0.12);
+}
+
+#habit-root .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--clr-light-a0);
+  color: var(--clr-light-a0);
+}
+#habit-root .table thead,
+#habit-root .table thead.table-light {
+  --bs-table-bg: var(--clr-surface-a30);
+  --bs-table-color: var(--clr-light-a0);
+  background-color: var(--clr-surface-a30);
+  color: var(--clr-light-a0);
+}
+#habit-root .table-bordered {
+  border-color: rgba(255,255,255,0.12);
+}
+#habit-root .table-bordered > :not(caption) > * {
+  border-color: rgba(255,255,255,0.12);
+}
+#habit-root .table-bordered > :not(caption) > * > * {
+  border-color: rgba(255,255,255,0.12);
+  background-color: var(--clr-surface-a20);
+}
+
+#habit-root .chart-wrap-sm {
+  background: var(--clr-surface-a20);
+  border: var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: .75rem;
+}
+
+#habit-root .badge.bg-warning.text-dark { color: #111 !important; }
+
+/* ===== Habit edit view adjustments ====================================== */
+.form-control[readonly],
+.form-control:disabled,
+.form-select:disabled {
+  background-color: var(--field-bg) !important;
+  color: var(--bs-body-color) !important;
+  border: var(--field-border) !important;
+  opacity: 1;
+}
+
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+/* ===== Icon picker styles =============================================== */
+[data-iconpicker-root] { color: var(--bs-body-color, #fff); }
+
+[data-iconpicker-root] .icon-preview {
+  color: var(--clr-light-a0, #fff);
+  font-size: 1.05rem;
+}
+
+[data-iconpicker-root] .icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: .5rem;
+  max-height: 260px;
+  overflow: auto;
+  background: var(--clr-surface-a20, #2a2a2a);
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+[data-iconpicker-root] .icon-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  width: 56px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .5rem;
+  background: var(--clr-surface-a10, #1a1a1a);
+  cursor: pointer;
+  transition: transform .05s ease-in-out, box-shadow .1s ease-in-out, background .1s ease-in-out, border-color .1s ease-in-out;
+}
+
+[data-iconpicker-root] .icon-option:hover {
+  background: var(--clr-surface-a30, #3d3d3d);
+  border-color: rgba(255,255,255,.14);
+}
+
+[data-iconpicker-root] .icon-option:focus-visible {
+  outline: 2px solid var(--clr-primary-a40, #3399ff);
+  outline-offset: 1px;
+}
+
+[data-iconpicker-root] .icon-option.active {
+  outline: 2px solid var(--clr-primary-a40, #3399ff);
+  box-shadow: 0 0 0 2px rgba(51,153,255,.18) inset;
+  background: var(--clr-surface-tonal-a10, #243344);
+  border-color: rgba(51,153,255,.35);
+}
+
+[data-iconpicker-root] .icon-option i {
+  font-size: 22px;
+  color: var(--clr-light-a0, #fff);
+}
+
+
