@@ -9,6 +9,7 @@
     <ItemGroup>
       <Folder Include="Areas\Identity\Data\" />
       <Folder Include="Views\Users\" />
+      <Folder Include="wwwroot\images\" />
     </ItemGroup>
 
     <ItemGroup>
