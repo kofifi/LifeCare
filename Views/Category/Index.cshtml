@@ -1,0 +1,39 @@
+@model IEnumerable<LifeCare.ViewModels.CategoryIndexVM>
+
+@{
+    ViewData["Title"] = "Kategorie";
+}
+
+<h2 class="mb-4">Kategorie</h2>
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-info">@TempData["Message"]</div>
+}
+<a asp-action="Create" class="btn btn-primary mb-3">Dodaj kategorię</a>
+
+<div class="mb-3">
+    @foreach (var category in Model)
+    {
+        <div class="d-flex align-items-center mb-1">
+            <code class="bg-dark text-light px-2 py-1 rounded flex-grow-1">@category.Name</code>
+            <a asp-action="Edit" asp-route-id="@category.Id" class="btn btn-sm btn-outline-secondary ms-2">Edytuj</a>
+            <form asp-action="Delete" asp-route-id="@category.Id" method="post" class="d-inline ms-1">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirmDelete(@category.HabitCount)">Usuń</button>
+            </form>
+        </div>
+    }
+</div>
+
+<a asp-controller="Habits" asp-action="Index" class="btn btn-secondary">Powrót do nawyków</a>
+
+@section Scripts {
+    <script>
+        function confirmDelete(count) {
+            let message = 'Czy na pewno chcesz usunąć?';
+            if (count > 0) {
+                message = `Usunięcie kategorii spowoduje przeniesienie ${count} nawyków do kategorii domyślnej. Kontynuować?`;
+            }
+            return confirm(message);
+        }
+    </script>
+}
