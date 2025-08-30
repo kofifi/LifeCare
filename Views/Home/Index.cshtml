@@ -3,36 +3,30 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="container my-5">
+<section class="dashboard container my-5">
     <h2 class="mb-4 text-center">Dashboard</h2>
     <div class="row text-center">
         <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Users</h5>
-                    <p class="display-6">@Model.UsersCount</p>
-                </div>
+            <div class="stat-card">
+                <h5>Users</h5>
+                <p class="stat-value">@Model.UsersCount</p>
             </div>
         </div>
         <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Habits</h5>
-                    <p class="display-6">@Model.HabitsCount</p>
-                </div>
+            <div class="stat-card">
+                <h5>Habits</h5>
+                <p class="stat-value">@Model.HabitsCount</p>
             </div>
         </div>
         <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Categories</h5>
-                    <p class="display-6">@Model.CategoriesCount</p>
-                </div>
+            <div class="stat-card">
+                <h5>Categories</h5>
+                <p class="stat-value">@Model.CategoriesCount</p>
             </div>
         </div>
     </div>
     <section class="news mt-5 text-center">
-        <h3>Latest Updates</h3>
+        <h3 class="mb-3">Latest Updates</h3>
         <a class="btn btn-outline-primary" href="/News">View recent commits</a>
     </section>
-</div>
+</section>
