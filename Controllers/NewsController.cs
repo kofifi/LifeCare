@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -13,7 +14,7 @@ public class NewsController : Controller
         var psi = new ProcessStartInfo
         {
             FileName = "git",
-            Arguments = "log --pretty=format:%h:::%s",
+            Arguments = "log --pretty=format:%h:::%s:::%an:::%cI",
             RedirectStandardOutput = true,
             UseShellExecute = false,
             WorkingDirectory = Directory.GetCurrentDirectory()
@@ -27,9 +28,12 @@ public class NewsController : Controller
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(line =>
             {
-                var parts = line.Split(":::", 2);
+                var parts = line.Split(":::", 4);
                 var hash = parts[0];
                 var message = parts.Length > 1 ? parts[1] : string.Empty;
+                var author = parts.Length > 2 ? parts[2] : string.Empty;
+                DateTime.TryParse(parts.Length > 3 ? parts[3] : string.Empty, out var date);
+
 
                 var branchPsi = new ProcessStartInfo
                 {
@@ -53,6 +57,8 @@ public class NewsController : Controller
                 {
                     Hash = hash,
                     Message = message,
+                    Author = author,
+                    Date = date,
                     Branches = branches
                 };
             })
