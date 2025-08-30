@@ -109,20 +109,3 @@ var categories = ViewBag.Categories as List<Category>;
 </script>
 }
 
-@section Styles {
-<style>
-    /* Dark theme dla pól readonly/disabled w tym widoku */
-    .form-control[readonly],
-    .form-control:disabled,
-    .form-select:disabled {
-        background-color: var(--field-bg) !important; /* np. var(--clr-surface-a20) */
-        color: var(--bs-body-color) !important; /* jasny tekst */
-        border: var(--field-border) !important; /* spójna ramka */
-        opacity: 1; /* bez przygaszenia */
-    }
-
-    input[type=number]::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-    }
-</style>
-}

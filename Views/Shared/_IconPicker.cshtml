@@ -76,63 +76,7 @@ var icons = new[]
     </small>
 </div>
 
-<!-- STYLE (dark theme dla pickera) -->
-<style>
-    [data-iconpicker-root] { color: var(--bs-body-color, #fff); }
-
-    [data-iconpicker-root] .icon-preview {
-        color: var(--clr-light-a0, #fff);
-        font-size: 1.05rem;
-    }
-
-    [data-iconpicker-root] .icon-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
-        gap: .5rem;
-        max-height: 260px;
-        overflow: auto;
-
-        /* DARK tło + obramowanie z Twoich tokenów */
-        background: var(--clr-surface-a20, #2a2a2a);
-        border: 1px solid rgba(255,255,255,0.08) !important;
-    }
-
-    [data-iconpicker-root] .icon-option {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        height: 56px; width: 56px;
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: .5rem;
-        background: var(--clr-surface-a10, #1a1a1a);
-        cursor: pointer;
-        transition: transform .05s ease-in-out, box-shadow .1s ease-in-out, background .1s ease-in-out, border-color .1s ease-in-out;
-    }
-
-    [data-iconpicker-root] .icon-option:hover {
-        background: var(--clr-surface-a30, #3d3d3d);
-        border-color: rgba(255,255,255,.14);
-    }
-
-    [data-iconpicker-root] .icon-option:focus-visible {
-        outline: 2px solid var(--clr-primary-a40, #3399ff);
-        outline-offset: 1px;
-    }
-
-    [data-iconpicker-root] .icon-option.active {
-        outline: 2px solid var(--clr-primary-a40, #3399ff);
-        box-shadow: 0 0 0 2px rgba(51,153,255,.18) inset;
-        background: var(--clr-surface-tonal-a10, #243344);
-        border-color: rgba(51,153,255,.35);
-    }
-
-    [data-iconpicker-root] .icon-option i {
-        font-size: 22px;
-        color: var(--clr-light-a0, #fff); /* BIAŁE IKONY */
-    }
-</style>
-
-<!-- SCRIPT (samoinicjalizujący się) -->
+    <!-- SCRIPT (samoinicjalizujący się) -->
 <script>
     (function(){
         const root    = document.getElementById('@containerId');
