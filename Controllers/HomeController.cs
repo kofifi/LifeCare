@@ -38,15 +38,11 @@ public class HomeController : Controller
         // Averages for the last 7 days
         var avgWater = await _context.DailyStats
             .Where(ds => ds.Date >= startDate)
-            .Select(ds => ds.WaterIntakeLiters)
-            .DefaultIfEmpty(0)
-            .AverageAsync();
+            .AverageAsync(ds => (double?)ds.WaterIntakeLiters) ?? 0;
 
         var avgSteps = await _context.DailyStats
             .Where(ds => ds.Date >= startDate)
-            .Select(ds => ds.Steps)
-            .DefaultIfEmpty(0)
-            .AverageAsync();
+            .AverageAsync(ds => (double?)ds.Steps) ?? 0;
 
         // Habit entries chart data
         var habitEntriesByDate = await _context.HabitEntries
