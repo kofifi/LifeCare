@@ -1,10 +1,32 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model HomeDashboardVM
+@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<section class="news">
-    <h2>Latest Updates</h2>
-    <ul>
-        <li><a href="/News">View recent commits</a></li>
-    </ul>
+<section class="dashboard container my-5">
+    <h2 class="mb-4 text-center">Dashboard</h2>
+    <div class="row text-center">
+        <div class="col-md-4 mb-3">
+            <div class="stat-card">
+                <h5>Users</h5>
+                <p class="stat-value">@Model.UsersCount</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="stat-card">
+                <h5>Habits</h5>
+                <p class="stat-value">@Model.HabitsCount</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="stat-card">
+                <h5>Categories</h5>
+                <p class="stat-value">@Model.CategoriesCount</p>
+            </div>
+        </div>
+    </div>
+    <section class="news mt-5 text-center">
+        <h3 class="mb-3">Latest Updates</h3>
+        <a class="btn btn-outline-primary" href="/News">View recent commits</a>
+    </section>
 </section>
