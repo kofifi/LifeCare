@@ -25,20 +25,40 @@ namespace LifeCare.Services
 
         public async Task<List<HabitVM>> GetAllHabitsAsync(string userId)
         {
-            var habits = await _context.Habits
-                .Include(h => h.Category)
-                .Where(h => h.UserId == userId)
-                .OrderBy(h => h.Order)
-                .ToListAsync();
+            List<Habit> habits;
+            try
+            {
+                habits = await _context.Habits
+                    .Include(h => h.Category)
+                    .Where(h => h.UserId == userId)
+                    .OrderBy(h => h.Order)
+                    .ToListAsync();
+            }
+            catch (Exception)
+            {
+                habits = await _context.Habits
+                    .Where(h => h.UserId == userId)
+                    .OrderBy(h => h.Order)
+                    .ToListAsync();
+            }
 
             return _mapper.Map<List<HabitVM>>(habits);
         }
 
         public async Task<HabitVM> GetHabitByIdAsync(int habitId, string userId)
         {
-            var habit = await _context.Habits
-                .Include(h => h.Category)
-                .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+            Habit habit;
+            try
+            {
+                habit = await _context.Habits
+                    .Include(h => h.Category)
+                    .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+            }
+            catch (Exception)
+            {
+                habit = await _context.Habits
+                    .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+            }
 
             return _mapper.Map<HabitVM>(habit);
         }
@@ -68,9 +88,18 @@ namespace LifeCare.Services
 
         public async Task DeleteHabitAsync(int habitId, string userId)
         {
-            var habit = await _context.Habits
-                .Include(h => h.Category)
-                .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+            Habit habit;
+            try
+            {
+                habit = await _context.Habits
+                    .Include(h => h.Category)
+                    .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+            }
+            catch (Exception)
+            {
+                habit = await _context.Habits
+                    .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+            }
             if (habit == null) return;
 
             _context.Habits.Remove(habit);
@@ -79,10 +108,17 @@ namespace LifeCare.Services
 
         public async Task<List<Category>> GetUserCategoriesAsync(string userId)
         {
-            return await _context.Set<Category>()
-                .Where(c => c.UserId == userId)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            try
+            {
+                return await _context.Set<Category>()
+                    .Where(c => c.UserId == userId)
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
+            }
+            catch (Exception)
+            {
+                return new List<Category>();
+            }
         }
 
         public async Task UpdateHabitOrderAsync(List<int> orderedHabitIds, string userId)
