@@ -5,24 +5,28 @@
 
 <section class="dashboard container py-4">
     <h2 class="mb-4 text-center">Dashboard</h2>
-    <div class="row row-cols-1 row-cols-md-3 g-4 text-center">
-        <div class="col">
-            <div class="stat-card p-3 h-100">
-                <h5>Users</h5>
-                <p class="stat-value">@Model.UsersCount</p>
-            </div>
-        </div>
-        <div class="col">
-            <div class="stat-card p-3 h-100">
-                <h5>Habits</h5>
-                <p class="stat-value">@Model.HabitsCount</p>
-            </div>
-        </div>
-        <div class="col">
-            <div class="stat-card p-3 h-100">
-                <h5>Categories</h5>
-                <p class="stat-value">@Model.CategoriesCount</p>
-            </div>
-        </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover dashboard-table">
+            <thead>
+                <tr>
+                    <th scope="col">Metric</th>
+                    <th scope="col">Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Users</td>
+                    <td>@Model.UsersCount</td>
+                </tr>
+                <tr>
+                    <td>Habits</td>
+                    <td>@Model.HabitsCount</td>
+                </tr>
+                <tr>
+                    <td>Categories</td>
+                    <td>@Model.CategoriesCount</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </section>
