@@ -1,10 +1,13 @@
+using System;
 using System.Diagnostics;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+using System.Threading.Tasks;
 using LifeCare.Data;
 using LifeCare.Models;
 using LifeCare.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace LifeCare.Controllers;
 
@@ -20,16 +23,29 @@ public class HomeController : Controller
         _context = context;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         var model = new HomeDashboardVM
         {
-            UsersCount = _context.Users.Count(),
-            HabitsCount = _context.Habits.Count(),
-            CategoriesCount = _context.Categories.Count()
+            UsersCount = await _context.Users.CountAsync(),
+            HabitsCount = await _context.Habits.CountAsync(),
+            CategoriesCount = await GetCategoriesCountAsync()
         };
 
         return View(model);
+    }
+
+    private async Task<int> GetCategoriesCountAsync()
+    {
+        try
+        {
+            return await _context.Categories.CountAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to count categories");
+            return 0;
+        }
     }
 
     public IActionResult Privacy()
