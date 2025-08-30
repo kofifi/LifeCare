@@ -11,6 +11,10 @@
             <li class="list-group-item d-flex justify-content-between align-items-start py-2 px-3">
                 <div>
                     <code>@commit.Hash</code> @commit.Message
+                    @if (commit.Branches.Count > 0)
+                    {
+                        <small class="text-muted">from @string.Join(", ", commit.Branches)</small>
+                    }
                 </div>
                 <a href="https://github.com/kofifi/LifeCare/commit/@commit.Hash" class="text-decoration-none">→</a>
             </li>

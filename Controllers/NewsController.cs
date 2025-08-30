@@ -28,7 +28,33 @@ public class NewsController : Controller
             .Select(line =>
             {
                 var parts = line.Split(":::", 2);
-                return new CommitInfo { Hash = parts[0], Message = parts.Length > 1 ? parts[1] : string.Empty };
+                var hash = parts[0];
+                var message = parts.Length > 1 ? parts[1] : string.Empty;
+
+                var branchPsi = new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = $"branch --contains {hash} --format=\"%(refname:short)\"",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    WorkingDirectory = Directory.GetCurrentDirectory()
+                };
+
+                using var branchProcess = Process.Start(branchPsi);
+                var branchOutput = branchProcess!.StandardOutput.ReadToEnd();
+                branchProcess.WaitForExit();
+
+                var branches = branchOutput
+                    .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(b => b.Trim())
+                    .ToList();
+
+                return new CommitInfo
+                {
+                    Hash = hash,
+                    Message = message,
+                    Branches = branches
+                };
             })
             .ToList();
 
