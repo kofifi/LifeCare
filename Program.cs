@@ -21,6 +21,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IHabitService, HabitService>();
 
+builder.Services.AddSingleton<IGitInfoService, GitInfoService>();
+
 builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
