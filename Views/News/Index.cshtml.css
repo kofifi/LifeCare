@@ -1,0 +1,42 @@
+/* ==============================================================
+   LifeCare News Styling
+   ============================================================== */
+
+.news {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.news h2 {
+  color: var(--clr-primary-a40);
+}
+
+.news .list-group-item {
+  background-color: var(--clr-surface-a20);
+  border: var(--border-soft);
+  color: var(--clr-light-a0);
+  border-radius: var(--radius-md);
+  margin-bottom: .5rem;
+  transition: background-color .2s ease;
+}
+
+.news .list-group-item:hover {
+  background-color: var(--clr-surface-a30);
+}
+
+.news .list-group-item > a {
+  color: var(--clr-primary-a40);
+  transition: color .2s ease;
+}
+
+.news .list-group-item > a:hover {
+  color: var(--clr-primary-a50);
+}
+
+.news code {
+  color: var(--clr-primary-a40);
+  background-color: var(--clr-surface-a30);
+  border-radius: var(--radius-sm);
+  padding: 0 .25rem;
+}
+
