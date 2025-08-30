@@ -8,7 +8,9 @@ using LifeCare.Data;
 using LifeCare.Models;
 using LifeCare.Services.Interfaces;
 using LifeCare.ViewModels;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace LifeCare.Services
 {
@@ -16,31 +18,74 @@ namespace LifeCare.Services
     {
         private readonly LifeCareDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<HabitService> _logger;
 
-        public HabitService(LifeCareDbContext context, IMapper mapper)
+        public HabitService(LifeCareDbContext context, IMapper mapper, ILogger<HabitService> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
+
+        private static bool IsMissingTable(SqlException ex, string table) =>
+            ex.Number == 208 && ex.Message.Contains(table, StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsMissingColumn(SqlException ex) => ex.Number == 207;
 
         public async Task<List<HabitVM>> GetAllHabitsAsync(string userId)
         {
-            var habits = await _context.Habits
-                .Include(h => h.Category)
-                .Where(h => h.UserId == userId)
-                .OrderBy(h => h.Order)
-                .ToListAsync();
-
-            return _mapper.Map<List<HabitVM>>(habits);
+            try
+            {
+                var habits = await _context.Habits
+                    .Include(h => h.Category)
+                    .Where(h => h.UserId == userId)
+                    .OrderBy(h => h.Order)
+                    .ToListAsync();
+                return _mapper.Map<List<HabitVM>>(habits);
+            }
+            catch (SqlException ex) when (IsMissingTable(ex, "Categories"))
+            {
+                _logger.LogWarning(ex, "Categories table missing, loading habits without categories");
+                try
+                {
+                    var habits = await _context.Habits
+                        .Where(h => h.UserId == userId)
+                        .OrderBy(h => h.Order)
+                        .ToListAsync();
+                    return _mapper.Map<List<HabitVM>>(habits);
+                }
+                catch (SqlException inner) when (IsMissingColumn(inner))
+                {
+                    _logger.LogError(inner, "Habit table schema mismatch");
+                    return new List<HabitVM>();
+                }
+            }
         }
 
         public async Task<HabitVM> GetHabitByIdAsync(int habitId, string userId)
         {
-            var habit = await _context.Habits
-                .Include(h => h.Category)
-                .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
-
-            return _mapper.Map<HabitVM>(habit);
+            try
+            {
+                var habit = await _context.Habits
+                    .Include(h => h.Category)
+                    .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+                return _mapper.Map<HabitVM>(habit);
+            }
+            catch (SqlException ex) when (IsMissingTable(ex, "Categories"))
+            {
+                _logger.LogWarning(ex, "Categories table missing, loading habit without category");
+                try
+                {
+                    var habit = await _context.Habits
+                        .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+                    return _mapper.Map<HabitVM>(habit);
+                }
+                catch (SqlException inner) when (IsMissingColumn(inner))
+                {
+                    _logger.LogError(inner, "Habit table schema mismatch");
+                    return null;
+                }
+            }
         }
 
         public async Task CreateHabitAsync(HabitVM habitVM, string userId)
@@ -68,9 +113,27 @@ namespace LifeCare.Services
 
         public async Task DeleteHabitAsync(int habitId, string userId)
         {
-            var habit = await _context.Habits
-                .Include(h => h.Category)
-                .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+            Habit? habit = null;
+            try
+            {
+                habit = await _context.Habits
+                    .Include(h => h.Category)
+                    .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+            }
+            catch (SqlException ex) when (IsMissingTable(ex, "Categories"))
+            {
+                _logger.LogWarning(ex, "Categories table missing, deleting habit without category");
+                try
+                {
+                    habit = await _context.Habits
+                        .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
+                }
+                catch (SqlException inner) when (IsMissingColumn(inner))
+                {
+                    _logger.LogError(inner, "Habit table schema mismatch");
+                    habit = null;
+                }
+            }
             if (habit == null) return;
 
             _context.Habits.Remove(habit);
@@ -79,10 +142,18 @@ namespace LifeCare.Services
 
         public async Task<List<Category>> GetUserCategoriesAsync(string userId)
         {
-            return await _context.Set<Category>()
-                .Where(c => c.UserId == userId)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            try
+            {
+                return await _context.Set<Category>()
+                    .Where(c => c.UserId == userId)
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
+            }
+            catch (SqlException ex) when (IsMissingTable(ex, "Categories") || IsMissingColumn(ex))
+            {
+                _logger.LogWarning(ex, "Categories table unavailable");
+                return new List<Category>();
+            }
         }
 
         public async Task UpdateHabitOrderAsync(List<int> orderedHabitIds, string userId)
