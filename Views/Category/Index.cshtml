@@ -1,0 +1,31 @@
+@model IEnumerable<LifeCare.Models.Category>
+
+@{
+    ViewData["Title"] = "Kategorie";
+}
+
+<h2 class="mb-4">Kategorie</h2>
+<a asp-action="Create" class="btn btn-primary mb-3">Dodaj kategorię</a>
+<table class="table table-dark table-striped">
+    <thead>
+        <tr>
+            <th>Nazwa</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var category in Model)
+        {
+            <tr>
+                <td>@category.Name</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@category.Id" class="btn btn-sm btn-secondary">Edytuj</a>
+                    <form asp-action="Delete" asp-route-id="@category.Id" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć?');">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a asp-controller="Habits" asp-action="Index" class="btn btn-secondary">Powrót do nawyków</a>

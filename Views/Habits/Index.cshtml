@@ -9,9 +9,12 @@ var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Twoje nawyki</h2>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="fa fa-plus"></i>
-        </a>
+        <div>
+            <a asp-action="Create" class="btn btn-primary me-2">
+                <i class="fa fa-plus"></i>
+            </a>
+            <a asp-controller="Category" asp-action="Index" class="btn btn-secondary">Kategorie</a>
+        </div>
     </div>
 
     <!-- Kalendarz z przyciskami do zmiany tygodnia -->
