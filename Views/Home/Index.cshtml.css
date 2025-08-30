@@ -1,0 +1,34 @@
+/* ==============================================================
+   LifeCare Home Dashboard Styling
+   ============================================================== */
+
+.dashboard {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.dashboard h2 {
+  color: var(--clr-primary-a40);
+}
+
+.dashboard .stat-card {
+  background-color: var(--clr-surface-a20);
+  border: var(--border-soft);
+  color: var(--clr-light-a0);
+  border-radius: var(--radius-md);
+  transition: background-color .2s ease;
+  padding: 1.25rem;
+}
+
+.dashboard .stat-card:hover {
+  background-color: var(--clr-surface-a30);
+}
+
+.dashboard .stat-card .stat-value {
+  font-size: 2.5rem;
+  font-weight: 600;
+}
+
+.news h3 {
+  color: var(--clr-primary-a40);
+}
