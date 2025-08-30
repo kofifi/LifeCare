@@ -2,11 +2,13 @@
 using LifeCare.Data;
 using LifeCare.Models;
 using LifeCare.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LifeCare.Controllers;
 
+[Authorize]
 public class CategoryController : Controller
 {
     private readonly LifeCareDbContext _context;
@@ -18,6 +20,31 @@ public class CategoryController : Controller
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
+    }
+
+    [HttpGet]
+    public IActionResult Create()
+    {
+        return View(new CategoryVM());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(CategoryVM categoryVM)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(categoryVM);
+        }
+
+        var userId = _userManager.GetUserId(User);
+        var category = _mapper.Map<Category>(categoryVM);
+        category.UserId = userId;
+
+        _context.Categories.Add(category);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction("Index", "Habits");
     }
 
     [HttpPost]
