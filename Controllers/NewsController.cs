@@ -34,6 +34,7 @@ public class NewsController : Controller
                 var author = parts.Length > 2 ? parts[2] : string.Empty;
                 DateTime.TryParse(parts.Length > 3 ? parts[3] : string.Empty, out var date);
 
+
                 var branchPsi = new ProcessStartInfo
                 {
                     FileName = "git",
