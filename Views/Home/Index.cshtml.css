@@ -11,21 +11,23 @@
   color: var(--clr-primary-a40);
 }
 
-.dashboard .stat-card {
+.dashboard-table {
+  max-width: 600px;
+  margin: 0 auto;
   background-color: var(--clr-surface-a10);
   color: var(--clr-light-a0);
   border-radius: var(--radius-md);
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
-  transition: background-color .2s ease;
+  overflow: hidden;
 }
 
-.dashboard .stat-card:hover {
-  background-color: var(--clr-surface-a20);
+.dashboard-table th {
+  background-color: var(--clr-primary-a40);
+  color: var(--clr-light-a0);
+  border: none;
 }
 
-.dashboard .stat-card .stat-value {
-  font-size: 2rem;
-  font-weight: 600;
+.dashboard-table td {
+  border: none;
 }
 
 .news h3 {
