@@ -25,6 +25,9 @@
                     <li class="nav-item">
                         <a class="nav-link" asp-area="" asp-controller="Habits" asp-action="Index">Nawyki</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="" asp-controller="News" asp-action="Index">Latest Updates</a>
+                    </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     @if (User.Identity?.IsAuthenticated ?? false)
