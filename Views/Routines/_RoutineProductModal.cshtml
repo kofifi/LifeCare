@@ -1,0 +1,51 @@
+﻿<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--bs-body-bg);">
+            <div class="modal-header">
+                <h5 class="modal-title">Produkt / działanie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="prodName" class="form-label">Nazwa</label>
+                    <input id="prodName" class="form-control" />
+                    <div class="invalid-feedback">Podaj nazwę.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="prodNote" class="form-label">Opis (opcjonalnie)</label>
+                    <textarea id="prodNote" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="prodUrl" class="form-label">Link do produktu (URL)</label>
+                    <input id="prodUrl" class="form-control" placeholder="https://..." />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Zdjęcie produktu</label>
+                    <div id="prodDropzone" class="border rounded p-3 text-center"
+                         style="background:var(--bs-body-bg);">
+                        <div class="small mb-2">Przeciągnij i upuść plik tutaj lub</div>
+                        <input type="file" id="prodFile" accept="image/*" class="form-control" />
+                        <div class="mt-2" id="prodImgPreview" style="display:none;">
+                            <img id="prodImg" alt="" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:6px;">
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="prodImgRemove">
+                                    <i class="fa fa-trash"></i> Usuń zdjęcie
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="prodImageUrl" />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button class="btn btn-primary" id="productSaveBtn">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>

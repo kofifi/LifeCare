@@ -4,6 +4,7 @@ using LifeCare.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeCare.Migrations
 {
     [DbContext(typeof(LifeCareDbContext))]
-    partial class LifeCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250901190809_Routines_Init")]
+    partial class Routines_Init
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -308,12 +311,6 @@ namespace LifeCare.Migrations
                     b.Property<string>("RRule")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("RotationEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("RotationMode")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("RoutineId")
                         .HasColumnType("int");
 
@@ -352,10 +349,9 @@ namespace LifeCare.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoutineStepId");
+                    b.HasIndex("RoutineEntryId");
 
-                    b.HasIndex("RoutineEntryId", "RoutineStepId")
-                        .IsUnique();
+                    b.HasIndex("RoutineStepId");
 
                     b.ToTable("RoutineStepEntries");
                 });
@@ -367,9 +363,6 @@ namespace LifeCare.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -390,36 +383,6 @@ namespace LifeCare.Migrations
                     b.HasIndex("RoutineStepId");
 
                     b.ToTable("RoutineStepProducts");
-                });
-
-            modelBuilder.Entity("LifeCare.Models.RoutineStepProductEntry", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Completed")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RoutineStepEntryId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RoutineStepProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoutineStepProductId");
-
-                    b.HasIndex("RoutineStepEntryId", "RoutineStepProductId")
-                        .IsUnique();
-
-                    b.ToTable("RoutineStepProductEntry");
                 });
 
             modelBuilder.Entity("LifeCare.Models.User", b =>
@@ -833,25 +796,6 @@ namespace LifeCare.Migrations
                     b.Navigation("RoutineStep");
                 });
 
-            modelBuilder.Entity("LifeCare.Models.RoutineStepProductEntry", b =>
-                {
-                    b.HasOne("LifeCare.Models.RoutineStepEntry", "StepEntry")
-                        .WithMany("ProductEntries")
-                        .HasForeignKey("RoutineStepEntryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LifeCare.Models.RoutineStepProduct", "Product")
-                        .WithMany("ProductEntries")
-                        .HasForeignKey("RoutineStepProductId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("StepEntry");
-                });
-
             modelBuilder.Entity("LifeCare.Models.UserProfile", b =>
                 {
                     b.HasOne("LifeCare.Models.User", "User")
@@ -952,16 +896,6 @@ namespace LifeCare.Migrations
                     b.Navigation("Products");
 
                     b.Navigation("StepEntries");
-                });
-
-            modelBuilder.Entity("LifeCare.Models.RoutineStepEntry", b =>
-                {
-                    b.Navigation("ProductEntries");
-                });
-
-            modelBuilder.Entity("LifeCare.Models.RoutineStepProduct", b =>
-                {
-                    b.Navigation("ProductEntries");
                 });
 
             modelBuilder.Entity("LifeCare.Models.User", b =>

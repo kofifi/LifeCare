@@ -1,0 +1,206 @@
+﻿@model LifeCare.ViewModels.RoutineVM
+@await Html.PartialAsync("_CategoryModal", new LifeCare.ViewModels.CategoryVM())
+
+@{
+    ViewData["Title"] = "Dodaj rutynę";
+    var categories = ViewBag.Categories as List<Category>;
+}
+
+<h2 class="mb-4">Dodaj rutynę</h2>
+
+<form asp-action="Create" method="post" id="routineForm">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Nazwa</label>
+        <input asp-for="Name" class="form-control"/>
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3" id="descriptionWrapper" style="display: none;">
+        <label asp-for="Description" class="form-label">Opis</label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="toggleDescription">
+        <i class="fa fa-plus"></i> Dodaj opis
+    </button>
+
+    <div class="mb-3">
+        <label asp-for="Color" class="form-label">Kolor</label>
+        <input asp-for="Color" type="color" class="form-control form-control-color"/>
+    </div>
+
+    @await Html.PartialAsync("_IconPicker", new LifeCare.ViewModels.IconPickerVM
+    {
+        ContainerId = "routineIconPicker",
+        ForId = "Icon",
+        ForName = "Icon",
+        Selected = Model.Icon,
+        StartCollapsed = true,
+        Label = "Ikona"
+    })
+
+    <div class="row g-2">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Data startu</label>
+            <input asp-for="StartDateUtc" type="date" class="form-control" id="startDate"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Godzina</label>
+            <input asp-for="TimeOfDay" type="time" class="form-control" id="timeOfDay"/>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label d-flex justify-content-between align-items-center">
+            <span>Powtarzaj co:</span>
+            <small class="text-muted">Zaznacz „Nigdy”, aby pominąć powtarzanie</small>
+        </label>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="noRepeatSwitch"/>
+            <label class="form-check-label" for="noRepeatSwitch">Nigdy (pomiń powtarzanie)</label>
+        </div>
+
+        <div id="repeatBody">
+            <div class="mb-2">
+                <div id="intervalGroup" class="btn-group flex-wrap" role="group" aria-label="Interwał">
+                    <input type="hidden" id="intervalInput" value="1"/>
+                    <button type="button" class="btn btn-outline-primary btn-sm interval-btn active" data-val="1">Każdy</button>
+                    @for (int i = 2; i <= 10; i++)
+                    {
+                        <button type="button" class="btn btn-outline-primary btn-sm interval-btn" data-val="@i">@i</button>
+                    }
+                </div>
+                <div class="form-text">Interwał (np. „co 2 tygodnie”)</div>
+            </div>
+
+            <div class="mb-2">
+                <div class="form-check">
+                    <input class="form-check-input freq-radio" type="radio" name="freq" id="freqDaily" value="DAILY" checked/>
+                    <label class="form-check-label" for="freqDaily">Dzień <small class="text-muted">(np. co 2 dni)</small></label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input freq-radio" type="radio" name="freq" id="freqWeekly" value="WEEKLY"/>
+                    <label class="form-check-label" for="freqWeekly">Tydzień <small class="text-muted">(np. co 3 tygodnie, w: Pn, Śr)</small></label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input freq-radio" type="radio" name="freq" id="freqMonthly" value="MONTHLY"/>
+                    <label class="form-check-label" for="freqMonthly">Miesiąc <small class="text-muted">(np. co miesiąc, dni: 2, 15)</small></label>
+                </div>
+            </div>
+
+            <div class="mb-2" id="weeklyPicker" style="display:none;">
+                <div class="mb-1">W wybranych dniach:</div>
+                <div id="bydayGroup" class="btn-group flex-wrap" role="group" aria-label="Dni tygodnia">
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="MO">Pn</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="TU">Wt</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="WE">Śr</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="TH">Cz</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="FR">Pt</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="SA">Sb</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="SU">Nd</button>
+                </div>
+            </div>
+
+            <div class="mb-2" id="monthlyPicker" style="display:none;">
+                <div class="mb-1">Dni miesiąca:</div>
+                <div id="bymonthdayGrid" class="d-grid" style="grid-template-columns: repeat(7, minmax(0,1fr)); gap:.25rem;">
+                    @for (int d = 1; d <= 31; d++)
+                    {
+                        <button type="button" class="btn btn-outline-secondary btn-sm md-btn" data-day="@d">@d</button>
+                    }
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="endSwitch"/>
+                    <label class="form-check-label" for="endSwitch">Zakończ się po pewnym czasie</label>
+                </div>
+
+                <div id="endBody" style="display:none;">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input end-radio" type="radio" name="endMode" id="endAfterDays" value="AFTER" checked/>
+                            <label class="form-check-label" for="endAfterDays">Po czasie</label>
+                        </div>
+
+                        <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                            <input type="number" class="form-control" id="endCount" min="1" value="30" style="max-width: 140px;"/>
+                            <select class="form-select" id="endUnit" style="max-width: 200px;">
+                                <option value="DAYS">dniach</option>
+                                <option value="WEEKS">tygodniach</option>
+                                <option value="MONTHS">miesiącach</option>
+                            </select>
+                        </div>
+
+                        <div class="form-text">Wyliczymy datę zakończenia.</div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input end-radio" type="radio" name="endMode" id="endByDate" value="DATE"/>
+                            <label class="form-check-label" for="endByDate">Do dnia</label>
+                        </div>
+                        <input type="date" class="form-control mt-1" id="endDate" style="max-width: 260px;"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CategoryId" class="form-label">Kategoria</label>
+        <div class="input-group">
+            <select asp-for="CategoryId" class="form-select" id="categorySelect">
+                <option value="">Brak</option>
+                @if (categories != null)
+                {
+                    foreach (var c in categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
+            <button type="button" class="btn btn-sm btn-outline-secondary ms-2"
+                    data-bs-toggle="modal" data-bs-target="#categoryModal"
+                    data-target-select="categorySelect">
+                <i class="fa fa-plus"></i> Nowa
+            </button>
+        </div>
+    </div>
+
+    <input type="hidden" asp-for="RRule" id="rruleHidden"/>
+
+    <div id="stepsValidationMsg" class="alert alert-danger d-none"></div>
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label m-0">Kroki rutyny</label>
+        </div>
+
+        <div id="stepsContainer" class="d-flex flex-column gap-3"></div>
+
+        <input type="hidden" name="StepsJson" id="StepsJson">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Zapisz</button>
+    <a asp-action="Index" class="btn btn-secondary">Anuluj</a>
+</form>
+
+@await Html.PartialAsync("_RoutineProductModal")
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/routines.css" asp-append-version="true"/>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"/>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <script src="~/js/routines.common.js" asp-append-version="true"></script>
+    <script src="~/js/routines.create.js" asp-append-version="true"></script>
+    <script src="~/js/routines.steps.js" asp-append-version="true"></script>
+}

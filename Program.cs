@@ -20,6 +20,7 @@ builder.Services.AddDefaultIdentity<User>(options =>
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IHabitService, HabitService>();
+builder.Services.AddScoped<IRoutineService, RoutineService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 

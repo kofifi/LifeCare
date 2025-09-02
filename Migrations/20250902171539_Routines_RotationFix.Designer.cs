@@ -4,6 +4,7 @@ using LifeCare.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeCare.Migrations
 {
     [DbContext(typeof(LifeCareDbContext))]
-    partial class LifeCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250902171539_Routines_RotationFix")]
+    partial class Routines_RotationFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -352,10 +355,9 @@ namespace LifeCare.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoutineStepId");
+                    b.HasIndex("RoutineEntryId");
 
-                    b.HasIndex("RoutineEntryId", "RoutineStepId")
-                        .IsUnique();
+                    b.HasIndex("RoutineStepId");
 
                     b.ToTable("RoutineStepEntries");
                 });
@@ -414,10 +416,9 @@ namespace LifeCare.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoutineStepProductId");
+                    b.HasIndex("RoutineStepEntryId");
 
-                    b.HasIndex("RoutineStepEntryId", "RoutineStepProductId")
-                        .IsUnique();
+                    b.HasIndex("RoutineStepProductId");
 
                     b.ToTable("RoutineStepProductEntry");
                 });

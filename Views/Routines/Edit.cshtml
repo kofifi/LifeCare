@@ -1,0 +1,260 @@
+@model LifeCare.ViewModels.RoutineVM
+@await Html.PartialAsync("_CategoryModal", new LifeCare.ViewModels.CategoryVM())
+
+@{
+    ViewData["Title"] = "Edytuj rutynę";
+    var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
+    var stepsJson = (string?)(ViewBag.StepsJson ?? "[]");
+}
+
+<h2 class="mb-4">Edytuj rutynę</h2>
+
+<form asp-action="Edit" method="post" id="routineForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id"/>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Nazwa</label>
+        <input asp-for="Name" class="form-control"/>
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3" id="descriptionWrapper" style="display:@(string.IsNullOrWhiteSpace(Model.Description) ? "none" : "block")">
+        <label asp-for="Description" class="form-label">Opis</label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="toggleDescription">
+        <i class="fa fa-@(string.IsNullOrWhiteSpace(Model.Description) ? "plus" : "minus")"></i> @(string.IsNullOrWhiteSpace(Model.Description) ? "Dodaj opis" : "Ukryj opis")
+    </button>
+
+    <div class="mb-3">
+        <label asp-for="Color" class="form-label">Kolor</label>
+        <input asp-for="Color" type="color" class="form-control form-control-color"/>
+    </div>
+
+    @await Html.PartialAsync("_IconPicker", new LifeCare.ViewModels.IconPickerVM
+    {
+        ContainerId = "routineIconPicker",
+        ForId = "Icon",
+        ForName = "Icon",
+        Selected = Model.Icon,
+        StartCollapsed = true,
+        Label = "Ikona"
+    })
+
+    <div class="row g-2">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Data startu</label>
+            <input asp-for="StartDateUtc" type="date" class="form-control" id="startDate"/>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Godzina</label>
+            <input asp-for="TimeOfDay" type="time" class="form-control" id="timeOfDay"/>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label d-flex justify-content-between align-items-center">
+            <span>Powtarzaj co:</span>
+            <small class="text-muted">Zaznacz „Nigdy”, aby pominąć powtarzanie</small>
+        </label>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="noRepeatSwitch"/>
+            <label class="form-check-label" for="noRepeatSwitch">Nigdy (pomiń powtarzanie)</label>
+        </div>
+
+        <div id="repeatBody">
+            <div class="mb-2">
+                <div id="intervalGroup" class="btn-group flex-wrap" role="group">
+                    <input type="hidden" id="intervalInput" value="1"/>
+                    <button type="button" class="btn btn-outline-primary btn-sm interval-btn" data-val="1">Każdy</button>
+                    @for (int i = 2; i <= 10; i++)
+                    {
+                        <button type="button" class="btn btn-outline-primary btn-sm interval-btn" data-val="@i">@i</button>
+                    }
+                </div>
+                <div class="form-text">Interwał</div>
+            </div>
+
+            <div class="mb-2">
+                <div class="form-check">
+                    <input class="form-check-input freq-radio" type="radio" name="freq" id="freqDaily" value="DAILY" checked/>
+                    <label class="form-check-label" for="freqDaily">Dzień</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input freq-radio" type="radio" name="freq" id="freqWeekly" value="WEEKLY"/>
+                    <label class="form-check-label" for="freqWeekly">Tydzień</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input freq-radio" type="radio" name="freq" id="freqMonthly" value="MONTHLY"/>
+                    <label class="form-check-label" for="freqMonthly">Miesiąc</label>
+                </div>
+            </div>
+
+            <div class="mb-2" id="weeklyPicker" style="display:none;">
+                <div class="mb-1">W wybranych dniach:</div>
+                <div id="bydayGroup" class="btn-group flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="MO">Pn</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="TU">Wt</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="WE">Śr</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="TH">Cz</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="FR">Pt</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="SA">Sb</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm day-btn" data-day="SU">Nd</button>
+                </div>
+            </div>
+
+            <div class="mb-2" id="monthlyPicker" style="display:none;">
+                <div class="mb-1">Dni miesiąca:</div>
+                <div id="bymonthdayGrid" class="d-grid" style="grid-template-columns: repeat(7, minmax(0,1fr)); gap:.25rem;">
+                    @for (int d = 1; d <= 31; d++)
+                    {
+                        <button type="button" class="btn btn-outline-secondary btn-sm md-btn" data-day="@d">@d</button>
+                    }
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="endSwitch"/>
+                    <label class="form-check-label" for="endSwitch">Zakończ się po pewnym czasie</label>
+                </div>
+
+                <div id="endBody" style="display:none;">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input end-radio" type="radio" name="endMode" id="endAfterDays" value="AFTER" checked/>
+                            <label class="form-check-label" for="endAfterDays">Po czasie</label>
+                        </div>
+
+                        <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                            <input type="number" class="form-control" id="endCount" min="1" value="30" style="max-width: 140px;"/>
+                            <select class="form-select" id="endUnit" style="max-width: 200px;">
+                                <option value="DAYS">dniach</option>
+                                <option value="WEEKS">tygodniach</option>
+                                <option value="MONTHS">miesiącach</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input end-radio" type="radio" name="endMode" id="endByDate" value="DATE"/>
+                            <label class="form-check-label" for="endByDate">Do dnia</label>
+                        </div>
+                        <input type="date" class="form-control mt-1" id="endDate" style="max-width: 260px;"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CategoryId" class="form-label">Kategoria</label>
+        <div class="input-group">
+            <select asp-for="CategoryId"
+                    id="editCategorySelect"
+                    class="form-select"
+                    asp-items="@(new SelectList(categories ?? new List<Category>(), "Id", "Name", Model.CategoryId))">
+                <option value="">(brak)</option>
+            </select>
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary ms-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#categoryModal"
+                    data-target-select="editCategorySelect">
+                <i class="fa fa-plus"></i> Nowa
+            </button>
+        </div>
+    </div>
+
+    <input type="hidden" asp-for="RRule" id="rruleHidden"/>
+
+    <div id="stepsValidationMsg" class="alert alert-danger d-none"></div>
+
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label m-0">Kroki rutyny</label>
+        </div>
+
+        <div id="stepsContainer" class="d-flex flex-column gap-3"></div>
+
+        <input type="hidden" name="StepsJson" id="StepsJson" value='@Html.Raw(stepsJson)'>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-save me-2"></i>Zapisz</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Anuluj</a>
+    </div>
+</form>
+
+@await Html.PartialAsync("_RoutineProductModal")
+
+@section Scripts {
+    <script>window.__LC_IS_EDIT = true;</script>
+
+    <partial name="_ValidationScriptsPartial"/>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="~/js/routines.common.js" asp-append-version="true"></script>
+    <script src="~/js/routines.create.js" asp-append-version="true"></script>
+    <script src="~/js/routines.steps.js" asp-append-version="true"></script>
+
+    <script>
+        (function hydrateFromRRule(){
+            const r = '@(Model.RRule ?? "")'.toUpperCase();
+            if (!r) return;
+
+            const map = Object.fromEntries(r.split(';').map(s => s.split('=')).filter(x => x.length === 2));
+
+            if (map.COUNT === '1') {
+                document.getElementById('noRepeatSwitch').checked = true;
+                document.getElementById('repeatBody').style.display = 'none';
+                return;
+            }
+
+            if (map.INTERVAL) {
+                const iv = parseInt(map.INTERVAL,10);
+                document.getElementById('intervalInput').value = iv;
+                document.querySelectorAll('.interval-btn').forEach(b => b.classList.toggle('active', +b.dataset.val === iv));
+            }
+
+            const f = map.FREQ || 'DAILY';
+            const id = f === 'WEEKLY' ? 'freqWeekly' : f === 'MONTHLY' ? 'freqMonthly' : 'freqDaily';
+            const el = document.getElementById(id);
+            if (el) { el.checked = true; el.dispatchEvent(new Event('change')); }
+
+            if (f === 'WEEKLY') {
+                document.getElementById('weeklyPicker').style.display = '';
+                const set = (map.BYDAY || '').split(',').filter(Boolean);
+                document.querySelectorAll('.day-btn').forEach(b => b.classList.toggle('active', set.includes(b.dataset.day)));
+            }
+
+            if (f === 'MONTHLY') {
+                document.getElementById('monthlyPicker').style.display = '';
+                const set = (map.BYMONTHDAY || '').split(',').filter(Boolean).map(Number);
+                document.querySelectorAll('.md-btn').forEach(b => b.classList.toggle('active', set.includes(+b.dataset.day)));
+            }
+
+            if (map.UNTIL) {
+                document.getElementById('endSwitch').checked = true;
+                document.getElementById('endBody').style.display = '';
+                const u = map.UNTIL;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(u)) {
+                    document.getElementById('endByDate').checked = true;
+                    document.getElementById('endDate').value = u;
+                } else {
+                    document.getElementById('endAfterDays').checked = true;
+                }
+            }
+        })();
+
+        document.getElementById('routineForm').addEventListener('submit', () => {
+            const r = window.buildRRule ? window.buildRRule() : '';
+            const el = document.getElementById('rruleHidden');
+            if (el) el.value = r;
+        });
+    </script>
+}
