@@ -4,20 +4,17 @@
     color: var(--bs-body-color);
     box-shadow: var(--shadow-soft);
 }
-
-#routine-root .card .card-body {
-    background: transparent;
-}
+#routine-root .card .card-body { background: transparent; }
 
 #routine-root .btn-light {
     --bs-btn-bg: var(--clr-surface-a30);
     --bs-btn-color: var(--clr-light-a0);
-    --bs-btn-border-color: rgba(255, 255, 255, 0.08);
+    --bs-btn-border-color: rgba(255,255,255,0.08);
     --bs-btn-hover-bg: var(--clr-surface-a40);
-    --bs-btn-hover-border-color: rgba(255, 255, 255, 0.12);
+    --bs-btn-hover-border-color: rgba(255,255,255,0.12);
     background-color: var(--clr-surface-a30) !important;
     color: var(--clr-light-a0) !important;
-    border-color: rgba(255, 255, 255, .12) !important;
+    border-color: rgba(255,255,255,.12) !important;
 }
 
 #routine-root .step-card {
@@ -27,14 +24,12 @@
     border-radius: var(--radius-md);
     padding: .75rem 1rem;
 }
-
 #routine-root .step-title {
     display: flex;
     align-items: center;
     gap: .5rem;
     font-weight: 600;
 }
-
 #routine-root .step-num {
     display: inline-flex;
     align-items: center;
@@ -46,7 +41,6 @@
     font-size: .85rem;
     line-height: 1;
 }
-
 #routine-root .step-rotation {
     position: absolute;
     top: .5rem;
@@ -68,21 +62,18 @@
     background: var(--clr-surface-a10);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
-
 #routine-root .product-row img {
     width: 44px;
     height: 44px;
     object-fit: cover;
     border-radius: 6px;
 }
-
 #routine-root .product-name-line {
     display: flex;
     gap: .4rem;
     align-items: baseline;
     flex-wrap: wrap;
 }
-
 #routine-root .product-note {
     font-size: .875rem;
     opacity: .85;
@@ -93,7 +84,6 @@
     --bs-table-color: var(--clr-light-a0);
     color: var(--clr-light-a0);
 }
-
 #routine-root .table thead,
 #routine-root .table thead.table-light {
     --bs-table-bg: var(--clr-surface-a30);
@@ -101,16 +91,9 @@
     background-color: var(--clr-surface-a30);
     color: var(--clr-light-a0);
 }
-
-#routine-root .table-bordered {
-    border-color: rgba(255, 255, 255, 0.12);
-}
-
-#routine-root .table-bordered > :not(caption) > * {
-    border-color: rgba(255, 255, 255, 0.12);
-}
-
+#routine-root .table-bordered { border-color: rgba(255,255,255,0.12); }
+#routine-root .table-bordered > :not(caption) > * { border-color: rgba(255,255,255,0.12); }
 #routine-root .table-bordered > :not(caption) > * > * {
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255,255,255,0.12);
     background-color: var(--clr-surface-a20);
 }

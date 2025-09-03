@@ -54,52 +54,54 @@
 
             <div id="structureBody" class="d-none">
                 <div class="d-flex flex-column gap-2">
-                    @foreach (var s in Model.Steps.OrderBy(x=>x.Order))
+                    @foreach (var s in Model.Steps.OrderBy(x => x.Order))
                     {
-                    <div class="step-card">
-                        @if (s.RotationEnabled)
-                        {
-                        <span class="step-rotation">Rotacja: @(s.RotationMode?.ToUpper())</span>
-                        }
-
-                        <div class="step-title">
-                            <span class="step-num">@s.Order</span>
-                            <span>@s.Name</span>
-                        </div>
-
-                        @if (!string.IsNullOrWhiteSpace(s.Description))
-                        {
-                        <div class="product-note mt-1">@s.Description</div>
-                        }
-
-                        @if (s.Products != null && s.Products.Count > 0)
-                        {
-                        <div class="mt-2 d-flex flex-column gap-2">
-                            @foreach (var p in s.Products.OrderBy(x=>x.Id))
+                        <div class="step-card">
+                            @if (s.RotationEnabled)
                             {
-                            <div class="product-row">
-                                @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
-                                {
-                                <img src="@p.ImageUrl" alt="">
-                                }
-                                <div class="flex-grow-1">
-                                    <div class="product-name-line">
-                                        <div class="fw-semibold">@p.Name</div>
-                                        @if (!string.IsNullOrWhiteSpace(p.Note))
-                                        {
-                                        <div class="product-note">— @p.Note</div>
-                                        }
-                                    </div>
-                                    @if (!string.IsNullOrWhiteSpace(p.Url))
+                                <span class="step-rotation">Rotacja: @(s.RotationMode?.ToUpper())</span>
+                            }
+
+                            <div class="step-title">
+                                <span class="step-num">@(s.Order+1)</span>
+                                <span>@s.Name</span>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(s.Description))
+                            {
+                                <div class="product-note mt-1">@s.Description</div>
+                            }
+
+                            @if (s.Products != null && s.Products.Count > 0)
+                            {
+                                <div class="mt-2 d-flex flex-column gap-2">
+                                    @foreach (var p in s.Products.OrderBy(x => x.Id))
                                     {
-                                    <div class="small"><a href="@p.Url" target="_blank" rel="noopener">link</a></div>
+                                        <div class="product-row">
+                                            @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
+                                            {
+                                                <img src="@p.ImageUrl" alt="">
+                                            }
+                                            <div class="flex-grow-1">
+                                                <div class="product-name-line">
+                                                    <div class="fw-semibold">@p.Name</div>
+                                                    @if (!string.IsNullOrWhiteSpace(p.Note))
+                                                    {
+                                                        <div class="product-note">— @p.Note</div>
+                                                    }
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(p.Url))
+                                                {
+                                                    <div class="small">
+                                                        <a href="@p.Url" target="_blank" rel="noopener">link</a>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
                                     }
                                 </div>
-                            </div>
                             }
                         </div>
-                        }
-                    </div>
                     }
                 </div>
             </div>
@@ -188,6 +190,7 @@
         </div>
     </div>
 
+    <!-- Kalendarz -->
     <div class="card mb-4">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">

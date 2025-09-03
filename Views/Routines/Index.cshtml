@@ -1,29 +1,29 @@
 ﻿@model IEnumerable<LifeCare.ViewModels.RoutineVM>
 @{
-ViewData["Title"] = "Rutyny";
-var categories = ViewBag.Categories as List<Category>;
+    ViewData["Title"] = "Rutyny";
+    var categories = ViewBag.Categories as List<Category>;
 
-bool IsActive(string? rrule)
-{
-if (string.IsNullOrWhiteSpace(rrule)) return true; // brak UNTIL => aktywna
-var parts = rrule.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-.Select(p => p.Split('=')).Where(a => a.Length == 2)
-.ToDictionary(a => a[0].ToUpperInvariant(), a => a[1], StringComparer.OrdinalIgnoreCase);
-if (!parts.TryGetValue("UNTIL", out var raw) || string.IsNullOrWhiteSpace(raw)) return true;
+    bool IsActive(string? rrule)
+    {
+        if (string.IsNullOrWhiteSpace(rrule)) return true; // brak UNTIL => aktywna
+        var parts = rrule.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(p => p.Split('=')).Where(a => a.Length == 2)
+            .ToDictionary(a => a[0].ToUpperInvariant(), a => a[1], StringComparer.OrdinalIgnoreCase);
+        if (!parts.TryGetValue("UNTIL", out var raw) || string.IsNullOrWhiteSpace(raw)) return true;
 
-DateTime until;
-if (DateOnly.TryParse(raw, out var d1)) until = d1.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-else if (DateTime.TryParseExact(raw, "yyyyMMdd'T'HHmmss'Z'", null,
-System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var z))
-until = z;
-else if (DateTime.TryParseExact(raw, "yyyyMMdd", null,
-System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var ymd))
-until = ymd;
-else if (DateTime.TryParse(raw, out var any)) until = any;
-else return true;
+        DateTime until;
+        if (DateOnly.TryParse(raw, out var d1)) until = d1.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        else if (DateTime.TryParseExact(raw, "yyyyMMdd'T'HHmmss'Z'", null,
+            System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var z))
+            until = z;
+        else if (DateTime.TryParseExact(raw, "yyyyMMdd", null,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var ymd))
+            until = ymd;
+        else if (DateTime.TryParse(raw, out var any)) until = any;
+        else return true;
 
-return DateTime.UtcNow.Date <= until.Date;
-}
+        return DateTime.UtcNow.Date <= until.Date;
+    }
 }
 
 <div class="container py-4">
@@ -47,10 +47,10 @@ return DateTime.UtcNow.Date <= until.Date;
                 <option value="">Wszystkie kategorie</option>
                 @if (categories != null)
                 {
-                foreach (var c in categories)
-                {
-                <option value="@c.Id">@c.Name</option>
-                }
+                    foreach (var c in categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
                 }
             </select>
         </div>
@@ -81,120 +81,118 @@ return DateTime.UtcNow.Date <= until.Date;
         <div class="d-flex flex-column gap-3" id="allList">
             @foreach (var r in Model)
             {
-            var active = IsActive(r.RRule);
-            <div class="soft-card clickable-card"
-                 data-category-id="@r.CategoryId"
-                 data-active="@(active ? "1" : "0")"
-                 data-routine-id="@r.Id"
-                 data-href="/Routines/Details/@r.Id"
-                 style="border-left:8px solid @r.Color;">
-                <div class="d-flex align-items-center justify-content-between gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <i class="fa @r.Icon fa-lg" style="color:@r.Color;"></i>
-                        <div>
-                            <a asp-action="Details" asp-route-id="@r.Id"
-                               class="text-reset text-decoration-none fw-semibold">@r.Name</a>
-                            @if (!string.IsNullOrWhiteSpace(r.Description))
-                            {
-                            <div class="small text-muted">@r.Description</div>
-                            }
-                            @if (r.TimeOfDay.HasValue)
-                            {
-                            <div
-                                class="small text-muted">@($"{(int)r.TimeOfDay.Value.TotalHours:0}:{r.TimeOfDay.Value.Minutes:00}")</div>
-                            }
-                            <div class="small">
-                                Status: @(active ? "aktywna" : "nieaktywna")
+                var active = IsActive(r.RRule);
+                <div class="soft-card clickable-card"
+                     data-category-id="@r.CategoryId"
+                     data-active="@(active ? "1" : "0")"
+                     data-routine-id="@r.Id"
+                     data-href="/Routines/Details/@r.Id"
+                     style="border-left:8px solid @r.Color;">
+                    <div class="d-flex align-items-center justify-content-between gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa @r.Icon fa-lg" style="color:@r.Color;"></i>
+                            <div>
+                                <a asp-action="Details" asp-route-id="@r.Id"
+                                   class="text-reset text-decoration-none fw-semibold">@r.Name</a>
+                                @if (!string.IsNullOrWhiteSpace(r.Description))
+                                {
+                                    <div class="small text-muted">@r.Description</div>
+                                }
+                                @if (r.TimeOfDay.HasValue)
+                                {
+                                    <div class="small text-muted">@($"{(int)r.TimeOfDay.Value.TotalHours:0}:{r.TimeOfDay.Value.Minutes:00}")</div>
+                                }
+                                <div class="small">Status: @(active ? "aktywna" : "nieaktywna")</div>
                             </div>
                         </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary">@r.Steps.Count kroków</span>
+
+                            <a class="icon-btn"
+                               href='@Url.Action("Edit","Routines",new { id = r.Id })'
+                               title="Edytuj"
+                               data-no-bubble>
+                                <i class="fa fa-edit"></i>
+                            </a>
+
+                            <button type="button"
+                                    class="icon-btn icon-btn-danger"
+                                    title="Usuń"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#routineDeleteModal"
+                                    data-id="@r.Id"
+                                    data-name="@r.Name"
+                                    data-no-bubble>
+                                <i class="fa fa-trash"></i>
+                            </button>
+
+                            <button class="btn btn-outline-secondary btn-sm"
+                                    type="button"
+                                    data-toggle-all-steps
+                                    title="Rozwiń">
+                                <i class="fa fa-chevron-down"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-secondary">@r.Steps.Count kroków</span>
 
-                        <a class="icon-btn"
-                           href='@Url.Action("Edit","Routines",new { id = r.Id })'
-                           title="Edytuj"
-                           data-no-bubble>
-                            <i class="fa fa-edit"></i>
-                        </a>
-
-                        <button type="button"
-                                class="icon-btn icon-btn-danger"
-                                title="Usuń"
-                                data-bs-toggle="modal"
-                                data-bs-target="#routineDeleteModal"
-                                data-id="@r.Id"
-                                data-name="@r.Name"
-                                data-no-bubble>
-                            <i class="fa fa-trash"></i>
-                        </button>
-
-
-                        <button class="btn btn-outline-secondary btn-sm"
-                                type="button"
-                                data-toggle-all-steps
-                                title="Rozwiń">
-                            <i class="fa fa-chevron-down"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mt-2 d-none" data-all-steps>
-                    <div class="d-flex flex-column gap-2">
-                        @{
-                        var idx = 0;
-                        }
-                        @foreach (var s in r.Steps.OrderBy(x => x.Order))
-                        {
-                        idx++;
-                        <div class="step-card">
-                            @if (s.RotationEnabled)
-                            {
-                            <span class="step-rotation">Rotacja: @(s.RotationMode?.ToUpper())</span>
+                    <div class="mt-2 d-none" data-all-steps>
+                        <div class="d-flex flex-column gap-2">
+                            @{
+                                var idx = 0;
                             }
-                            <div class="step-title">
-                                <span class="step-num">@idx</span>
-                                <span>@s.Name</span>
-                            </div>
-                            @if (!string.IsNullOrWhiteSpace(s.Description))
+                            @foreach (var s in r.Steps.OrderBy(x => x.Order))
                             {
-                            <div class="product-note mt-1">@s.Description</div>
-                            }
-
-                            @if (s.Products != null && s.Products.Count > 0)
-                            {
-                            <div class="mt-2 d-flex flex-column gap-2">
-                                @foreach (var p in s.Products.OrderBy(x => x.Id))
-                                {
-                                <div class="product-row">
-                                    @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
+                                idx++;
+                                <div class="step-card">
+                                    @if (s.RotationEnabled)
                                     {
-                                    <img src="@p.ImageUrl" alt="">
+                                        <span class="step-rotation">Rotacja: @(s.RotationMode?.ToUpper())</span>
                                     }
-                                    <div class="flex-grow-1">
-                                        <div class="product-name-line">
-                                            <div class="fw-semibold">@p.Name</div>
-                                            @if (!string.IsNullOrWhiteSpace(p.Note))
+                                    <div class="step-title">
+                                        <span class="step-num">@idx</span>
+                                        <span>@s.Name</span>
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(s.Description))
+                                    {
+                                        <div class="product-note mt-1">@s.Description</div>
+                                    }
+
+                                    @if (s.Products != null && s.Products.Count > 0)
+                                    {
+                                        <div class="mt-2 d-flex flex-column gap-2">
+                                            @foreach (var p in s.Products.OrderBy(x => x.Id))
                                             {
-                                            <div class="product-note">— @p.Note</div>
+                                                <div class="product-row">
+                                                    @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
+                                                    {
+                                                        <img src="@p.ImageUrl" alt="">
+                                                    }
+                                                    <div class="flex-grow-1">
+                                                        <div class="product-name-line">
+                                                            <div class="fw-semibold">@p.Name</div>
+                                                            @if (!string.IsNullOrWhiteSpace(p.Note))
+                                                            {
+                                                                <div class="product-note">— @p.Note</div>
+                                                            }
+                                                        </div>
+                                                        @if (!string.IsNullOrWhiteSpace(p.Url))
+                                                        {
+                                                            <div class="small">
+                                                                <a href="@p.Url" target="_blank" rel="noopener">link</a>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
                                             }
                                         </div>
-                                        @if (!string.IsNullOrWhiteSpace(p.Url))
-                                        {
-                                        <div class="small">
-                                            <a href="@p.Url" target="_blank" rel="noopener">link</a>
-                                        </div>
-                                        }
-                                    </div>
+                                    }
                                 </div>
-                                }
-                            </div>
                             }
                         </div>
-                        }
                     </div>
                 </div>
-            </div>
             }
         </div>
     </section>
@@ -203,160 +201,12 @@ return DateTime.UtcNow.Date <= until.Date;
 @await Html.PartialAsync("_RoutineDeleteModal")
 
 @section Styles {
-<style>
-    .routine-card.completed {
-        opacity: .65;
-    }
-
-    .routine-card .strike {
-        text-decoration: line-through;
-    }
-
-    .step-row.completed {
-        opacity: .7;
-    }
-
-    .step-row .name.completed {
-        text-decoration: line-through;
-    }
-
-    .count-badge {
-        font-size: .85rem;
-    }
-
-    .prod-pill {
-        display: inline-block;
-        padding: .15rem .5rem;
-        border-radius: 999px;
-        background: #2e2e2e;
-        font-size: .75rem;
-        margin-right: .25rem;
-    }
-
-    .clickable-card {
-        cursor: pointer;
-    }
-
-    /* --- krok jak w Details --- */
-    .step-card {
-        background: var(--clr-surface-a20, #2a2a2a);
-        border: var(--border-soft, 1px solid rgba(255, 255, 255, .12));
-        border-radius: .5rem;
-        padding: .6rem .75rem .65rem .75rem;
-        position: relative;
-    }
-
-    .step-num {
-        width: 28px;
-        height: 28px;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: .9rem;
-        background: rgba(255, 255, 255, .08);
-        margin-right: .5rem;
-    }
-
-    .step-title {
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-        font-weight: 600;
-    }
-
-    .product-row {
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-        padding: .35rem .5rem;
-        border-radius: .35rem;
-        background: rgba(255, 255, 255, .04);
-    }
-
-    .product-row img {
-        width: 36px;
-        height: 36px;
-        object-fit: cover;
-        border-radius: .4rem;
-    }
-
-    .product-name-line {
-        display: flex;
-        align-items: baseline;
-        gap: .4rem;
-    }
-
-    .product-note {
-        font-size: .85rem;
-        color: #9aa0a6;
-    }
-
-    .step-rotation {
-        position: absolute;
-        right: .5rem;
-        top: .5rem;
-        font-size: .7rem;
-        padding: .1rem .4rem;
-        border-radius: .5rem;
-        background: rgba(59, 130, 246, .15);
-        color: #60a5fa;
-    }
-
-    .soft-card {
-        overflow: visible;
-        position: relative;
-    }
-
-    .dropdown-menu {
-        z-index: 2000;
-    }
-
-    .icon-btn {
-        --size: 30px;
-        width: 30px;
-        height: 30px;
-        border: 1px solid rgba(255, 255, 255, .15);
-        background: var(--clr-surface-a30, #2e2e2e);
-        color: var(--bs-body-color, #eaeaea);
-        border-radius: 8px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-    }
-
-    .icon-btn:hover {
-        filter: brightness(1.1);
-    }
-
-    .icon-btn i {
-        font-size: 0.95rem;
-    }
-
-    .icon-btn-danger {
-        color: #dc3545;
-        border-color: rgba(220, 53, 69, .35);
-    }
-
-    #todayList, #allList, .soft-card {
-        overflow: visible;
-        position: relative;
-    }
-
-    .dropdown-menu {
-        z-index: 2000;
-    }
-
-</style>
+    <link rel="stylesheet" href="~/css/routines.index.css" asp-append-version="true" />
 }
 
 @section Scripts {
-<script src="~/js/routines/routines.index.common.js" asp-append-version="true"></script>
-<script src="~/js/routines/routines.index.today.js" asp-append-version="true"></script>
-<script src="~/js/routines/routines.index.all.js" asp-append-version="true"></script>
-<script>
-    window.LC_Routines_Index.init();
-</script>
+    <script src="~/js/routines/routines.index.common.js" asp-append-version="true"></script>
+    <script src="~/js/routines/routines.index.today.js" asp-append-version="true"></script>
+    <script src="~/js/routines/routines.index.all.js" asp-append-version="true"></script>
+    <script> window.LC_Routines_Index.init(); </script>
 }
