@@ -24,6 +24,11 @@ builder.Services.AddScoped<IRoutineService, RoutineService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "RequestVerificationToken";
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

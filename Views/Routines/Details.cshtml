@@ -1,0 +1,229 @@
+﻿@model LifeCare.ViewModels.RoutineVM
+@{
+    ViewData["Title"] = "Szczegóły rutyny";
+    var color = Model.Color;
+    var icon = Model.Icon;
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/Chart.min.css"/>
+
+<div class="container py-4" id="routine-root"
+     data-routine-id="@Model.Id"
+     data-color="@Model.Color"
+     data-start-utc="@Model.StartDateUtc.ToString("yyyy-MM-dd")"
+     data-rrule="@(Model.RRule ?? "")">
+
+    <div class="position-relative mb-4">
+        <div class="position-absolute top-0 end-0">
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown">
+                    <i class="fa fa-ellipsis-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                    <li>
+                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.Id"><i class="fa fa-edit me-2"></i>Edytuj</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@Model.Id"><i class="fa fa-trash me-2"></i>Usuń</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <i class="fa @icon fa-3x mb-2" style="color:@color;"></i>
+            <h3 class="mb-1" style="color:@color;">@Model.Name</h3>
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <div class="text-muted">@Model.Description</div>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Struktura rutyny</strong>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary">@Model.Steps.Count kroków</span>
+                    <button class="btn btn-outline-secondary btn-sm" id="toggleStructure" title="Rozwiń/Zwiń">
+                        <i class="fa fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="structureBody" class="d-none">
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var s in Model.Steps.OrderBy(x=>x.Order))
+                    {
+                    <div class="step-card">
+                        @if (s.RotationEnabled)
+                        {
+                        <span class="step-rotation">Rotacja: @(s.RotationMode?.ToUpper())</span>
+                        }
+
+                        <div class="step-title">
+                            <span class="step-num">@s.Order</span>
+                            <span>@s.Name</span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(s.Description))
+                        {
+                        <div class="product-note mt-1">@s.Description</div>
+                        }
+
+                        @if (s.Products != null && s.Products.Count > 0)
+                        {
+                        <div class="mt-2 d-flex flex-column gap-2">
+                            @foreach (var p in s.Products.OrderBy(x=>x.Id))
+                            {
+                            <div class="product-row">
+                                @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
+                                {
+                                <img src="@p.ImageUrl" alt="">
+                                }
+                                <div class="flex-grow-1">
+                                    <div class="product-name-line">
+                                        <div class="fw-semibold">@p.Name</div>
+                                        @if (!string.IsNullOrWhiteSpace(p.Note))
+                                        {
+                                        <div class="product-note">— @p.Note</div>
+                                        }
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(p.Url))
+                                    {
+                                    <div class="small"><a href="@p.Url" target="_blank" rel="noopener">link</a></div>
+                                    }
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Wykonane kroki (tydzień)</strong>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-secondary" id="prevWeek">«</button>
+                    <span class="btn btn-sm btn-light" id="weekLabel">–</span>
+                    <button class="btn btn-sm btn-outline-secondary" id="nextWeek">»</button>
+                </div>
+            </div>
+            <div style="height:200px">
+                <canvas id="weekChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4" id="statsRow" style="display:none;">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <div class="text-muted mb-1">Wykonanie od startu</div>
+                    <div class="display-6 fw-bold" id="overallPercent">0%</div>
+                    <div class="small text-muted mt-2" id="rangeInfo"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted mb-2">Podsumowanie</div>
+                    <div class="row text-center g-3">
+                        <div class="col-6 col-md-4">
+                            <div class="small text-muted">Aktualna seria</div>
+                            <div class="h4 mb-0" id="currentStreak">0</div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="small text-muted">Najlepsza seria</div>
+                            <div class="h4 mb-0" id="bestStreak">0</div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="small text-muted">Wystąpienia</div>
+                            <div class="h4 mb-0" id="totalOcc">0</div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="small text-muted">Pełne</div>
+                            <div class="h5 mb-0" id="completedDays">0</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Częściowe</div>
+                            <div class="h5 mb-0" id="partialDays">0</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Pominięte</div>
+                            <div class="h5 mb-0" id="skippedDays">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4" id="skipsCard" style="display:none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Najczęściej pomijane kroki</strong>
+            </div>
+            <div id="skipsList" class="d-flex flex-column gap-2"></div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Pełne vs częściowe vs pominięte</strong>
+            </div>
+            <div style="height:220px">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <strong>Kalendarz</strong>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-secondary" id="prevMonth">«</button>
+                    <span class="btn btn-sm btn-light" id="monthLabel">–</span>
+                    <button class="btn btn-sm btn-outline-secondary" id="nextMonth">»</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle mb-0" id="monthTable">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Pon</th><th>Wto</th><th>Śro</th><th>Czw</th><th>Pią</th><th>Sob</th><th>Nie</th>
+                    </tr>
+                    </thead>
+                    <tbody id="monthBody"></tbody>
+                </table>
+            </div>
+            <div class="small text-muted mt-2">
+                <span class="badge bg-success me-1">&nbsp;</span> pełne
+                <span class="badge bg-warning text-dark mx-1">&nbsp;</span> częściowe
+                <span class="badge bg-danger ms-1">&nbsp;</span> pominięte
+                <span class="badge bg-secondary ms-3">&nbsp;</span> poza zakresem (przed startem / po zakończeniu)
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="~/js/routines/routines.details.js" asp-append-version="true"></script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/routines.details.css" asp-append-version="true"/>
+}

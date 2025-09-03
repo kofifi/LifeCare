@@ -24,11 +24,32 @@
 }
 
 .step-card {
-    background: var(--clr-surface-a20);
-    border: var(--border-soft);
-    border-radius: var(--radius-lg);
-    padding: .75rem;
+    background: var(--clr-surface-a20, #2a2a2a);
+    border: var(--border-soft, 1px solid rgba(255,255,255,.12));
+    border-radius: .5rem;
+    padding: .6rem .75rem .65rem .75rem;
+    position: relative;
 }
+.step-num {
+    width: 28px; height: 28px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .9rem;
+    background: rgba(255,255,255,.08);
+    margin-right: .5rem;
+}
+.step-title { display:flex; align-items:center; gap:.5rem; font-weight:600; }
+.product-row { display:flex; align-items:center; gap:.5rem; padding:.35rem .5rem; border-radius:.35rem; background: rgba(255,255,255,.04); }
+.product-row img { width:36px; height:36px; object-fit:cover; border-radius:.4rem; }
+.product-name-line { display:flex; align-items:baseline; gap:.4rem; }
+.product-note { font-size:.85rem; color: #9aa0a6; }
+.step-rotation {
+    position:absolute; right:.5rem; top:.5rem;
+    font-size:.7rem; padding:.1rem .4rem;
+    border-radius:.5rem;
+    background: rgba(59,130,246,.15);
+    color:#60a5fa;
+}
+
 .step-card .drag-handle { cursor: grab; }
 .step-card .drag-handle:active { cursor: grabbing; }
 

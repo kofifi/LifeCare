@@ -91,7 +91,8 @@ namespace LifeCare.Controllers
             var stepsJson = System.Text.Json.JsonSerializer.Serialize(
                 (vm.Steps ?? new List<RoutineStepVM>())
                 .OrderBy(s => s.Order)
-                .Select(s => new {
+                .Select(s => new
+                {
                     id = s.Id,
                     name = s.Name,
                     minutes = s.EstimatedMinutes,
@@ -99,7 +100,8 @@ namespace LifeCare.Controllers
                     rotation = new { enabled = s.RotationEnabled, mode = s.RotationMode },
                     products = (s.Products ?? new List<RoutineStepProductVM>())
                         .OrderBy(p => p.Id)
-                        .Select(p => new {
+                        .Select(p => new
+                        {
                             id = p.Id,
                             name = p.Name,
                             note = p.Note,
@@ -243,6 +245,40 @@ namespace LifeCare.Controllers
                 });
 
             return JsonSerializer.Serialize(items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            var vm = await _service.GetRoutineAsync(id, userId); // już masz
+            if (vm == null) return NotFound();
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RoutineStats(int routineId)
+        {
+            var userId = _userManager.GetUserId(User);
+            var stats = await _service.GetRoutineStatsAsync(routineId, userId);
+            return Json(stats);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RoutineEntries(int routineId, string from, string to)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (!DateOnly.TryParse(from, out var f) || !DateOnly.TryParse(to, out var t)) return BadRequest();
+            var list = await _service.GetRoutineEntriesAsync(routineId, f, t, userId);
+            return Json(list);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RoutineMonth(int routineId, int year, int month)
+        {
+            var userId = _userManager.GetUserId(User);
+            var map = await _service.GetRoutineMonthMapAsync(routineId, year, month, userId);
+            return Json(map);
         }
     }
 }

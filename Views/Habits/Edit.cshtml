@@ -3,8 +3,8 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-ViewData["Title"] = "Edytuj nawyk";
-var categories = ViewBag.Categories as List<Category>;
+    ViewData["Title"] = "Edytuj nawyk";
+    var categories = ViewBag.Categories as List<Category>;
 }
 
 @await Html.PartialAsync("_CategoryModal", new LifeCare.ViewModels.CategoryVM())
@@ -40,13 +40,14 @@ var categories = ViewBag.Categories as List<Category>;
         <input asp-for="Color" type="color" class="form-control form-control-color"/>
     </div>
 
-    @await Html.PartialAsync("_IconPicker", new LifeCare.ViewModels.IconPickerVM {
-    ContainerId = "habitIconPickerEdit",
-    ForId = "Icon",
-    ForName = "Icon",
-    Selected = Model.Icon,
-    StartCollapsed = true,
-    Label = "Ikona"
+    @await Html.PartialAsync("_IconPicker", new LifeCare.ViewModels.IconPickerVM
+    {
+        ContainerId = "habitIconPickerEdit",
+        ForId = "Icon",
+        ForName = "Icon",
+        Selected = Model.Icon,
+        StartCollapsed = true,
+        Label = "Ikona"
     })
 
     <div class="mb-3">
@@ -91,8 +92,9 @@ var categories = ViewBag.Categories as List<Category>;
 </form>
 
 @section Scripts {
-<partial name="_ValidationScriptsPartial"/>
-<script>
+    <script src="~/js/site-category-modal.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial"/>
+    <script>
     document.getElementById('toggleDescription').addEventListener('click', function () {
         const desc = document.getElementById('descriptionWrapper');
         const isVisible = desc.style.display !== 'none';
@@ -106,23 +108,22 @@ var categories = ViewBag.Categories as List<Category>;
         const isQuantity = '@Model.Type' === 'Quantity' || '@((int)Model.Type)' === '1';
         document.getElementById('quantityFields').style.display = isQuantity ? 'block' : 'none';
     })();
-</script>
+    </script>
 }
 
 @section Styles {
-<style>
-    /* Dark theme dla pól readonly/disabled w tym widoku */
+    <style>
     .form-control[readonly],
     .form-control:disabled,
     .form-select:disabled {
-        background-color: var(--field-bg) !important; /* np. var(--clr-surface-a20) */
-        color: var(--bs-body-color) !important; /* jasny tekst */
-        border: var(--field-border) !important; /* spójna ramka */
-        opacity: 1; /* bez przygaszenia */
+        background-color: var(--field-bg) !important;
+        color: var(--bs-body-color) !important; 
+        border: var(--field-border) !important;
+        opacity: 1;
     }
 
     input[type=number]::-webkit-inner-spin-button {
         -webkit-appearance: none;
     }
-</style>
+    </style>
 }

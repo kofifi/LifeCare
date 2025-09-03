@@ -24,6 +24,7 @@ public class RoutineVM
     public string? CategoryName { get; set; }
 
     public int Order { get; set; }
+    public bool ResetStats { get; set; }
 
     public List<RoutineStepVM> Steps { get; set; } = new();
     

@@ -31,5 +31,9 @@ namespace LifeCare.Services.Interfaces
 
         Task<bool> ToggleStepProductAsync(int routineId, int stepId, int productId, DateOnly date, bool completed, string userId);
 
+        Task<RoutineStatsVM> GetRoutineStatsAsync(int routineId, string userId);
+        Task<List<RoutineDayEntryVM>> GetRoutineEntriesAsync(int routineId, DateOnly from, DateOnly to, string userId);
+        Task<Dictionary<string,string>> GetRoutineMonthMapAsync(int routineId, int year, int month, string userId);
+
     }
 }

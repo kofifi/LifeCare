@@ -112,13 +112,37 @@ namespace LifeCare.Services
         {
             var entity = await _db.Routines
                 .Include(r => r.Steps).ThenInclude(s => s.Products)
+                .Include(r => r.Entries)
+                .ThenInclude(e => e.StepEntries)
+                .ThenInclude(se => se.ProductEntries)
                 .FirstOrDefaultAsync(r => r.Id == vm.Id && r.UserId == userId);
+
             if (entity == null) throw new KeyNotFoundException();
 
-            var originalStartDate = entity.StartDateUtc;
+            var oldStart = entity.StartDateUtc.Date;
+            var newStart = (vm.StartDateUtc == default ? oldStart : vm.StartDateUtc.Date);
+
             _mapper.Map(vm, entity);
-            entity.StartDateUtc = originalStartDate;
+            entity.StartDateUtc = newStart;
             entity.CategoryId = vm.CategoryId;
+
+            if (vm.ResetStats)
+            {
+                foreach (var e in entity.Entries.ToList())
+                {
+                    foreach (var se in e.StepEntries.ToList())
+                    {
+                        if (se.ProductEntries != null && se.ProductEntries.Count > 0)
+                            _db.RemoveRange(se.ProductEntries);
+
+                        _db.Remove(se);
+                    }
+
+                    _db.Remove(e);
+                }
+
+                entity.Entries.Clear();
+            }
 
             if (vm.Steps != null)
             {
@@ -126,9 +150,23 @@ namespace LifeCare.Services
                 var incomingIds = vm.Steps.Where(s => s.Id != 0).Select(s => s.Id).ToHashSet();
 
                 foreach (var toDel in entity.Steps.Where(s => !incomingIds.Contains(s.Id)).ToList())
+                {
+                    foreach (var e in entity.Entries)
+                    {
+                        var seForStep = e.StepEntries.Where(se => se.RoutineStepId == toDel.Id).ToList();
+                        foreach (var se in seForStep)
+                        {
+                            if (se.ProductEntries != null && se.ProductEntries.Count > 0)
+                                _db.RemoveRange(se.ProductEntries);
+                            _db.Remove(se);
+                        }
+                    }
+
                     _db.RoutineSteps.Remove(toDel);
+                }
 
                 int nextOrder = 0;
+
                 foreach (var s in vm.Steps)
                 {
                     if (s.Id != 0 && existingById.TryGetValue(s.Id, out var step))
@@ -140,25 +178,26 @@ namespace LifeCare.Services
                         step.RRule = string.IsNullOrWhiteSpace(s.RRule) ? null : s.RRule.Trim();
                         step.Order = s.Order != 0 ? s.Order : nextOrder++;
                         step.RotationEnabled = s.RotationEnabled;
-                        step.RotationMode = s.RotationMode;
+                        step.RotationMode = string.IsNullOrWhiteSpace(s.RotationMode) ? null : s.RotationMode;
 
-                        var prodIncoming = (s.Products ?? new List<RoutineStepProductVM>())
+                        var incoming = (s.Products ?? new List<RoutineStepProductVM>())
                             .Where(p => !string.IsNullOrWhiteSpace(p.Name)).ToList();
-                        step.Products ??= new List<RoutineStepProduct>();
 
-                        var keepIds = prodIncoming.Where(p => p.Id != 0).Select(p => p.Id).ToHashSet();
+                        step.Products ??= new List<RoutineStepProduct>();
+                        var keepIds = incoming.Where(p => p.Id != 0).Select(p => p.Id).ToHashSet();
+
                         foreach (var pd in step.Products.Where(p => !keepIds.Contains(p.Id)).ToList())
                             _db.RoutineStepProducts.Remove(pd);
 
-                        var prodById = step.Products.ToDictionary(p => p.Id);
-                        foreach (var p in prodIncoming)
+                        var byId = step.Products.ToDictionary(p => p.Id);
+                        foreach (var p in incoming)
                         {
-                            if (p.Id != 0 && prodById.TryGetValue(p.Id, out var ep))
+                            if (p.Id != 0 && byId.TryGetValue(p.Id, out var ep))
                             {
                                 ep.Name = p.Name!.Trim();
                                 ep.Note = string.IsNullOrWhiteSpace(p.Note) ? null : p.Note!.Trim();
                                 ep.Url = string.IsNullOrWhiteSpace(p.Url) ? null : p.Url!.Trim();
-                                ep.ImageUrl = p.ImageUrl;
+                                ep.ImageUrl = string.IsNullOrWhiteSpace(p.ImageUrl) ? null : p.ImageUrl!.Trim();
                             }
                             else
                             {
@@ -167,7 +206,7 @@ namespace LifeCare.Services
                                     Name = p.Name!.Trim(),
                                     Note = string.IsNullOrWhiteSpace(p.Note) ? null : p.Note!.Trim(),
                                     Url = string.IsNullOrWhiteSpace(p.Url) ? null : p.Url!.Trim(),
-                                    ImageUrl = p.ImageUrl
+                                    ImageUrl = string.IsNullOrWhiteSpace(p.ImageUrl) ? null : p.ImageUrl!.Trim()
                                 });
                             }
                         }
@@ -184,7 +223,7 @@ namespace LifeCare.Services
                             Order = s.Order != 0 ? s.Order : nextOrder++,
                             RRule = string.IsNullOrWhiteSpace(s.RRule) ? null : s.RRule.Trim(),
                             RotationEnabled = s.RotationEnabled,
-                            RotationMode = s.RotationMode
+                            RotationMode = string.IsNullOrWhiteSpace(s.RotationMode) ? null : s.RotationMode
                         };
 
                         if (s.Products != null && s.Products.Count > 0)
@@ -196,7 +235,7 @@ namespace LifeCare.Services
                                     Name = p.Name!.Trim(),
                                     Note = string.IsNullOrWhiteSpace(p.Note) ? null : p.Note!.Trim(),
                                     Url = string.IsNullOrWhiteSpace(p.Url) ? null : p.Url!.Trim(),
-                                    ImageUrl = p.ImageUrl
+                                    ImageUrl = string.IsNullOrWhiteSpace(p.ImageUrl) ? null : p.ImageUrl!.Trim()
                                 })
                                 .ToList();
                         }
@@ -207,7 +246,26 @@ namespace LifeCare.Services
             }
 
             await _db.SaveChangesAsync();
+
+            if (!vm.ResetStats && newStart > oldStart)
+            {
+                var toRemove = entity.Entries.Where(e => e.Date.Date < newStart).ToList();
+                foreach (var e in toRemove)
+                {
+                    foreach (var se in e.StepEntries.ToList())
+                    {
+                        if (se.ProductEntries != null && se.ProductEntries.Count > 0)
+                            _db.RemoveRange(se.ProductEntries);
+                        _db.Remove(se);
+                    }
+
+                    _db.Remove(e);
+                }
+
+                await _db.SaveChangesAsync();
+            }
         }
+
 
         public async Task DeleteRoutineAsync(int id, string userId)
         {
@@ -242,8 +300,8 @@ namespace LifeCare.Services
             var routines = await _db.Routines
                 .Include(r => r.Steps).ThenInclude(s => s.Products)
                 .Include(r => r.Entries.Where(e => e.Date == dateUtc))
-                    .ThenInclude(e => e.StepEntries)
-                    .ThenInclude(se => se.ProductEntries)
+                .ThenInclude(e => e.StepEntries)
+                .ThenInclude(se => se.ProductEntries)
                 .Where(r => r.UserId == userId)
                 .OrderBy(r => r.TimeOfDay).ThenBy(r => r.Order)
                 .ToListAsync();
@@ -597,7 +655,8 @@ namespace LifeCare.Services
 
             if (!match) return false;
 
-            if (!ignoreCount && map.TryGetValue("COUNT", out var cntRaw) && int.TryParse(cntRaw, out var cnt) && cnt > 0)
+            if (!ignoreCount && map.TryGetValue("COUNT", out var cntRaw) && int.TryParse(cntRaw, out var cnt) &&
+                cnt > 0)
             {
                 var occIdx = GetOccurrenceIndexCore(startUtc, rrule, date);
                 return occIdx >= 0 && occIdx < cnt;
@@ -611,9 +670,10 @@ namespace LifeCare.Services
             var dateUtc = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
             var routine = await _db.Routines
-                .Include(r => r.Steps)
+                .Include(r => r.Steps).ThenInclude(s => s.Products)
                 .Include(r => r.Entries.Where(e => e.Date == dateUtc))
                 .ThenInclude(e => e.StepEntries)
+                .ThenInclude(se => se.ProductEntries)
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.UserId == userId);
 
             if (routine == null) return false;
@@ -626,21 +686,12 @@ namespace LifeCare.Services
             }
 
             var todaysSteps = routine.Steps.Where(s =>
-                    OccursOnDate(routine.StartDateUtc, string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
-                        date))
-                .ToList();
+                OccursOnDate(routine.StartDateUtc, string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule, date)
+            ).ToList();
 
             foreach (var s in todaysSteps)
             {
-                var dupes = entry.StepEntries
-                    .Where(x => x.RoutineStepId == s.Id)
-                    .OrderByDescending(x => x.Id)
-                    .ToList();
-
-                var se = dupes.FirstOrDefault();
-                foreach (var d in dupes.Skip(1))
-                    _db.RoutineStepEntries.Remove(d);
-
+                var se = entry.StepEntries.FirstOrDefault(x => x.RoutineStepId == s.Id);
                 if (se == null)
                 {
                     se = new RoutineStepEntry { RoutineStepId = s.Id };
@@ -648,14 +699,32 @@ namespace LifeCare.Services
                 }
 
                 se.Completed = completed;
-                if (!completed) se.Skipped = false;
+                se.Skipped = false;
                 se.CompletedAt = completed ? DateTime.UtcNow : (DateTime?)null;
+
+                if (s.RotationEnabled && string.Equals(s.RotationMode, "ANY", StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (var p in s.Products ?? Enumerable.Empty<RoutineStepProduct>())
+                    {
+                        var pe = se.ProductEntries.FirstOrDefault(x => x.RoutineStepProductId == p.Id);
+                        if (pe == null)
+                        {
+                            pe = new RoutineStepProductEntry { RoutineStepProductId = p.Id };
+                            se.ProductEntries.Add(pe);
+                        }
+
+                        pe.Completed = completed;
+                        pe.CompletedAt = completed ? DateTime.UtcNow : (DateTime?)null;
+                    }
+                }
             }
 
             entry.Completed = completed;
+
             await _db.SaveChangesAsync();
             return true;
         }
+
 
         public async Task<bool> SetRoutineCompletedAsync(int routineId, DateOnly date, bool completed, string userId)
         {
@@ -826,6 +895,301 @@ namespace LifeCare.Services
             var dayMonday = day.AddDays(-dayOffset).Date;
 
             return (int)((dayMonday - startMonday).TotalDays / 7.0);
+        }
+
+        public async Task<RoutineStatsVM> GetRoutineStatsAsync(int routineId, string userId)
+        {
+            var routine = await _db.Routines
+                .Include(r => r.Steps).ThenInclude(s => s.Products)
+                .Include(r => r.Entries).ThenInclude(e => e.StepEntries)
+                .FirstOrDefaultAsync(r => r.Id == routineId && r.UserId == userId);
+
+            if (routine == null) throw new KeyNotFoundException();
+
+            DateTime? until = null;
+            if (!string.IsNullOrWhiteSpace(routine.RRule))
+            {
+                var map = ParseRRule(routine.RRule);
+                if (map.TryGetValue("UNTIL", out var raw) && TryParseUntil(raw, out var u))
+                    until = u.Date;
+            }
+
+            var start = routine.StartDateUtc.Date;
+            var today = DateTime.UtcNow.Date;
+            var end = until.HasValue && until.Value < today ? until.Value : today;
+
+            int totalOcc = 0, completedDays = 0, partialDays = 0, skippedDays = 0;
+            int currentStreak = 0, bestStreak = 0;
+
+            var entriesMap = routine.Entries
+                .GroupBy(e => e.Date.Date)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            for (var day = start; day <= end; day = day.AddDays(1))
+            {
+                var dOnly = DateOnly.FromDateTime(day);
+
+                if (!string.IsNullOrWhiteSpace(routine.RRule) &&
+                    !OccursOnDate(routine.StartDateUtc, routine.RRule, dOnly))
+                {
+                    continue;
+                }
+
+                var todaysSteps = routine.Steps
+                    .Where(s =>
+                        OccursOnDate(
+                            routine.StartDateUtc,
+                            string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
+                            dOnly))
+                    .ToList();
+
+                if (todaysSteps.Count == 0)
+                    continue;
+
+                totalOcc++;
+
+                entriesMap.TryGetValue(day, out var entry);
+                var stepMap = entry?.StepEntries
+                                  .GroupBy(se => se.RoutineStepId)
+                                  .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Id).First())
+                              ?? new Dictionary<int, RoutineStepEntry>();
+
+                int done = 0, skipped = 0;
+                foreach (var s in todaysSteps)
+                {
+                    if (stepMap.TryGetValue(s.Id, out var se))
+                    {
+                        if (se.Completed) done++;
+                        else if (se.Skipped) skipped++;
+                    }
+                }
+
+                if (done == todaysSteps.Count)
+                {
+                    completedDays++;
+                    currentStreak++;
+                    bestStreak = Math.Max(bestStreak, currentStreak);
+                }
+                else if (done > 0 || skipped > 0)
+                {
+                    partialDays++;
+                    currentStreak = 0;
+                }
+                else
+                {
+                    skippedDays++;
+                    currentStreak = 0;
+                }
+            }
+
+            var stats = new RoutineStatsVM
+            {
+                StartDateUtc = routine.StartDateUtc,
+                EndDateUtc = until,
+                TotalOccurrences = totalOcc,
+                CompletedDays = completedDays,
+                PartialDays = partialDays,
+                SkippedDays = skippedDays,
+                CurrentStreak = currentStreak,
+                BestStreak = bestStreak,
+                OverallPercent = totalOcc > 0 ? (double)completedDays / totalOcc * 100.0 : 0.0
+            };
+
+            var stepAgg = new Dictionary<int, (int skip, int comp, int total)>();
+            foreach (var s in routine.Steps)
+                stepAgg[s.Id] = (0, 0, 0);
+
+            for (var day = start; day <= end; day = day.AddDays(1))
+            {
+                var dOnly = DateOnly.FromDateTime(day);
+
+                foreach (var step in routine.Steps)
+                {
+                    var stepRule = string.IsNullOrWhiteSpace(step.RRule) ? routine.RRule : step.RRule;
+                    if (!OccursOnDate(routine.StartDateUtc, stepRule, dOnly))
+                        continue;
+
+                    // zaplanowane wykonanie kroku
+                    var agg = stepAgg[step.Id];
+                    agg.total++;
+
+                    entriesMap.TryGetValue(day, out var entry);
+                    RoutineStepEntry? se = null;
+
+                    if (entry != null)
+                    {
+                        se = entry.StepEntries
+                            .Where(x => x.RoutineStepId == step.Id)
+                            .OrderByDescending(x => x.Id)
+                            .FirstOrDefault();
+                    }
+
+                    if (se?.Completed == true)
+                    {
+                        agg.comp++;
+                    }
+                    else if (se?.Skipped == true)
+                    {
+                        agg.skip++;
+                    }
+                    else
+                    {
+                        if (day < today)
+                            agg.skip++;
+                    }
+
+                    stepAgg[step.Id] = agg;
+                }
+            }
+
+            stats.TopSkippedSteps = routine.Steps
+                .Select(s => new StepSkipVM
+                {
+                    StepId = s.Id,
+                    Name = s.Name,
+                    SkippedCount = stepAgg.TryGetValue(s.Id, out var v) ? v.skip : 0,
+                    CompletedCount = stepAgg.TryGetValue(s.Id, out var v2) ? v2.comp : 0,
+                    TotalEntries = stepAgg.TryGetValue(s.Id, out var v3) ? v3.total : 0
+                })
+                .Where(x => x.SkippedCount > 0) // nie pokazuj zer
+                .OrderByDescending(x => x.SkippedCount)
+                .ThenBy(x => x.Name)
+                .Take(5)
+                .ToList();
+
+            return stats;
+        }
+
+
+        public async Task<List<RoutineDayEntryVM>> GetRoutineEntriesAsync(int routineId, DateOnly from, DateOnly to,
+            string userId)
+        {
+            var routine = await _db.Routines
+                .Include(r => r.Steps)
+                .Include(r => r.Entries.Where(e => e.Date >= from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)
+                                                   && e.Date <= to.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)))
+                .ThenInclude(e => e.StepEntries)
+                .FirstOrDefaultAsync(r => r.Id == routineId && r.UserId == userId);
+            if (routine == null) throw new KeyNotFoundException();
+
+            var list = new List<RoutineDayEntryVM>();
+            for (var d = from; d <= to; d = d.AddDays(1))
+            {
+                if (!OccursOnDate(routine.StartDateUtc, routine.RRule, d)) continue;
+
+                var todaysSteps = routine.Steps.Where(s =>
+                        OccursOnDate(routine.StartDateUtc, string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
+                            d))
+                    .ToList();
+
+                if (todaysSteps.Count == 0) continue;
+
+                var dateUtc = d.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+                var entry = routine.Entries.FirstOrDefault(e => e.Date == dateUtc);
+                var stepMap = entry?.StepEntries.GroupBy(se => se.RoutineStepId)
+                                  .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Id).First())
+                              ?? new Dictionary<int, RoutineStepEntry>();
+
+                int done = 0;
+                foreach (var s in todaysSteps)
+                    if (stepMap.TryGetValue(s.Id, out var se) && se.Completed)
+                        done++;
+
+                list.Add(new RoutineDayEntryVM
+                    { Date = d.ToString("yyyy-MM-dd"), CompletedSteps = done, TotalSteps = todaysSteps.Count });
+            }
+
+            return list;
+        }
+
+        public async Task<Dictionary<string, string>> GetRoutineMonthMapAsync(int routineId, int year, int month,
+            string userId)
+        {
+            var todayUtcDate = DateTime.UtcNow.Date;
+
+            var routine = await _db.Routines
+                .Include(r => r.Steps)
+                .Include(r => r.Entries.Where(e =>
+                    e.Date.Year == year && e.Date.Month == month))
+                .ThenInclude(e => e.StepEntries)
+                .FirstOrDefaultAsync(r => r.Id == routineId && r.UserId == userId);
+
+            if (routine == null) return new Dictionary<string, string>();
+
+            var first = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var last = first.AddMonths(1).AddDays(-1);
+
+            var steps = routine.Steps.Select(s => new { s.Id, s.RRule }).ToList();
+
+            var result = new Dictionary<string, string>();
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+
+            for (int day = 1; day <= daysInMonth; day++)
+            {
+                var dUtc = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+                var d = DateOnly.FromDateTime(dUtc);
+
+                bool outOfRange = false;
+                if (dUtc.Date < routine.StartDateUtc.Date) outOfRange = true;
+
+                if (!outOfRange && !string.IsNullOrWhiteSpace(routine.RRule))
+                {
+                    var occurs = OccursOnDate(routine.StartDateUtc, routine.RRule, d);
+                    if (!occurs) outOfRange = true;
+                }
+
+                string key = $"{year}-{month:00}-{day:00}";
+
+                if (outOfRange)
+                {
+                    result[key] = "off";
+                    continue;
+                }
+
+                var todaysStepIds = steps
+                    .Where(s => OccursOnDate(
+                        routine.StartDateUtc,
+                        string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
+                        d))
+                    .Select(s => s.Id)
+                    .ToList();
+
+                if (todaysStepIds.Count == 0)
+                {
+                    result[key] = "off";
+                    continue;
+                }
+
+                var entry = routine.Entries.FirstOrDefault(e => e.Date.Date == dUtc.Date);
+                if (entry == null)
+                {
+                    if (dUtc.Date > todayUtcDate)
+                    {
+                        result[key] = "future";
+                        continue;
+                    }
+
+                    result[key] = "none";
+                    continue;
+                }
+
+                if (entry.Completed)
+                {
+                    result[key] = "full";
+                    continue;
+                }
+
+                var map = entry.StepEntries
+                    .GroupBy(se => se.RoutineStepId)
+                    .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Id).First());
+
+                bool anyTouched = todaysStepIds.Any(id =>
+                    map.TryGetValue(id, out var se) && (se.Completed || se.Skipped));
+
+                result[key] = anyTouched ? "partial" : "none";
+            }
+
+            return result;
         }
     }
 }
