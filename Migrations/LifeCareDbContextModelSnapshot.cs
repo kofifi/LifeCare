@@ -82,6 +82,9 @@ namespace LifeCare.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("StartDateUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("TargetQuantity")
                         .HasColumnType("int");
 
@@ -200,15 +203,50 @@ namespace LifeCare.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Color")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RRule")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("ReminderEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ReminderMinutesBefore")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan?>("TimeOfDay")
+                        .HasColumnType("time");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("UserId");
 
@@ -223,20 +261,168 @@ namespace LifeCare.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Done")
+                    b.Property<bool>("Completed")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("RoutineId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ScheduledDate")
-                        .HasColumnType("datetime2");
+                    b.Property<bool>("Skipped")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RoutineId");
 
                     b.ToTable("RoutineEntries");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStep", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("EstimatedMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RRule")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("RotationEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("RotationMode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoutineId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoutineId");
+
+                    b.ToTable("RoutineSteps");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStepEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoutineEntryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoutineStepId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Skipped")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoutineStepId");
+
+                    b.HasIndex("RoutineEntryId", "RoutineStepId")
+                        .IsUnique();
+
+                    b.ToTable("RoutineStepEntries");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStepProduct", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoutineStepId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoutineStepId");
+
+                    b.ToTable("RoutineStepProducts");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStepProductEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RoutineStepEntryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoutineStepProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoutineStepProductId");
+
+                    b.HasIndex("RoutineStepEntryId", "RoutineStepProductId")
+                        .IsUnique();
+
+                    b.ToTable("RoutineStepProductEntry");
                 });
 
             modelBuilder.Entity("LifeCare.Models.User", b =>
@@ -583,11 +769,17 @@ namespace LifeCare.Migrations
 
             modelBuilder.Entity("LifeCare.Models.Routine", b =>
                 {
+                    b.HasOne("LifeCare.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId");
+
                     b.HasOne("LifeCare.Models.User", "User")
                         .WithMany("Routines")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("User");
                 });
@@ -601,6 +793,66 @@ namespace LifeCare.Migrations
                         .IsRequired();
 
                     b.Navigation("Routine");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStep", b =>
+                {
+                    b.HasOne("LifeCare.Models.Routine", "Routine")
+                        .WithMany("Steps")
+                        .HasForeignKey("RoutineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Routine");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStepEntry", b =>
+                {
+                    b.HasOne("LifeCare.Models.RoutineEntry", "RoutineEntry")
+                        .WithMany("StepEntries")
+                        .HasForeignKey("RoutineEntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LifeCare.Models.RoutineStep", "RoutineStep")
+                        .WithMany("StepEntries")
+                        .HasForeignKey("RoutineStepId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("RoutineEntry");
+
+                    b.Navigation("RoutineStep");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStepProduct", b =>
+                {
+                    b.HasOne("LifeCare.Models.RoutineStep", "RoutineStep")
+                        .WithMany("Products")
+                        .HasForeignKey("RoutineStepId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RoutineStep");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStepProductEntry", b =>
+                {
+                    b.HasOne("LifeCare.Models.RoutineStepEntry", "StepEntry")
+                        .WithMany("ProductEntries")
+                        .HasForeignKey("RoutineStepEntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LifeCare.Models.RoutineStepProduct", "Product")
+                        .WithMany("ProductEntries")
+                        .HasForeignKey("RoutineStepProductId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("StepEntry");
                 });
 
             modelBuilder.Entity("LifeCare.Models.UserProfile", b =>
@@ -689,6 +941,30 @@ namespace LifeCare.Migrations
             modelBuilder.Entity("LifeCare.Models.Routine", b =>
                 {
                     b.Navigation("Entries");
+
+                    b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineEntry", b =>
+                {
+                    b.Navigation("StepEntries");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStep", b =>
+                {
+                    b.Navigation("Products");
+
+                    b.Navigation("StepEntries");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStepEntry", b =>
+                {
+                    b.Navigation("ProductEntries");
+                });
+
+            modelBuilder.Entity("LifeCare.Models.RoutineStepProduct", b =>
+                {
+                    b.Navigation("ProductEntries");
                 });
 
             modelBuilder.Entity("LifeCare.Models.User", b =>

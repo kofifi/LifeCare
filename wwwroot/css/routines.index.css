@@ -1,0 +1,72 @@
+﻿.routine-card.completed { opacity: .65; }
+.routine-card .strike { text-decoration: line-through; }
+
+.step-row.completed { opacity: .7; }
+.step-row .name.completed { text-decoration: line-through; }
+
+.count-badge { font-size: .85rem; }
+.prod-pill {
+    display: inline-block;
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    background: #2e2e2e;
+    font-size: .75rem;
+    margin-right: .25rem;
+}
+
+.clickable-card { cursor: pointer; }
+
+.step-card {
+    background: var(--clr-surface-a20, #2a2a2a);
+    border: var(--border-soft, 1px solid rgba(255, 255, 255, .12));
+    border-radius: .5rem;
+    padding: .6rem .75rem .65rem .75rem;
+    position: relative;
+}
+
+.step-num {
+    width: 28px; height: 28px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .9rem;
+    background: rgba(255, 255, 255, .08);
+    margin-right: .5rem;
+}
+
+.step-title { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
+
+.product-row {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .35rem .5rem; border-radius: .35rem;
+    background: rgba(255, 255, 255, .04);
+}
+
+.product-row img { width: 36px; height: 36px; object-fit: cover; border-radius: .4rem; }
+.product-name-line { display: flex; align-items: baseline; gap: .4rem; }
+.product-note { font-size: .85rem; color: #9aa0a6; }
+
+.step-rotation {
+    position: absolute; right: .5rem; top: .5rem;
+    font-size: .7rem; padding: .1rem .4rem; border-radius: .5rem;
+    background: rgba(59, 130, 246, .15); color: #60a5fa;
+}
+
+.soft-card { overflow: visible; position: relative; }
+.dropdown-menu { z-index: 2000; }
+
+.icon-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(255, 255, 255, .15);
+    background: var(--clr-surface-a30, #2e2e2e);
+    color: var(--bs-body-color, #eaeaea);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.icon-btn:hover { filter: brightness(1.1); }
+.icon-btn i { font-size: .95rem; }
+.icon-btn-danger { color: #dc3545; border-color: rgba(220, 53, 69, .35); }
+
+#todayList, #allList, .soft-card { overflow: visible; position: relative; }

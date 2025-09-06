@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LifeCare.Models;
 using LifeCare.Services.Interfaces;
 using LifeCare.ViewModels;
+using LifeCare.ViewModels.Habits;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,8 +18,6 @@ namespace LifeCare.Controllers
         private readonly IHabitService _habitService;
         private readonly UserManager<User> _userManager;
 
-        // DTOs dla akcji AJAX (Details)
-        public record HabitStatsDto(double OverallPercent, int CurrentStreak, int BestStreak, int Total, int Completed, int Skipped);
         public record HabitEntryDto(DateTime Date, bool Completed, float? Quantity);
 
         public HabitsController(IHabitService habitService, UserManager<User> userManager)
@@ -57,7 +56,6 @@ namespace LifeCare.Controllers
             var userId = _userManager.GetUserId(User);
             ViewBag.Categories = await _habitService.GetUserCategoriesAsync(userId);
 
-            // Domyślne wartości dla nowego nawyku
             return View(new HabitVM
             {
                 Type = HabitType.Checkbox,
@@ -104,11 +102,10 @@ namespace LifeCare.Controllers
                 return View(habitVM);
             }
 
-            // opcjonalna weryfikacja właściciela
             var existing = await _habitService.GetHabitByIdAsync(habitVM.Id, userId);
             if (existing == null) return NotFound();
 
-            await _habitService.UpdateHabitAsync(habitVM, userId);  // << bez var updated
+            await _habitService.UpdateHabitAsync(habitVM, userId); // << bez var updated
 
             TempData["Toast.Success"] = "Zaktualizowano nawyk.";
             return RedirectToAction(nameof(Details), new { id = habitVM.Id });
@@ -157,19 +154,10 @@ namespace LifeCare.Controllers
             return result ? Ok() : BadRequest();
         }
 
-        // -----------------------------
-        //      AKCJE POD DETAILS
-        // -----------------------------
-
-        // GET /Habits/HabitStats?habitId=1
         [HttpGet]
         public async Task<IActionResult> HabitStats(int habitId)
         {
             var userId = _userManager.GetUserId(User);
-
-            // W serwisie zaimplementuj logikę liczenia statystyk:
-            // Task<(double OverallPercent,int CurrentStreak,int BestStreak,int Total,int Completed,int Skipped)>
-            //     GetHabitStatsAsync(int habitId, string userId)
             var stats = await _habitService.GetHabitStatsAsync(habitId, userId);
 
             var dto = new HabitStatsDto(
@@ -178,20 +166,19 @@ namespace LifeCare.Controllers
                 stats.BestStreak,
                 stats.Total,
                 stats.Completed,
-                stats.Skipped
+                stats.Skipped,
+                stats.Partial,
+                stats.StartDateUtc
             );
 
             return Json(dto);
         }
 
-        // GET /Habits/HabitEntries?habitId=1&from=2025-08-01&to=2025-08-07
         [HttpGet]
         public async Task<IActionResult> HabitEntries(int habitId, DateTime from, DateTime to)
         {
             var userId = _userManager.GetUserId(User);
 
-            // W serwisie:
-            // Task<IReadOnlyList<HabitEntry>> GetHabitEntriesAsync(int habitId, string userId, DateTime from, DateTime to)
             var entries = await _habitService.GetHabitEntriesAsync(habitId, userId, from, to);
 
             var dto = entries
@@ -202,7 +189,6 @@ namespace LifeCare.Controllers
             return Json(dto);
         }
 
-        // GET /Habits/HabitMonth?habitId=1&year=2025&month=8
         [HttpGet]
         public async Task<IActionResult> HabitMonth(int habitId, int year, int month)
         {
@@ -215,26 +201,43 @@ namespace LifeCare.Controllers
             if (habit == null) return NotFound();
 
             var entries = await _habitService.GetHabitEntriesAsync(habitId, userId, from, to);
+            var allEntries =
+                await _habitService.GetHabitEntriesAsync(habitId, userId, DateTime.MinValue, DateTime.MaxValue);
+
+            var hasAny = allEntries.Any();
+            var startDate = hasAny ? allEntries.Min(e => e.Date.Date) : DateTime.UtcNow.Date;
+            var today = DateTime.UtcNow.Date;
+
             var isQuantity = habit.Type == HabitType.Quantity;
             var target = habit.TargetQuantity ?? 0;
 
-            // Map statusów dnia: 'full'|'partial'|'none'
             var map = new Dictionary<string, string>();
-            for (var d = from; d <= to; d = d.AddDays(1))
+            for (var d = from.Date; d <= to.Date; d = d.AddDays(1))
             {
-                var e = entries.FirstOrDefault(x => x.Date.Date == d.Date);
                 string status;
-
-                if (isQuantity)
+                if (d < startDate)
                 {
-                    var q = e?.Quantity ?? 0;
-                    if (q <= 0) status = "none";
-                    else if (q >= target && target > 0) status = "full";
-                    else status = "partial";
+                    status = "off";
+                }
+                else if (d > today)
+                {
+                    status = "future";
                 }
                 else
                 {
-                    status = (e?.Completed ?? false) ? "full" : "none";
+                    var e = entries.FirstOrDefault(x => x.Date.Date == d);
+                    if (isQuantity)
+                    {
+                        var q = (int?)(e?.Quantity) ?? 0;
+                        if (target > 0)
+                            status = q >= target ? "full" : (q > 0 ? "partial" : "none");
+                        else
+                            status = q > 0 ? "full" : "none";
+                    }
+                    else
+                    {
+                        status = (e?.Completed ?? false) ? "full" : "none";
+                    }
                 }
 
                 map[d.ToString("yyyy-MM-dd")] = status;

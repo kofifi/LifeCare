@@ -1,0 +1,23 @@
+﻿<div class="modal fade" id="routineDeleteModal" tabindex="-1" aria-labelledby="routineDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="routineDeleteModalLabel">Usuń rutynę</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+            </div>
+            <div class="modal-body">
+                Czy na pewno chcesz usunąć rutynę <strong id="deleteRoutineName"></strong>? Tego działania nie można cofnąć.
+            </div>
+            <div class="modal-footer">
+                <form asp-controller="Routines" asp-action="Delete" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="deleteRoutineId" />
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-trash me-1"></i> Usuń
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -11,14 +11,12 @@
 <form asp-action="Create" method="post">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <!-- Nazwa -->
     <div class="mb-3">
         <label asp-for="Name" class="form-label">Nazwa</label>
         <input asp-for="Name" class="form-control"/>
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
-    <!-- Opis (toggle) -->
     <div class="mb-3" id="descriptionWrapper" style="display: none;">
         <label asp-for="Description" class="form-label">Opis</label>
         <textarea asp-for="Description" class="form-control" rows="3"></textarea>
@@ -28,13 +26,11 @@
         <i class="fa fa-plus"></i> Dodaj opis
     </button>
 
-    <!-- Kolor -->
     <div class="mb-3">
         <label asp-for="Color" class="form-label">Kolor</label>
         <input asp-for="Color" type="color" class="form-control form-control-color"/>
     </div>
 
-    <!-- Ikona (rozwijany picker jako partial) -->
     @await Html.PartialAsync("_IconPicker", new LifeCare.ViewModels.IconPickerVM
     {
         ContainerId = "habitIconPicker",
@@ -54,7 +50,6 @@
         </select>
     </div>
 
-    <!-- Pola ilościowe (pokazywane tylko dla Quantity) -->
     <div class="mb-3" id="quantityFields" style="display: none;">
         <label asp-for="TargetQuantity" class="form-label">Docelowa ilość</label>
         <input asp-for="TargetQuantity" class="form-control" placeholder="np. 50"/>
@@ -63,7 +58,6 @@
         <input asp-for="Unit" class="form-control" placeholder="np. strony, minuty"/>
     </div>
 
-    <!-- Kategoria + przycisk do dodania nowej (modal) -->
     <div class="mb-3">
         <label asp-for="CategoryId" class="form-label">Kategoria</label>
         <div class="input-group">
@@ -93,7 +87,6 @@
     <partial name="_ValidationScriptsPartial"/>
 
     <script>
-    // Toggle pola ilościowe
     const habitTypeEl = document.getElementById('habitType');
     const quantityFields = document.getElementById('quantityFields');
     function toggleQuantityFields() {
@@ -101,9 +94,8 @@
         quantityFields.style.display = show ? 'block' : 'none';
     }
     habitTypeEl.addEventListener('change', toggleQuantityFields);
-    toggleQuantityFields(); // init
+    toggleQuantityFields();
 
-    // Toggle opisu
     document.getElementById('toggleDescription').addEventListener('click', function () {
         const desc = document.getElementById('descriptionWrapper');
         const isVisible = desc.style.display !== 'none';
@@ -112,5 +104,7 @@
             ? '<i class="fa fa-plus"></i> Dodaj opis'
             : '<i class="fa fa-minus"></i> Ukryj opis';
     });
-</script>
+    </script>
+
+    <script src="~/js/site-category-modal.js" asp-append-version="true"></script>
 }

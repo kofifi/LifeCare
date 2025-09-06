@@ -1,0 +1,67 @@
+﻿#routine-root .step-card {
+    position: relative;
+    background: var(--clr-surface-a20);
+    border: var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: .75rem 1rem;
+}
+
+#routine-root .step-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 600;
+}
+
+#routine-root .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--clr-surface-a30);
+    font-size: .85rem;
+    line-height: 1;
+}
+
+#routine-root .step-rotation {
+    position: absolute;
+    top: .5rem;
+    right: .75rem;
+    font-size: .75rem;
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    background: rgba(80, 140, 250, .16);
+    color: #70a1ff;
+    border: 1px solid rgba(80, 140, 250, .25);
+}
+
+#routine-root .product-row {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    padding: .5rem;
+    border-radius: .5rem;
+    background: var(--clr-surface-a10);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#routine-root .product-row img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+#routine-root .product-name-line {
+    display: flex;
+    gap: .4rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+
+#routine-root .product-note {
+    font-size: .875rem;
+    opacity: .85;
+}

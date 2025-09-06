@@ -1,0 +1,166 @@
+﻿@model LifeCare.ViewModels.RoutineVM
+@{
+    ViewData["Title"] = "Szczegóły rutyny";
+    var color = Model.Color;
+    var icon = Model.Icon;
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/Chart.min.css"/>
+
+<div class="container py-4" id="routine-root"
+     data-routine-id="@Model.Id"
+     data-color="@Model.Color"
+     data-start-utc="@Model.StartDateUtc.ToString("yyyy-MM-dd")"
+     data-rrule="@(Model.RRule ?? "")">
+
+    <div class="position-relative mb-4">
+        <div class="position-absolute top-0 end-0">
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown">
+                    <i class="fa fa-ellipsis-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                    <li>
+                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.Id"><i class="fa fa-edit me-2"></i>Edytuj</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@Model.Id"><i class="fa fa-trash me-2"></i>Usuń</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <i class="fa @icon fa-3x mb-2" style="color:@color;"></i>
+            <h3 class="mb-1" style="color:@color;">@Model.Name</h3>
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <div class="text-muted">@Model.Description</div>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Struktura rutyny</strong>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary">@Model.Steps.Count kroków</span>
+                    <button class="btn btn-outline-secondary btn-sm" id="toggleStructure" title="Rozwiń/Zwiń">
+                        <i class="fa fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="structureBody" class="d-none">
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var s in Model.Steps.OrderBy(x => x.Order))
+                    {
+                        <div class="step-card">
+                            @if (s.RotationEnabled)
+                            {
+                                <span class="step-rotation">Rotacja: @(s.RotationMode?.ToUpper())</span>
+                            }
+
+                            <div class="step-title">
+                                <span class="step-num">@(s.Order + 1)</span>
+                                <span>@s.Name</span>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(s.Description))
+                            {
+                                <div class="product-note mt-1">@s.Description</div>
+                            }
+
+                            @if (s.Products != null && s.Products.Count > 0)
+                            {
+                                <div class="mt-2 d-flex flex-column gap-2">
+                                    @foreach (var p in s.Products.OrderBy(x => x.Id))
+                                    {
+                                        <div class="product-row">
+                                            @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
+                                            {
+                                                <img src="@p.ImageUrl" alt="">
+                                            }
+                                            <div class="flex-grow-1">
+                                                <div class="product-name-line">
+                                                    <div class="fw-semibold">@p.Name</div>
+                                                    @if (!string.IsNullOrWhiteSpace(p.Note))
+                                                    {
+                                                        <div class="product-note">— @p.Note</div>
+                                                    }
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(p.Url))
+                                                {
+                                                    <div class="small">
+                                                        <a href="@p.Url" target="_blank" rel="noopener">link</a>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("Stats/_StatsWeekChart", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine", WeekTitle = "Wykonane kroki (tydzień)" })
+    @await Html.PartialAsync("Stats/_StatsSummary", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine" })
+    @await Html.PartialAsync("Stats/_StatsSkips", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine", ShowSkips = true, SkipsTitle = "Najczęściej pomijane kroki" })
+    @await Html.PartialAsync("Stats/_StatsPieChart", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine", PieTitle = "Pełne vs częściowe vs pominięte" })
+    @await Html.PartialAsync("Stats/_StatsCalendar", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine" })
+
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="~/js/stats.common.js" asp-append-version="true"></script>
+    <script src="~/js/routines/routines.details.js" asp-append-version="true"></script>
+
+    <script>
+      (async function(){
+        const root = document.getElementById('routine-root');
+        const routineId = +root.dataset.routineId;
+        await StatsCommon.init({
+          kind: 'routine',
+          selectors: {
+            pieCanvas:   '#routine_pieChart',
+            weekCanvas:  '#routine_weekChart',
+            weekLabel:   '#routine_weekLabel',
+            monthLabel:  '#routine_monthLabel',
+            monthBody:   '#routine_monthBody',
+            statsRow:    '#routine_statsRow',
+            overallPercent: '#routine_overallPercent',
+            currentStreak:  '#routine_currentStreak',
+            bestStreak:     '#routine_bestStreak',
+            totalCount:     '#routine_totalCount',
+            completedCount: '#routine_completedCount',
+            partialCount:   '#routine_partialCount',
+            skippedCount:   '#routine_skippedCount',
+            rangeInfo:      '#routine_rangeInfo',
+            skipsCard:      '#routine_skipsCard',
+            skipsList:      '#routine_skipsList',
+            prevWeek:  '#routine_prevWeek',
+            nextWeek:  '#routine_nextWeek',
+            prevMonth: '#routine_prevMonth',
+            nextMonth: '#routine_nextMonth'
+          },
+          endpoints: {
+            stats: (  )      => `/Routines/RoutineStats?routineId=${routineId}`,
+            week:  (f,t)     => `/Routines/RoutineEntries?routineId=${routineId}&from=${f}&to=${t}`,
+            month: (y,m)     => `/Routines/RoutineMonth?routineId=${routineId}&year=${y}&month=${m}`
+          }
+        });
+      })();
+    </script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/stats.common.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/routines.details.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/stats.shared.css" asp-append-version="true"/>
+}

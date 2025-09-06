@@ -1,10 +1,11 @@
-﻿<div class="card mb-4">
+﻿@model LifeCare.ViewModels.StatsPartialsVM
+<div class="card mb-4">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <strong>Ukończone vs nieukończone</strong>
+            <strong>@Model.PieTitle</strong>
         </div>
         <div class="chart-wrap-sm">
-            <canvas id="pieChart"></canvas>
+            <canvas id="@($"{Model.Prefix}_pieChart")"></canvas>
         </div>
     </div>
 </div>

@@ -20,10 +20,16 @@ builder.Services.AddDefaultIdentity<User>(options =>
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IHabitService, HabitService>();
+builder.Services.AddScoped<IRoutineService, RoutineService>();
 
 builder.Services.AddSingleton<IGitInfoService, GitInfoService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "RequestVerificationToken";
+});
 
 var app = builder.Build();
 

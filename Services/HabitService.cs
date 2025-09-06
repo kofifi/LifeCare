@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using LifeCare.Data;
 using LifeCare.Models;
@@ -47,8 +43,7 @@ namespace LifeCare.Services
         {
             var habit = _mapper.Map<Habit>(habitVM);
             habit.UserId = userId;
-
-            // ustaw porządek na koniec listy
+            
             var maxOrder = await _context.Habits.Where(h => h.UserId == userId).MaxAsync(h => (int?)h.Order) ?? -1;
             habit.Order = maxOrder + 1;
 
@@ -144,11 +139,8 @@ namespace LifeCare.Services
             return true;
         }
 
-        // ------------------------------
-        //         NOWE METODY
-        // ------------------------------
-
-        public async Task<IReadOnlyList<HabitEntry>> GetHabitEntriesAsync(int habitId, string userId, DateTime from, DateTime to)
+        public async Task<IReadOnlyList<HabitEntry>> GetHabitEntriesAsync(int habitId, string userId, DateTime from,
+            DateTime to)
         {
             var fromDate = from.Date;
             var toDate = to.Date;
@@ -165,7 +157,8 @@ namespace LifeCare.Services
             return entries;
         }
 
-        public async Task<(double OverallPercent, int CurrentStreak, int BestStreak, int Total, int Completed, int Skipped)>
+        public async Task<(double OverallPercent, int CurrentStreak, int BestStreak, int Total, int Completed, int
+                Skipped, int Partial, DateTime StartDateUtc)>
             GetHabitStatsAsync(int habitId, string userId)
         {
             var habit = await _context.Habits
@@ -173,28 +166,26 @@ namespace LifeCare.Services
 
             if (habit == null)
             {
-                return (0, 0, 0, 0, 0, 0);
+                return (0, 0, 0, 0, 0, 0, 0, DateTime.UtcNow.Date);
             }
 
-            // Pobierz wszystkie wpisy danego nawyku (dla użytkownika)
             var entries = await _context.HabitEntries
                 .Where(e => e.HabitId == habitId && e.Habit.UserId == userId)
                 .ToListAsync();
 
             if (!entries.Any())
             {
-                return (0, 0, 0, 0, 0, 0);
+                var today = DateTime.UtcNow.Date;
+                return (0, 0, 0, 1, 0, 1, 0, today);
             }
 
-            // Zakres od pierwszego wpisu do dziś
             var start = entries.Min(e => e.Date.Date);
-            var end = DateTime.Today;
+            var end = DateTime.UtcNow.Date;
             if (start > end) start = end;
 
-            // Zbuduj słownik wpisów po dacie
             var byDate = entries
                 .GroupBy(e => e.Date.Date)
-                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Id).First()); // last entry of the day
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Id).First());
 
             bool IsCompletedForDay(DateTime day)
             {
@@ -203,9 +194,8 @@ namespace LifeCare.Services
                 if (habit.Type == HabitType.Quantity)
                 {
                     var target = habit.TargetQuantity ?? 0;
-                    var q = e.Quantity ?? 0;
+                    var q = (int?)e.Quantity ?? 0;
                     if (target > 0) return q >= target;
-                    // gdy target == 0 traktuj dowolną ilość > 0 jako wykonane
                     return q > 0;
                 }
                 else
@@ -214,21 +204,35 @@ namespace LifeCare.Services
                 }
             }
 
+            bool IsPartialForDay(DateTime day)
+            {
+                if (habit.Type != HabitType.Quantity) return false;
+                if (!byDate.TryGetValue(day, out var e)) return false;
+
+                var target = habit.TargetQuantity ?? 0;
+                var q = (int?)e.Quantity ?? 0;
+
+                if (target <= 0) return false;
+                return q > 0 && q < target;
+            }
+
             int totalDays = (int)(end - start).TotalDays + 1;
             int completedDays = 0;
+            int partialDays = 0;
 
-            // serie
-            int currentStreak = 0;
+            int running = 0;
             int bestStreak = 0;
 
-            // liczenie completed skipped i streaków
-            int running = 0;
             for (var d = start; d <= end; d = d.AddDays(1))
             {
-                var done = IsCompletedForDay(d);
-                if (done)
+                var completed = IsCompletedForDay(d);
+                var partial = IsPartialForDay(d);
+
+                if (completed) completedDays++;
+                if (partial) partialDays++;
+
+                if (completed)
                 {
-                    completedDays++;
                     running++;
                     if (running > bestStreak) bestStreak = running;
                 }
@@ -238,19 +242,18 @@ namespace LifeCare.Services
                 }
             }
 
-            // aktualna seria – liczymy wstecz od dziś
-            var cur = 0;
+            var currentStreak = 0;
             for (var d = end; d >= start; d = d.AddDays(-1))
             {
-                if (IsCompletedForDay(d)) cur++;
+                if (IsCompletedForDay(d)) currentStreak++;
                 else break;
             }
-            currentStreak = cur;
 
-            var skipped = totalDays - completedDays;
+            var skipped = totalDays - completedDays - partialDays;
             var overallPercent = totalDays > 0 ? (double)completedDays / totalDays * 100.0 : 0.0;
 
-            return (overallPercent, currentStreak, bestStreak, totalDays, completedDays, skipped);
+            return (overallPercent, currentStreak, bestStreak, totalDays, completedDays, skipped, partialDays,
+                start.ToUniversalTime());
         }
     }
 }

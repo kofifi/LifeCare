@@ -10,6 +10,5 @@ public class Category
     public string Name { get; set; }
     public string UserId { get; set; } // użytkownik, który utworzył kategorię
     public User User { get; set; }
-
     public ICollection<Habit> Habits { get; set; }
 }

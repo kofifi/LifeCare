@@ -124,6 +124,7 @@ public class CategoryController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateAjax([FromBody] CategoryVM categoryVM)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);

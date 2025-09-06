@@ -1,0 +1,28 @@
+﻿@model LifeCare.ViewModels.StatsPartialsVM
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <strong>@Model.CalendarTitle</strong>
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-secondary" id="@($"{Model.Prefix}_prevMonth")">«</button>
+                <span class="btn btn-sm btn-light" id="@($"{Model.Prefix}_monthLabel")">–</span>
+                <button class="btn btn-sm btn-outline-secondary" id="@($"{Model.Prefix}_nextMonth")">»</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered text-center align-middle mb-0 stats-dark-table" id="@($"{Model.Prefix}_monthTable")">
+                <thead class="table-light stats-dark-head">
+                <tr><th>Pon</th><th>Wto</th><th>Śro</th><th>Czw</th><th>Pią</th><th>Sob</th><th>Nie</th></tr>
+                </thead>
+                <tbody id="@($"{Model.Prefix}_monthBody")" class="stats-dark-border"></tbody>
+            </table>
+        </div>
+        <div class="small text-muted mt-2">
+            <span class="badge bg-success me-1">&nbsp;</span> @Model.LegendFull
+            <span class="badge bg-warning text-dark mx-1">&nbsp;</span> @Model.LegendPartial
+            <span class="badge bg-danger ms-1">&nbsp;</span> @Model.LegendSkipped
+            <span class="badge bg-primary ms-3">&nbsp;</span> @Model.LegendFuture
+            <span class="badge bg-secondary ms-1">&nbsp;</span> @Model.LegendOff
+        </div>
+    </div>
+</div>
