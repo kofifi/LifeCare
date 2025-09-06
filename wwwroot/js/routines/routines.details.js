@@ -19,14 +19,10 @@
 
         const statsRow = document.getElementById('statsRow');
         if (statsRow) statsRow.style.display = 'flex';
+
         const percent = Math.round(s.overallPercent || 0);
-        document.getElementById('overallPercent').textContent = `${percent}%`;
-        document.getElementById('currentStreak').textContent = s.currentStreak || 0;
-        document.getElementById('bestStreak').textContent = s.bestStreak || 0;
-        document.getElementById('totalOcc').textContent = s.totalOccurrences || 0;
-        document.getElementById('completedDays').textContent = s.completedDays || 0;
-        document.getElementById('partialDays').textContent = s.partialDays || 0;
-        document.getElementById('skippedDays').textContent = s.skippedDays || 0;
+        const overall = document.getElementById('overallPercent');
+        if (overall) overall.textContent = `${percent}%`;
 
         const rangeInfo = document.getElementById('rangeInfo');
         if (rangeInfo){
@@ -35,27 +31,18 @@
             rangeInfo.textContent = `Od ${start.toLocaleDateString('pl-PL')}` + (end ? ` do ${end.toLocaleDateString('pl-PL')}` : '');
         }
 
-        const rawList = s.topSkippedSteps || [];
-        const list = rawList.filter(i => (i.skippedCount || 0) > 0);
-        const skipsCard = document.getElementById('skipsCard');
-        const skipsList = document.getElementById('skipsList');
-
-        if (skipsCard && skipsList){
-            skipsCard.style.display = '';
-            skipsList.innerHTML = '';
-            if (list.length){
-                list.forEach(i=>{
-                    const row = document.createElement('div');
-                    row.className = 'd-flex justify-content-between align-items-center';
-                    row.innerHTML = `
-                        <div class="text-truncate me-3">${i.name}</div>
-                        <div class="small text-muted">${i.skippedCount}× pominięte</div>`;
-                    skipsList.appendChild(row);
-                });
-            } else {
-                skipsList.innerHTML = `<div class="text-muted">Brak pominiętych kroków</div>`;
-            }
-        }
+        const cur = document.getElementById('currentStreak');
+        if (cur) cur.textContent = s.currentStreak ?? 0;
+        const best = document.getElementById('bestStreak');
+        if (best) best.textContent = s.bestStreak ?? 0;
+        const total = document.getElementById('totalOcc');
+        if (total) total.textContent = s.totalOccurrences ?? 0;
+        const c = document.getElementById('completedDays');
+        if (c) c.textContent = s.completedDays ?? 0;
+        const p = document.getElementById('partialDays');
+        if (p) p.textContent = s.partialDays ?? 0;
+        const sk = document.getElementById('skippedDays');
+        if (sk) sk.textContent = s.skippedDays ?? 0;
 
         const ctxP = document.getElementById('pieChart');
         if (ctxP && window.Chart){
@@ -119,6 +106,9 @@
         });
     }
 
+    function firstOfMonth(d){ const x=new Date(d); x.setDate(1); x.setHours(0,0,0,0); return x; }
+    function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+
     function buildMonthTable(map){
         const body = document.getElementById('monthBody');
         if (!body) return;
@@ -171,10 +161,11 @@
     const structureBody = document.getElementById('structureBody');
     if (toggleStructure && structureBody){
         toggleStructure.addEventListener('click', (e)=>{
+            e.preventDefault();
             e.stopPropagation();
             const willOpen = structureBody.classList.contains('d-none');
             structureBody.classList.toggle('d-none', !willOpen ? true : false);
-            toggleStructure.innerHTML = `<i class="fa fa-chevron-${willOpen?'up':'down'}"></i>`;
+            toggleStructure.innerHTML = `<i class="fa fa-chevron-${willOpen ? 'up':'down'}"></i>`;
         });
     }
 

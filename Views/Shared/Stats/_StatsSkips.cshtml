@@ -1,0 +1,12 @@
+﻿@model LifeCare.ViewModels.StatsPartialsVM
+@if (Model.ShowSkips)
+{
+    <div class="card mb-4" id="@($"{Model.Prefix}_skipsCard")" style="display:none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>@Model.SkipsTitle</strong>
+            </div>
+            <div id="@($"{Model.Prefix}_skipsList")" class="d-flex flex-column gap-2"></div>
+        </div>
+    </div>
+}

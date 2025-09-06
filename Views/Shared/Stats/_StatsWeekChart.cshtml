@@ -1,0 +1,16 @@
+﻿@model LifeCare.ViewModels.StatsPartialsVM
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>@Model.WeekTitle</strong>
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-secondary" id="@($"{Model.Prefix}_prevWeek")">«</button>
+                <span class="btn btn-sm btn-light" id="@($"{Model.Prefix}_weekLabel")">–</span>
+                <button class="btn btn-sm btn-outline-secondary" id="@($"{Model.Prefix}_nextWeek")">»</button>
+            </div>
+        </div>
+        <div class="chart-wrap-sm">
+            <canvas id="@($"{Model.Prefix}_weekChart")"></canvas>
+        </div>
+    </div>
+</div>

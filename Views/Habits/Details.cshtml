@@ -7,16 +7,16 @@ var icon = Model.Icon;
 }
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/Chart.min.css"/>
-<link rel="stylesheet" href="~/css/habits.details.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/stats.shared.css" asp-append-version="true"/>
 
 <div class="container py-4" id="habit-root"
      data-habit-id="@Model.Id"
      data-type="@Model.Type"
      data-target="@Model.TargetQuantity"
      data-unit="@Model.Unit"
-     data-color="@Model.Color">
+     data-color="@Model.Color"
+     data-start-utc="@Model.StartDateUtc.ToString("yyyy-MM-dd")">
 
-    <!-- Header z opcjami -->
     <div class="position-relative mb-4">
         <div class="position-absolute top-0 end-0">
             <div class="dropdown">
@@ -46,15 +46,10 @@ var icon = Model.Icon;
             <i class="fa @icon fa-3x mb-2" style="color: @color;"></i>
             <h3 class="mb-1" style="color: @color;">@Model.Name</h3>
 
-            <!-- Opis typu + kontrolka wykonania -->
             @if (Model.Type == HabitType.Checkbox)
             {
             <div class="mb-2">
                 <span class="badge bg-secondary">Zadanie</span>
-            </div>
-            <div class="form-check d-inline-flex align-items-center gap-lg-5">
-                <label class="form-check-label" for="detailsTaskCheckbox">Ukończono dziś zadanie?</label>
-                <input class="form-check-input" type="checkbox" id="detailsTaskCheckbox">
             </div>
             }
             else
@@ -62,283 +57,20 @@ var icon = Model.Icon;
             <div class="mb-2">
                 <span class="badge bg-secondary">Cel: @Model.TargetQuantity @Model.Unit</span>
             </div>
-            <div class="d-inline-flex align-items-center gap-2">
-                <span id="detailsProgress" class="text-muted">0/@Model.TargetQuantity</span>
-                <button id="detailsAddBtn" class="btn btn-outline-primary btn-sm" type="button" title="Dodaj wykonanie">
-                    <i class="fa fa-plus"></i>
-                </button>
-            </div>
             }
         </div>
     </div>
 
-    <!-- Statystyki (partial) -->
-    @await Html.PartialAsync("_HabitStats")
+    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsWeekChart.cshtml", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit", WeekTitle = "Wpisy (tydzień)" })
+    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsSummary.cshtml",   new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit" })
+    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsPieChart.cshtml",  new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit", PieTitle = "Ukończone vs częściowe vs pominięte" })
+    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsCalendar.cshtml",  new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit" })
 
-    <!-- Koło (partial) -->
-    @await Html.PartialAsync("_HabitPieChart")
-
-    <!-- Tygodniowy bar (partial) -->
-    @await Html.PartialAsync("_HabitWeekChart")
-
-    <!-- Kalendarz (partial) -->
-    @await Html.PartialAsync("_HabitCalendar")
-
-    <!-- Modal usuwania (partial) -->
     @await Html.PartialAsync("_HabitDeleteModal", Model)
-</div>
-
-<div class="modal fade" id="quantityModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header">
-                <h5 class="modal-title">Dodaj wykonanie</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
-            </div>
-            <div class="modal-body">
-                <p><strong id="modalHabitName">@Model.Name</strong></p>
-                <p>Jednostka: <span id="modalUnit">@Model.Unit</span></p>
-                <div class="mb-3">
-                    <label for="modalQuantityInput" class="form-label">Ilość wykonana dziś</label>
-                    <input type="number" class="form-control" id="modalQuantityInput" min="0"/>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="confirmQuantityBtn" class="btn btn-success" type="button">Zapisz</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 @section Scripts {
 <partial name="_ValidationScriptsPartial" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="~/js/habits.details.js" asp-append-version="true"></script>
-
-<script>
-    (function () {
-        function ymdLocal(d = new Date()) {
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-        }
-
-        const root = document.getElementById('habit-root');
-        const habitId = parseInt(root.dataset.habitId);
-        const type = root.dataset.type;              // "Checkbox" lub "Quantity"
-        const target = parseFloat(root.dataset.target) || 0;
-        const unit = root.dataset.unit || "";
-        const color = root.dataset.color || "#888";
-
-        let currentDateStr = ymdLocal(); // zawsze lokalny 'YYYY-MM-DD'
-
-        const chk = document.getElementById('detailsTaskCheckbox');
-        const progressEl = document.getElementById('detailsProgress');
-        const addBtn = document.getElementById('detailsAddBtn');
-
-        const qtyModalEl = document.getElementById('quantityModal');
-        const qtyModal = qtyModalEl ? new bootstrap.Modal(qtyModalEl) : null;
-        const qtyInput = document.getElementById('modalQuantityInput');
-        const qtyConfirmBtn = document.getElementById('confirmQuantityBtn');
-
-        async function getEntriesForDate(date) {
-            const res = await fetch(`/Habits/GetEntries?date=${date}`);
-            if (!res.ok) return [];
-            return res.json();
-        }
-
-        async function saveEntry({ habitId, date, completed, quantity }) {
-            const res = await fetch('/Habits/SaveEntry', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ habitId, date, completed, quantity })
-            });
-            return res.ok;
-        }
-
-        async function refreshStats() {
-            try {
-                const res = await fetch(`/Habits/HabitStats?habitId=${habitId}`);
-                if (!res.ok) return;
-
-                const s = await res.json();
-                const map = {
-                    '#overallPercentValue': (v) => (v?.toFixed ? v.toFixed(0) + '%' : v + '%'),
-                    '#currentStreakValue':  (v) => v,
-                    '#bestStreakValue':     (v) => v,
-                    '#totalValue':          (v) => v,
-                    '#completedValue':      (v) => v,
-                    '#skippedValue':        (v) => v,
-                };
-                const data = {
-                    '#overallPercentValue': s.overallPercent,
-                    '#currentStreakValue':  s.currentStreak,
-                    '#bestStreakValue':     s.bestStreak,
-                    '#totalValue':          s.total,
-                    '#completedValue':      s.completed,
-                    '#skippedValue':        s.skipped,
-                };
-                Object.keys(data).forEach(sel => {
-                    const el = document.querySelector(sel);
-                    if (el) el.textContent = map[sel](data[sel]);
-                });
-
-                window.dispatchEvent(new CustomEvent('habit:entry-updated', { detail: { habitId } }));
-
-                if (window.HabitsDetails && typeof window.HabitsDetails.refreshAll === 'function') {
-                    window.HabitsDetails.refreshAll();
-                }
-            } catch (_) { }
-        }
-
-        function setProgressUI(quantity) {
-            if (!progressEl) return;
-            const q = quantity || 0;
-            progressEl.innerHTML = `${q}/${target}`;
-            progressEl.classList.toggle('text-muted', q < target);
-            progressEl.style.color = q >= target ? color : '';
-            if (q >= target) {
-                progressEl.innerHTML += ' <i class="fa fa-check text-success"></i>';
-            }
-        }
-
-        async function loadTodayEntry() {
-            const entries = await getEntriesForDate(currentDateStr);
-            const entry = entries.find(e => e.habitId === habitId);
-            if (type === 'Checkbox' || type === '0') {
-                if (chk) chk.checked = !!(entry?.completed);
-            } else {
-                const q = parseFloat(entry?.quantity || 0);
-                setProgressUI(q);
-            }
-        }
-
-        async function handleCheckboxChange(e) {
-            const checked = e.target.checked;
-            const ok = await saveEntry({
-                habitId,
-                date: currentDateStr,
-                completed: checked,
-                quantity: null
-            });
-            if (!ok) {
-                e.target.checked = !checked;
-                alert('Nie udało się zapisać.');
-                return;
-            }
-            await refreshStats();
-        }
-
-        function openQuantityModal() {
-            if (!qtyModal) return;
-            const current = (progressEl?.textContent?.split('/')?.[0]) || '0';
-            qtyInput.value = parseFloat(current) || 0;
-            qtyModal.show();
-        }
-
-        async function confirmQuantity() {
-            const q = parseFloat(qtyInput.value);
-            if (isNaN(q)) return;
-            const completed = target > 0 ? q >= target : q > 0;
-
-            const ok = await saveEntry({
-                habitId,
-                date: currentDateStr,
-                completed,
-                quantity: q
-            });
-            if (!ok) {
-                alert('Nie udało się zapisać.');
-                return;
-            }
-            if (qtyModal) qtyModal.hide();
-            setProgressUI(q);
-            await refreshStats();
-        }
-
-        setInterval(() => {
-            const nowStr = ymdLocal();
-            if (nowStr !== currentDateStr) {
-                currentDateStr = nowStr;
-                loadTodayEntry();
-                if (window.HabitsDetails?.refreshAll) {
-                    window.HabitsDetails.refreshAll();
-                }
-            }
-        }, 60000);
-
-        loadTodayEntry();
-
-        if (chk) chk.addEventListener('change', handleCheckboxChange);
-        if (addBtn) addBtn.addEventListener('click', openQuantityModal);
-        if (qtyConfirmBtn) qtyConfirmBtn.addEventListener('click', confirmQuantity);
-    })();
-</script>
 }
-
-@section Styles {
-<style>
-    /* Karty w Details – ciemne tło, jasny tekst */
-    #habit-root .card {
-        background: var(--clr-surface-a20);
-        border: var(--border-soft);
-        color: var(--bs-body-color);
-        box-shadow: var(--shadow-soft);
-    }
-    #habit-root .card .card-body { background: transparent; }
-
-    #habit-root .btn-light {
-        background-color: var(--clr-surface-a30) !important;
-        color: var(--clr-light-a0) !important;
-        border-color: rgba(255,255,255,.12) !important;
-    }
-    
-    /* „light” przycisk używany jako label (np. month/week label) */
-    #habit-root .btn-light {
-        --bs-btn-bg: var(--clr-surface-a30);
-        --bs-btn-color: var(--clr-light-a0);
-        --bs-btn-border-color: rgba(255,255,255,0.08);
-        --bs-btn-hover-bg: var(--clr-surface-a40);
-        --bs-btn-hover-border-color: rgba(255,255,255,0.12);
-    }
-
-    /* Tabela kalendarza – ciemne nagłówki i ciemne komórki */
-    #habit-root .table {
-        --bs-table-bg: transparent;
-        --bs-table-color: var(--clr-light-a0);
-        color: var(--clr-light-a0);
-    }
-    #habit-root .table thead,
-    #habit-root .table thead.table-light {
-        --bs-table-bg: var(--clr-surface-a30);
-        --bs-table-color: var(--clr-light-a0);
-        background-color: var(--clr-surface-a30);
-        color: var(--clr-light-a0);
-    }
-    #habit-root .table-bordered {
-        border-color: rgba(255,255,255,0.12);
-    }
-    #habit-root .table-bordered > :not(caption) > * {
-        border-color: rgba(255,255,255,0.12);
-    }
-    #habit-root .table-bordered > :not(caption) > * > * {
-        border-color: rgba(255,255,255,0.12);
-        background-color: var(--clr-surface-a20);
-    }
-
-    /* Opakowanie canvasa, żeby wykres nie „wisiał” na jasnym */
-    #habit-root .chart-wrap-sm {
-        background: var(--clr-surface-a20);
-        border: var(--border-soft);
-        border-radius: var(--radius-md);
-        padding: .75rem;
-    }
-
-    /* Odrobinę kontrastu dla badge-warning z czarnym tekstem */
-    #habit-root .badge.bg-warning.text-dark {
-        color: #111 !important;
-    }
-</style>
-}
-

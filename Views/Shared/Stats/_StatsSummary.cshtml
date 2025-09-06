@@ -1,0 +1,45 @@
+﻿@model LifeCare.ViewModels.StatsPartialsVM
+<div class="row g-3 mb-4" id="@($"{Model.Prefix}_statsRow")" style="display:none;">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                <div class="text-muted mb-1">Wykonanie od startu</div>
+                <div class="display-6 fw-bold" id="@($"{Model.Prefix}_overallPercent")">0%</div>
+                <div class="small text-muted mt-2" id="@($"{Model.Prefix}_rangeInfo")"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted mb-2">Podsumowanie</div>
+                <div class="row text-center g-3">
+                    <div class="col-6 col-md-4">
+                        <div class="small text-muted">Aktualna seria</div>
+                        <div class="h4 mb-0" id="@($"{Model.Prefix}_currentStreak")">0</div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="small text-muted">Najlepsza seria</div>
+                        <div class="h4 mb-0" id="@($"{Model.Prefix}_bestStreak")">0</div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="small text-muted">Wystąpienia</div>
+                        <div class="h4 mb-0" id="@($"{Model.Prefix}_totalCount")">0</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small text-muted">Pełne</div>
+                        <div class="h5 mb-0" id="@($"{Model.Prefix}_completedCount")">0</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small text-muted">Częściowe</div>
+                        <div class="h5 mb-0" id="@($"{Model.Prefix}_partialCount")">0</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small text-muted">Pominięte</div>
+                        <div class="h5 mb-0" id="@($"{Model.Prefix}_skippedCount")">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

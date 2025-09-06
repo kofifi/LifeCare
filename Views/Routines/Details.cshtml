@@ -63,7 +63,7 @@
                             }
 
                             <div class="step-title">
-                                <span class="step-num">@(s.Order+1)</span>
+                                <span class="step-num">@(s.Order + 1)</span>
                                 <span>@s.Name</span>
                             </div>
 
@@ -108,125 +108,59 @@
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong>Wykonane kroki (tydzień)</strong>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-secondary" id="prevWeek">«</button>
-                    <span class="btn btn-sm btn-light" id="weekLabel">–</span>
-                    <button class="btn btn-sm btn-outline-secondary" id="nextWeek">»</button>
-                </div>
-            </div>
-            <div style="height:200px">
-                <canvas id="weekChart"></canvas>
-            </div>
-        </div>
-    </div>
+    @await Html.PartialAsync("Stats/_StatsWeekChart", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine", WeekTitle = "Wykonane kroki (tydzień)" })
+    @await Html.PartialAsync("Stats/_StatsSummary", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine" })
+    @await Html.PartialAsync("Stats/_StatsSkips", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine", ShowSkips = true, SkipsTitle = "Najczęściej pomijane kroki" })
+    @await Html.PartialAsync("Stats/_StatsPieChart", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine", PieTitle = "Pełne vs częściowe vs pominięte" })
+    @await Html.PartialAsync("Stats/_StatsCalendar", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine" })
 
-    <div class="row g-3 mb-4" id="statsRow" style="display:none;">
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                    <div class="text-muted mb-1">Wykonanie od startu</div>
-                    <div class="display-6 fw-bold" id="overallPercent">0%</div>
-                    <div class="small text-muted mt-2" id="rangeInfo"></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-8">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="text-muted mb-2">Podsumowanie</div>
-                    <div class="row text-center g-3">
-                        <div class="col-6 col-md-4">
-                            <div class="small text-muted">Aktualna seria</div>
-                            <div class="h4 mb-0" id="currentStreak">0</div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="small text-muted">Najlepsza seria</div>
-                            <div class="h4 mb-0" id="bestStreak">0</div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="small text-muted">Wystąpienia</div>
-                            <div class="h4 mb-0" id="totalOcc">0</div>
-                        </div>
-
-                        <div class="col-4">
-                            <div class="small text-muted">Pełne</div>
-                            <div class="h5 mb-0" id="completedDays">0</div>
-                        </div>
-                        <div class="col-4">
-                            <div class="small text-muted">Częściowe</div>
-                            <div class="h5 mb-0" id="partialDays">0</div>
-                        </div>
-                        <div class="col-4">
-                            <div class="small text-muted">Pominięte</div>
-                            <div class="h5 mb-0" id="skippedDays">0</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card mb-4" id="skipsCard" style="display:none;">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong>Najczęściej pomijane kroki</strong>
-            </div>
-            <div id="skipsList" class="d-flex flex-column gap-2"></div>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong>Pełne vs częściowe vs pominięte</strong>
-            </div>
-            <div style="height:220px">
-                <canvas id="pieChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Kalendarz -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <strong>Kalendarz</strong>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-secondary" id="prevMonth">«</button>
-                    <span class="btn btn-sm btn-light" id="monthLabel">–</span>
-                    <button class="btn btn-sm btn-outline-secondary" id="nextMonth">»</button>
-                </div>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-bordered text-center align-middle mb-0" id="monthTable">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Pon</th><th>Wto</th><th>Śro</th><th>Czw</th><th>Pią</th><th>Sob</th><th>Nie</th>
-                    </tr>
-                    </thead>
-                    <tbody id="monthBody"></tbody>
-                </table>
-            </div>
-            <div class="small text-muted mt-2">
-                <span class="badge bg-success me-1">&nbsp;</span> pełne
-                <span class="badge bg-warning text-dark mx-1">&nbsp;</span> częściowe
-                <span class="badge bg-danger ms-1">&nbsp;</span> pominięte
-                <span class="badge bg-secondary ms-3">&nbsp;</span> poza zakresem (przed startem / po zakończeniu)
-            </div>
-        </div>
-    </div>
 </div>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="~/js/stats.common.js" asp-append-version="true"></script>
     <script src="~/js/routines/routines.details.js" asp-append-version="true"></script>
+
+    <script>
+      (async function(){
+        const root = document.getElementById('routine-root');
+        const routineId = +root.dataset.routineId;
+        await StatsCommon.init({
+          kind: 'routine',
+          selectors: {
+            pieCanvas:   '#routine_pieChart',
+            weekCanvas:  '#routine_weekChart',
+            weekLabel:   '#routine_weekLabel',
+            monthLabel:  '#routine_monthLabel',
+            monthBody:   '#routine_monthBody',
+            statsRow:    '#routine_statsRow',
+            overallPercent: '#routine_overallPercent',
+            currentStreak:  '#routine_currentStreak',
+            bestStreak:     '#routine_bestStreak',
+            totalCount:     '#routine_totalCount',
+            completedCount: '#routine_completedCount',
+            partialCount:   '#routine_partialCount',
+            skippedCount:   '#routine_skippedCount',
+            rangeInfo:      '#routine_rangeInfo',
+            skipsCard:      '#routine_skipsCard',
+            skipsList:      '#routine_skipsList',
+            prevWeek:  '#routine_prevWeek',
+            nextWeek:  '#routine_nextWeek',
+            prevMonth: '#routine_prevMonth',
+            nextMonth: '#routine_nextMonth'
+          },
+          endpoints: {
+            stats: (  )      => `/Routines/RoutineStats?routineId=${routineId}`,
+            week:  (f,t)     => `/Routines/RoutineEntries?routineId=${routineId}&from=${f}&to=${t}`,
+            month: (y,m)     => `/Routines/RoutineMonth?routineId=${routineId}&year=${y}&month=${m}`
+          }
+        });
+      })();
+    </script>
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/stats.common.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/routines.details.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/stats.shared.css" asp-append-version="true"/>
 }

@@ -20,7 +20,8 @@ namespace LifeCare.Services.Interfaces
         
         Task<IReadOnlyList<HabitEntry>> GetHabitEntriesAsync(int habitId, string userId, DateTime from, DateTime to);
 
-        Task<(double OverallPercent, int CurrentStreak, int BestStreak, int Total, int Completed, int Skipped)>
+        Task<(double OverallPercent, int CurrentStreak, int BestStreak, int Total, int Completed, int
+                Skipped, int Partial, DateTime StartDateUtc)>
             GetHabitStatsAsync(int habitId, string userId);
     }
 }
