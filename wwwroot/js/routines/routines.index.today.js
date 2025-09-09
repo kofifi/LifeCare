@@ -12,7 +12,7 @@
     function fmtYmd(d) {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     }
-    
+
     function isSameDay(a, b) {
         return a.getFullYear() === b.getFullYear() &&
             a.getMonth() === b.getMonth() &&
@@ -30,8 +30,26 @@
 
     function getSelectedTagIdsFromUrl() {
         const p = new URLSearchParams(window.location.search);
-        const ids = p.getAll("tagIds").map(x => parseInt(x, 10)).filter(n => !isNaN(n));
+        const ids = p.getAll("todayTagIds").map(x => String(parseInt(x, 10))).filter(v => v && v !== "NaN");
         return ids;
+    }
+
+    function setUrlTodayTagIds(ids) {
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("todayTagIds");
+            (ids || []).forEach(id => url.searchParams.append("todayTagIds", String(id)));
+            window.history.replaceState(null, "", url.toString());
+        } catch { /* no-op */ }
+    }
+    
+    function setUrlTagIds(ids) {
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("tagIds");
+            (ids || []).forEach(id => url.searchParams.append("tagIds", String(id)));
+            window.history.replaceState(null, "", url.toString());
+        } catch { /* no-op */ }
     }
 
     function isInteractiveTarget(e) {
@@ -40,21 +58,37 @@
         );
     }
 
+    function getRoutineTagIds(r) {
+        if (Array.isArray(r?.tagIds)) return r.tagIds.map(String);
+        if (Array.isArray(r?.selectedTagIds)) return r.selectedTagIds.map(String);
+        return [];
+    }
+
     async function loadForDate(dateStr) {
         const url = new URL(window.location.origin + `/Routines/ForDate`);
         url.searchParams.set("date", dateStr);
-        const tagIds = getSelectedTagIdsFromUrl();
-        for (const id of tagIds) url.searchParams.append("tagIds", String(id));
+
+        const urlTagIds = getSelectedTagIdsFromUrl();
+        for (const id of urlTagIds) url.searchParams.append("tagIds", String(id));
         url.searchParams.set("_", Date.now().toString());
 
         const res = await fetch(url.toString());
         const list = await res.json();
 
         let filtered = list;
-        if (tagIds.length > 0) {
+        if (urlTagIds.length > 0) {
             filtered = list.filter(it => {
-                const arr = Array.isArray(it.tagIds) ? it.tagIds : [];
-                return tagIds.every(t => arr.includes(t));
+                const tags = getRoutineTagIds(it);
+                if (!tags.length) return false;
+                return urlTagIds.every(t => tags.includes(String(t)));
+            });
+        }
+
+        if (state.tagIds.length > 0) {
+            filtered = filtered.filter(it => {
+                const tags = getRoutineTagIds(it);
+                if (!tags.length) return false;
+                return state.tagIds.every(id => tags.includes(id));
             });
         }
 
@@ -67,6 +101,7 @@
 
     function setTags(ids) {
         state.tagIds = (ids || []).map(String);
+        setUrlTodayTagIds(state.tagIds);
     }
 
     function updateTitle() {
@@ -144,18 +179,6 @@
         const host = qs("#todayList");
         if (!host) return;
 
-        const filteredByTags = (function(){
-            if (!state.tagIds.length) return list;
-            return list.filter(r => {
-                const ids = (r.selectedTagIds && Array.isArray(r.selectedTagIds))
-                    ? r.selectedTagIds.map(x => String(x))
-                    : [];
-                if (!ids.length) return false;
-                return state.tagIds.every(id => ids.includes(id));
-            });
-        })();
-        const filtered = filteredByTags;
-        
         host.innerHTML = "";
 
         if (!list.length) {
@@ -163,11 +186,19 @@
             return;
         }
 
-        filtered.forEach((r) => {
+        list.forEach((r) => {
             const card = document.createElement("div");
             card.className = "soft-card routine-card clickable-card";
             card.style.borderLeft = `8px solid ${r.color}`;
             card.setAttribute("data-href", `/Routines/Details/${r.routineId}`);
+
+            const tagIds = getRoutineTagIds(r);
+            if (tagIds.length) {
+                card.setAttribute("data-tags", tagIds.join(","));
+            } else {
+                card.setAttribute("data-tags", "");
+            }
+
             if (r.completed) card.classList.add("completed");
 
             const header = document.createElement("div");
@@ -386,6 +417,9 @@
     }
 
     function init() {
+        const fromUrl = getSelectedTagIdsFromUrl();
+        if (fromUrl.length) state.tagIds = fromUrl.map(String);
+
         bindWeekButtons();
         renderCalendar();
     }

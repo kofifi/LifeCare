@@ -70,9 +70,23 @@
 
 window.LC_Routines_All = (function () {
     const state = { tagIds: [] };
-
+    
+    function getAllTagIdsFromUrl() {
+        const p = new URLSearchParams(window.location.search);
+        return p.getAll("allTagIds").map(x => String(parseInt(x, 10))).filter(v => v && v !== "NaN");
+    }
+    function setUrlAllTagIds(ids) {
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("allTagIds");
+            (ids || []).forEach(id => url.searchParams.append("allTagIds", String(id)));
+            window.history.replaceState(null, "", url.toString());
+        } catch { /* no-op */ }
+    }
+    
     function setTags(ids) {
         state.tagIds = (ids || []).map(String);
+        setUrlAllTagIds(state.tagIds);
     }
 
     function cardHasAllTags(card) {
@@ -92,7 +106,7 @@ window.LC_Routines_All = (function () {
         host.querySelectorAll('.clickable-card').forEach(card => {
             const activeOk =
                 !statusVal ||
-                (statusVal === 'active'   && card.dataset.active === '1') ||
+                (statusVal === 'active' && card.dataset.active === '1') ||
                 (statusVal === 'inactive' && card.dataset.active === '0');
 
             const tagAttr = (card.getAttribute('data-tags') || '')
@@ -107,6 +121,9 @@ window.LC_Routines_All = (function () {
     }
 
     function init() {
+        const fromUrl = getAllTagIdsFromUrl();
+        if (fromUrl.length) state.tagIds = fromUrl;
+
         applyFilters();
         document.querySelector('.tf-status-apply')?.addEventListener('click', function (e) {
             e.preventDefault();

@@ -54,7 +54,7 @@
         {
             Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
             SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
-            QueryKey = "tagIds",
+            QueryKey = "todayTagIds",
             Placeholder = "Filtruj rutyny po tagach…",
             SubmitMode = "manual",
             Section = "today"
@@ -75,7 +75,7 @@
                 {
                     Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
                     SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
-                    QueryKey = "tagIds",
+                    QueryKey = "allTagIds",
                     Placeholder = "Filtruj rutyny po tagach…",
                     SubmitMode = "manual",
                     Section = "all"

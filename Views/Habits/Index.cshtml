@@ -22,14 +22,16 @@
         <button id="nextWeek" class="btn btn-outline-secondary">&raquo;</button>
     </div>
 
-    @await Html.PartialAsync("_TagFilter", new TagFilterVM
-    {
-        Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
-        SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
-        QueryKey = "tagIds",
-        Placeholder = "Filtruj nawyki po tagach…",
-        SubmitMode = "auto"
-    })
+    <div id="habitTagFilterWrap">
+        @await Html.PartialAsync("_TagFilter", new TagFilterVM
+        {
+            Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
+            SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
+            QueryKey = "tagIds",
+            Placeholder = "Filtruj nawyki po tagach…",
+            SubmitMode = "manual"   // możesz zostawić nawet "auto", ale trzymajmy spójnie jak w Routines/All
+        })
+    </div>
 
     <div class="d-flex flex-column gap-3" id="habit-list">
         @foreach (var habit in Model.OrderBy(h => h.Order))
@@ -108,6 +110,50 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tfRoot = document.querySelector('#habitTagFilterWrap .tf');
+        if (!tfRoot) return;
+        const form = tfRoot.closest('form');
+        if (!form) return;
+
+        const origSubmit = form.submit ? form.submit.bind(form) : null;
+        form.submit = function () {
+            try {
+                const selected = Array.from(tfRoot.querySelectorAll('.tf-list input[type="checkbox"]:checked'))
+                    .map(i => i.value);
+
+                const url = new URL(window.location.href);
+                url.searchParams.delete('tagIds');
+                selected.forEach(id => url.searchParams.append('tagIds', id));
+
+                window.history.replaceState(null, '', url.toString());
+
+                return false;
+            } catch (err) {
+                console.error('Habit tag filter submit override error:', err);
+                return false;
+            }
+        };
+
+        form.addEventListener('submit', function (e) { e.preventDefault(); }, true);
+
+        (function initFromUrl(){
+            const fromUrl = new URLSearchParams(location.search).getAll('tagIds').map(String);
+            if (!fromUrl.length) return;
+            tfRoot.querySelectorAll('.tf-list input[type="checkbox"]').forEach(cb => {
+                cb.checked = fromUrl.includes(cb.value);
+            });
+            const evt = new CustomEvent('tagfilter:change', {
+                bubbles: true, cancelable: true,
+                detail: { section: (tfRoot.dataset.section || 'today'), queryKey: (tfRoot.dataset.queryKey || 'tagIds'), selectedIds: fromUrl, root: tfRoot }
+            });
+            tfRoot.dispatchEvent(evt);
+        })();
+    });
+</script>
+
 }
 
 

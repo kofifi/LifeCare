@@ -5,7 +5,7 @@
     return `${y}-${m}-${day}`;
 }
 
-const tagFilterState = { tagIds: [] };
+const tagFilterState = {tagIds: []};
 
 function applyHabitFilters() {
     const selected = tagFilterState.tagIds.map(String);
@@ -32,7 +32,7 @@ new Sortable(document.getElementById('habit-list'), {
 
         fetch('/Habits/UpdateOrder', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(order)
         }).then(res => {
             if (!res.ok) alert('Błąd zapisu kolejności');
@@ -40,12 +40,15 @@ new Sortable(document.getElementById('habit-list'), {
     }
 });
 
-document.getElementById("categoryFilter").addEventListener("change", function () {
-    const selected = this.value;
-    document.querySelectorAll(".habit-card").forEach(el => {
-        el.style.display = (!selected || el.dataset.categoryId === selected) ? "block" : "none";
+const categoryFilter = document.getElementById("categoryFilter");
+if (categoryFilter) {
+    categoryFilter.addEventListener("change", function () {
+        const selected = this.value;
+        document.querySelectorAll(".habit-card").forEach(el => {
+            el.style.display = (!selected || el.dataset.categoryId === selected) ? "" : "none";
+        });
     });
-});
+}
 
 function renderCalendar() {
     const container = document.getElementById("calendar-scroll");
@@ -62,7 +65,7 @@ function renderCalendar() {
         const btn = document.createElement("button");
         btn.className = "btn btn-outline-primary mx-1 day-button";
         btn.dataset.date = ymdLocal(d);
-        btn.textContent = d.toLocaleDateString('pl-PL', { weekday: 'short', day: '2-digit', month: '2-digit' });
+        btn.textContent = d.toLocaleDateString('pl-PL', {weekday: 'short', day: '2-digit', month: '2-digit'});
 
         if (d.toDateString() === selectedDate.toDateString()) {
             btn.classList.add("active");
@@ -135,7 +138,7 @@ document.getElementById("confirmQuantityBtn").addEventListener("click", async fu
     if (!isNaN(quantity)) {
         const res = await fetch('/Habits/SaveEntry', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 habitId: selectedHabitId,
                 date: ymdLocal(selectedDate),
@@ -176,8 +179,8 @@ document.getElementById('habit-list').addEventListener('change', function (e) {
 function saveEntry(habitId, date, completed, quantity = null) {
     fetch('/Habits/SaveEntry', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ habitId, date, completed, quantity })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({habitId, date, completed, quantity})
     });
 }
 
