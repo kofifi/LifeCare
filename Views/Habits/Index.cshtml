@@ -38,55 +38,55 @@
     <div class="d-flex flex-column gap-3" id="habit-list">
         @foreach (var habit in Model.OrderBy(h => h.Order))
         {
-            <div class="habit-card"
-                 data-id="@habit.Id"
-                 data-tags="@(habit.SelectedTagIds == null ? "" : string.Join(',', habit.SelectedTagIds))"
-                 data-target="@habit.TargetQuantity"
-                 data-unit="@habit.Unit"
-                 data-color="@habit.Color">
+        <div class="habit-card"
+             data-id="@habit.Id"
+             data-type="@habit.Type"
+             data-tags="@(habit.SelectedTagIds == null ? "" : string.Join(',', habit.SelectedTagIds))"
+             data-target="@habit.TargetQuantity"
+             data-unit="@habit.Unit"
+             data-color="@habit.Color">
 
-                <div class="soft-card d-flex flex-row align-items-center"
-                     style="border-left: 10px solid @habit.Color;">
-                    <i class="me-3 fa @habit.Icon fa-2x" style="color: @habit.Color;"></i>
+            <div class="soft-card d-flex flex-row align-items-center"
+                 style="border-left: 10px solid @habit.Color;">
+                <i class="me-3 fa @habit.Icon fa-2x" style="color: @habit.Color;"></i>
 
-                    <div class="flex-grow-1 text-light">
-                        <a asp-action="Details"
-                           asp-route-id="@habit.Id"
-                           class="text-decoration-none text-light">
-                            <strong>@habit.Name</strong><br/>
-                            <small>@habit.Description</small>
+                <div class="flex-grow-1 text-light">
+                    <a asp-action="Details"
+                       asp-route-id="@habit.Id"
+                       class="text-decoration-none text-light">
+                        <strong>@habit.Name</strong><br/>
+                        <small>@habit.Description</small>
 
-                            @if (habit.SelectedTagIds != null && habit.SelectedTagIds.Any())
+                        @if (habit.SelectedTagIds != null && habit.SelectedTagIds.Any())
+                        {
+                        <div class="mt-1">
+                            @foreach (var tid in habit.SelectedTagIds)
                             {
-                                <div class="mt-1">
-                                    @foreach (var tid in habit.SelectedTagIds)
-                                    {
-                                        var nm = tagNameById.ContainsKey(tid) ? tagNameById[tid] : tid.ToString();
-                                        <span class="badge bg-secondary me-1">@nm</span>
-                                    }
-                                </div>
+                            var nm = tagNameById.ContainsKey(tid) ? tagNameById[tid] : tid.ToString();
+                            <span class="badge bg-secondary me-1">@nm</span>
                             }
-
-                        </a>
-                    </div>
-
-                    <div class="text-end">
-                        @if (habit.Type == LifeCare.Models.HabitType.Quantity)
-                        {
-                            <span class="habit-progress me-2"
-                                  data-habit-id="@habit.Id"
-                                  style="font-size: 0.9em; color: gray;">
-                                0/@habit.TargetQuantity
-                            </span>
-                            <button class="btn btn-outline-primary btn-sm">+</button>
+                        </div>
                         }
-                        else
-                        {
-                            <input type="checkbox" class="form-check-input"/>
-                        }
-                    </div>
+                    </a>
+                </div>
+
+                <div class="text-end">
+                    @if (habit.Type == LifeCare.Models.HabitType.Quantity)
+                    {
+                    <span class="habit-progress me-2"
+                          data-habit-progress
+                          style="font-size: 0.9em; color: gray;">
+                            0/@(habit.TargetQuantity ?? 0)
+                        </span>
+                    <button class="btn btn-outline-primary btn-sm" data-open-quantity>+</button>
+                    }
+                    else
+                    {
+                    <input type="checkbox" class="form-check-input" data-habit-checkbox />
+                    }
                 </div>
             </div>
+        </div>
         }
     </div>
 </div>

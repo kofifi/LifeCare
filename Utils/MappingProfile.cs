@@ -19,6 +19,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.Tags, o => o.Ignore())
             .ForMember(d => d.Entries, o => o.Ignore());
 
+        CreateMap<HabitEntry, HabitEntryVM>().ReverseMap();
+
         CreateMap<RoutineStep, RoutineStepVM>().ReverseMap();
         CreateMap<RoutineStepProduct, RoutineStepProductVM>().ReverseMap();
 

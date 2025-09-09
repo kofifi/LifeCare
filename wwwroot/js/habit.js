@@ -1,193 +1,280 @@
-﻿function ymdLocal(d = new Date()) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-}
+﻿(function () {
+    const state = {
+        selectedDate: new Date(),
+        weekOffset: 0
+    };
 
-const tagFilterState = {tagIds: []};
+    const qs = (sel, root = document) => root.querySelector(sel);
+    const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-function applyHabitFilters() {
-    const selected = tagFilterState.tagIds.map(String);
-    document.querySelectorAll(".habit-card").forEach(card => {
-        const tags = (card.getAttribute("data-tags") || "")
-            .split(",")
-            .map(s => s.trim())
-            .filter(Boolean);
-
-        const visible = !selected.length || selected.every(id => tags.includes(id));
-        card.style.display = visible ? "block" : "none";
-    });
-}
-
-let selectedHabitId = null;
-let selectedDate = new Date();
-let weekOffset = 0;
-
-new Sortable(document.getElementById('habit-list'), {
-    animation: 150,
-    onEnd: function () {
-        const order = Array.from(document.querySelectorAll('.habit-card'))
-            .map(el => el.getAttribute('data-id'));
-
-        fetch('/Habits/UpdateOrder', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(order)
-        }).then(res => {
-            if (!res.ok) alert('Błąd zapisu kolejności');
-        });
+    function fmtYmd(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
     }
-});
 
-const categoryFilter = document.getElementById("categoryFilter");
-if (categoryFilter) {
-    categoryFilter.addEventListener("change", function () {
-        const selected = this.value;
-        document.querySelectorAll(".habit-card").forEach(el => {
-            el.style.display = (!selected || el.dataset.categoryId === selected) ? "" : "none";
-        });
-    });
-}
+    function isSameDay(a, b) {
+        return a.getFullYear() === b.getFullYear()
+            && a.getMonth() === b.getMonth()
+            && a.getDate() === b.getDate();
+    }
 
-function renderCalendar() {
-    const container = document.getElementById("calendar-scroll");
-    container.innerHTML = "";
+    function renderCalendar() {
+        const host = qs('#calendar-scroll');
+        if (!host) return;
 
-    const baseDate = new Date();
-    baseDate.setDate(baseDate.getDate() + weekOffset * 7);
-    const monday = new Date(baseDate);
-    monday.setDate(monday.getDate() - (monday.getDay() + 6) % 7);
+        host.innerHTML = '';
+        const base = new Date();
+        base.setDate(base.getDate() + state.weekOffset * 7);
 
-    for (let i = 0; i < 7; i++) {
-        const d = new Date(monday);
-        d.setDate(d.getDate() + i);
-        const btn = document.createElement("button");
-        btn.className = "btn btn-outline-primary mx-1 day-button";
-        btn.dataset.date = ymdLocal(d);
-        btn.textContent = d.toLocaleDateString('pl-PL', {weekday: 'short', day: '2-digit', month: '2-digit'});
+        const monday = new Date(base);
+        const delta = (monday.getDay() + 6) % 7;
+        monday.setDate(monday.getDate() - delta);
 
-        if (d.toDateString() === selectedDate.toDateString()) {
-            btn.classList.add("active");
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(d.getDate() + i);
+
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline-primary mx-1 day-button';
+            btn.dataset.date = fmtYmd(d);
+            btn.textContent = d.toLocaleDateString('pl-PL', {weekday: 'short', day: '2-digit', month: '2-digit'});
+            if (isSameDay(d, state.selectedDate)) btn.classList.add('active');
+
+            btn.addEventListener('click', () => {
+                qsa('.day-button', host).forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.selectedDate = new Date(`${btn.dataset.date}T00:00:00`);
+                loadEntries(fmtYmd(state.selectedDate));
+            });
+
+            host.appendChild(btn);
         }
 
-        btn.addEventListener("click", function () {
-            document.querySelectorAll(".day-button").forEach(b => b.classList.remove("active"));
-            this.classList.add("active");
-            selectedDate = new Date(this.dataset.date);
-            loadEntriesForDate(this.dataset.date);
-        });
-
-        container.appendChild(btn);
+        loadEntries(fmtYmd(state.selectedDate));
     }
 
-    loadEntriesForDate(ymdLocal(selectedDate));
-}
+    function bindWeekButtons() {
+        qs('#prevWeek')?.addEventListener('click', () => {
+            state.weekOffset--;
+            renderCalendar();
+        });
+        qs('#nextWeek')?.addEventListener('click', () => {
+            state.weekOffset++;
+            renderCalendar();
+        });
+    }
 
-document.getElementById("prevWeek").addEventListener("click", () => {
-    weekOffset--;
-    renderCalendar();
-});
+    async function loadEntries(dateStr) {
+        const res = await fetch(`/Habits/GetEntries?date=${encodeURIComponent(dateStr + 'T12:00:00')}`, {cache: 'no-store'});
+        if (!res.ok) return;
+        const entries = await res.json();
 
-document.getElementById("nextWeek").addEventListener("click", () => {
-    weekOffset++;
-    renderCalendar();
-});
+        resetUiToDefaults();
 
-function loadEntriesForDate(date) {
-    fetch(`/Habits/GetEntries?date=${date}`)
-        .then(res => res.json())
-        .then(entries => {
-            document.querySelectorAll(".habit-card").forEach(card => {
-                const id = parseInt(card.dataset.id);
-                const entry = entries.find(e => e.habitId === id);
-                const checkbox = card.querySelector('input[type=checkbox]');
-                const progress = card.querySelector('.habit-progress');
-                const target = parseFloat(card.getAttribute('data-target')) || 0;
+        const byHabit = new Map();
+        entries.forEach(e => {
+            const hid = e.habitId ?? e.HabitId ?? e.habitID;
+            if (hid != null) byHabit.set(Number(hid), e);
+        });
 
-                if (checkbox) {
-                    checkbox.checked = entry?.completed || false;
+        qsa('.habit-card').forEach(card => {
+            const id = Number(card.dataset.id);
+            const type = (card.dataset.type || '').toLowerCase();
+            const target = Number(card.dataset.target || 0);
+
+            const entry = byHabit.get(id);
+
+            if (type === 'checkbox') {
+                const cb = qs('[data-habit-checkbox]', card);
+                if (!cb) return;
+                const done = !!(entry && (entry.completed ?? entry.Completed));
+                cb.checked = done;
+            } else {
+                const prog = qs('[data-habit-progress]', card);
+                if (!prog) return;
+                const q = Number(entry?.quantity ?? entry?.Quantity ?? 0);
+                prog.textContent = `${q}/${isNaN(target) ? 0 : target}`;
+                if (target > 0 && q >= target) {
+                    prog.style.color = 'var(--bs-success, #28a745)';
+                    prog.classList.add('fw-semibold');
+                } else if (q > 0) {
+                    prog.style.color = 'var(--bs-warning, #ffc107)';
+                    prog.classList.remove('fw-semibold');
+                } else {
+                    prog.style.color = 'gray';
+                    prog.classList.remove('fw-semibold');
                 }
+            }
+        });
+    }
 
-                if (progress) {
-                    const quantity = entry?.quantity || 0;
-                    progress.innerHTML = `${quantity}/${target}`;
-                    progress.style.color = quantity >= target ? card.dataset.color : 'gray';
-                    if (quantity >= target) {
-                        progress.innerHTML += ' <i class="fa fa-check text-success"></i>';
-                    }
+    function resetUiToDefaults() {
+        qsa('.habit-card').forEach(card => {
+            const type = (card.dataset.type || '').toLowerCase();
+            const target = Number(card.dataset.target || 0);
+            if (type === 'checkbox') {
+                const cb = qs('[data-habit-checkbox]', card);
+                if (cb) cb.checked = false;
+            } else {
+                const prog = qs('[data-habit-progress]', card);
+                if (prog) {
+                    prog.textContent = `0/${isNaN(target) ? 0 : target}`;
+                    prog.style.color = 'gray';
+                    prog.classList.remove('fw-semibold');
+                }
+            }
+        });
+    }
+
+    function bindInteractions() {
+        const list = qs('#habit-list');
+        if (!list) return;
+
+        list.addEventListener('change', async (e) => {
+            const cb = e.target.closest('[data-habit-checkbox]');
+            if (!cb) return;
+
+            const card = e.target.closest('.habit-card');
+            if (!card) return;
+
+            const habitId = Number(card.dataset.id);
+            const completed = !!cb.checked;
+
+            const d = state.selectedDate;
+            const safeDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
+
+            const payload = {
+                habitId,
+                date: safeDate,
+                completed,
+                quantity: null
+            };
+
+            const ok = await fetch('/Habits/SaveEntry', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(r => r.ok);
+
+            if (!ok) cb.checked = !completed;
+            else await loadEntries(fmtYmd(state.selectedDate));
+        });
+
+        list.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-qty-plus]');
+            if (!btn) return;
+
+            const card = e.target.closest('.habit-card');
+            if (!card) return;
+
+            const name = card.dataset.name || 'Nawyk';
+            const unit = card.dataset.unit || '';
+            const hid = Number(card.dataset.id);
+
+            const modalEl = qs('#quantityModal');
+            if (!modalEl) return;
+
+            modalEl.dataset.habitId = String(hid);
+            modalEl.querySelector('#modalHabitName').textContent = name;
+            modalEl.querySelector('#modalUnit').textContent = unit;
+            modalEl.querySelector('#modalQuantityInput').value = '';
+
+            const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+            m.show();
+        });
+
+        qs('#confirmQuantityBtn')?.addEventListener('click', async () => {
+            const modalEl = qs('#quantityModal');
+            if (!modalEl) return;
+
+            const hid = Number(modalEl.dataset.habitId);
+            const val = Number(qs('#modalQuantityInput').value || 0);
+            const card = qs(`.habit-card[data-id="${hid}"]`);
+            const target = Number(card?.dataset.target || 0);
+
+            const completed = target > 0 ? (val >= target) : (val > 0);
+
+            const d = state.selectedDate;
+            const safeDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
+
+            const payload = {
+                habitId: hid,
+                date: safeDate,
+                completed,
+                quantity: isNaN(val) ? 0 : val
+            };
+
+            const ok = await fetch('/Habits/SaveEntry', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(r => r.ok);
+
+            if (ok) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                await loadEntries(fmtYmd(state.selectedDate));
+            }
+        });
+    }
+
+    function initFromUrlTagFilter() {
+        const tfRoot = document.querySelector('#habitTagFilterWrap .tf');
+        if (!tfRoot) return;
+        const form = tfRoot.closest('form');
+        if (!form) return;
+
+        const origSubmit = form.submit ? form.submit.bind(form) : null;
+        form.submit = function () {
+            try {
+                const selected = Array.from(tfRoot.querySelectorAll('.tf-list input[type="checkbox"]:checked'))
+                    .map(i => i.value);
+
+                const url = new URL(window.location.href);
+                url.searchParams.delete('tagIds');
+                selected.forEach(id => url.searchParams.append('tagIds', id));
+
+                window.history.replaceState(null, '', url.toString());
+                if (typeof origSubmit === 'function') origSubmit();
+            } catch {
+            }
+            return false;
+        };
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+        }, true);
+
+        (function seed() {
+            const fromUrl = new URLSearchParams(location.search).getAll('tagIds').map(String);
+            if (!fromUrl.length) return;
+            tfRoot.querySelectorAll('.tf-list input[type="checkbox"]').forEach(cb => {
+                cb.checked = fromUrl.includes(cb.value);
+            });
+            const evt = new CustomEvent('tagfilter:change', {
+                bubbles: true, cancelable: true,
+                detail: {
+                    section: (tfRoot.dataset.section || 'habits'),
+                    queryKey: (tfRoot.dataset.queryKey || 'tagIds'),
+                    selectedIds: fromUrl,
+                    root: tfRoot
                 }
             });
-        });
-}
-
-function openQuantityModal(habitId, card, current, target) {
-    selectedHabitId = habitId;
-    const name = card.querySelector('strong').textContent;
-    const unit = card.getAttribute('data-unit') || "";
-
-    document.getElementById("modalHabitName").textContent = name;
-    document.getElementById("modalUnit").textContent = unit;
-    document.getElementById("modalQuantityInput").value = current;
-    const modal = new bootstrap.Modal(document.getElementById("quantityModal"));
-    modal.show();
-}
-
-document.getElementById("confirmQuantityBtn").addEventListener("click", async function () {
-    const quantity = parseFloat(document.getElementById("modalQuantityInput").value);
-    if (!isNaN(quantity)) {
-        const res = await fetch('/Habits/SaveEntry', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                habitId: selectedHabitId,
-                date: ymdLocal(selectedDate),
-                completed: true,
-                quantity: quantity
-            })
-        });
-
-        if (res.ok) {
-            bootstrap.Modal.getInstance(document.getElementById("quantityModal")).hide();
-            loadEntriesForDate(ymdLocal(selectedDate));
-        } else {
-            alert('Wystąpił błąd podczas zapisu.');
-        }
+            tfRoot.dispatchEvent(evt);
+        })();
     }
-});
 
-document.getElementById('habit-list').addEventListener('click', function (e) {
-    if (e.target.closest('button') && e.target.closest('.habit-card')) {
-        const button = e.target.closest('button');
-        const card = button.closest('.habit-card');
-        const habitId = parseInt(card.dataset.id);
-        const progress = card.querySelector('.habit-progress');
-        const quantity = parseFloat(progress?.textContent.split('/')[0]) || 0;
-        const target = parseFloat(card.dataset.target) || 0;
-        openQuantityModal(habitId, card, quantity, target);
+    function init() {
+        bindWeekButtons();
+        bindInteractions();
+        initFromUrlTagFilter();
+        renderCalendar();
     }
-});
 
-document.getElementById('habit-list').addEventListener('change', function (e) {
-    if (e.target.type === 'checkbox' && e.target.closest('.habit-card')) {
-        const card = e.target.closest('.habit-card');
-        const habitId = parseInt(card.dataset.id);
-        saveEntry(habitId, ymdLocal(selectedDate), e.target.checked);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
-});
-
-function saveEntry(habitId, date, completed, quantity = null) {
-    fetch('/Habits/SaveEntry', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({habitId, date, completed, quantity})
-    });
-}
-
-renderCalendar();
-
-document.addEventListener('tagfilter:change', (e) => {
-    e.preventDefault();
-    tagFilterState.tagIds = (e.detail?.selectedIds || []).map(String);
-    applyHabitFilters();
-});
+})();
