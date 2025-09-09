@@ -34,12 +34,21 @@
     });
 
     host.addEventListener("click", (e) => {
-        if (e.target.closest("[data-no-bubble]") || e.target.closest("[data-bs-toggle]")) {
-            e.preventDefault();
+        const noBubbleEl = e.target.closest("[data-no-bubble]");
+        if (noBubbleEl) {
+            e.stopPropagation();
+            return;
+        }
+        const modalTrigger = e.target.closest("[data-bs-toggle]");
+        if (modalTrigger) {
+            if (!(modalTrigger.tagName === "A" && modalTrigger.getAttribute("href"))) {
+                e.preventDefault();
+            }
             e.stopPropagation();
         }
     });
 })();
+
 
 (function () {
     function wireRoutineDeleteModal() {

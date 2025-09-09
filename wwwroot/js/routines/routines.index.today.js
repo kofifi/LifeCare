@@ -64,6 +64,16 @@
         return [];
     }
 
+    function escapeHtml(s) {
+        return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+    function tagsHtml(ids) {
+        const dict = window.LC_TagDict || {};
+        const names = (ids || []).map(String).map(id => dict[id] || id);
+        if (!names.length) return "";
+        return `<div class="mt-1">${names.map(n => `<span class="badge bg-secondary me-1">${escapeHtml(n)}</span>`).join("")}</div>`;
+    }
+
     async function loadForDate(dateStr) {
         const url = new URL(window.location.origin + `/Routines/ForDate`);
         url.searchParams.set("date", dateStr);
@@ -210,6 +220,7 @@
             <div class="fw-semibold ${r.completed ? "strike" : ""}">${r.name}</div>
             ${r.description ? `<div class="small text-muted">${r.description}</div>` : ``}
             ${r.timeOfDay ? `<div class="small text-muted">${fmtTimeMaybe(r.timeOfDay)}</div>` : ``}
+            ${tagsHtml(getRoutineTagIds(r))}
           </div>
         </div>
         <div class="d-flex align-items-center gap-2">

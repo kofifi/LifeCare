@@ -1,20 +1,43 @@
 ﻿window.LC_Routines_Index = (function () {
-    function qs(sel) {
-        return document.querySelector(sel);
-    }
-
-    function show(el) {
-        el?.classList.remove("d-none");
-    }
-
-    function hide(el) {
-        el?.classList.add("d-none");
-    }
+    function qs(sel) { return document.querySelector(sel); }
+    function show(el) { el?.classList.remove("d-none"); }
+    function hide(el) { el?.classList.add("d-none"); }
 
     function getSectionFromUrl() {
         const p = new URLSearchParams(window.location.search);
         const sec = (p.get("section") || "").toLowerCase();
         return (sec === "all" || sec === "today") ? `#${sec}Section` : "#todaySection";
+    }
+
+    function clearTagFilterUI(sectionSel) {
+        const root = document.querySelector(`${sectionSel} .tf`);
+        if (!root) return;
+        root.querySelector(".tf-clear")?.click();
+        root.querySelector(".tf-reset")?.click();
+        root.querySelectorAll('.tf-list input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+        const evt = new CustomEvent('tagfilter:change', {
+            bubbles: true, cancelable: true,
+            detail: { section: root.dataset.section || 'today', queryKey: root.dataset.queryKey || '', selectedIds: [], root }
+        });
+        root.dispatchEvent(evt);
+    }
+
+    function clearOtherSectionFiltersAndUrl(targetId) {
+        const url = new URL(window.location.href);
+
+        if (targetId === "#todaySection") {
+            url.searchParams.delete("allTagIds");
+            history.replaceState(null, "", url.toString());
+            if (window.LC_Routines_All?.setTags) window.LC_Routines_All.setTags([]);
+            if (window.LC_Routines_All?.applyFilters) window.LC_Routines_All.applyFilters();
+            clearTagFilterUI("#allSection");
+        } else {
+            url.searchParams.delete("todayTagIds");
+            history.replaceState(null, "", url.toString());
+            if (window.LC_Routines_Today?.setTags) window.LC_Routines_Today.setTags([]);
+            if (window.LC_Routines_Today?.reload) window.LC_Routines_Today.reload();
+            clearTagFilterUI("#todaySection");
+        }
     }
 
     function switchSection(targetId) {
@@ -23,18 +46,16 @@
         const statusCol = qs("#statusFilterCol");
 
         if (targetId === "#todaySection") {
-            show(today);
-            hide(all);
-            hide(statusCol);
+            show(today); hide(all); hide(statusCol);
             qs("#btnToday")?.classList.replace("btn-outline-primary", "btn-primary");
             qs("#btnAll")?.classList.replace("btn-primary", "btn-outline-primary");
+            clearOtherSectionFiltersAndUrl("#todaySection");
             if (window.LC_Routines_Today?.reload) window.LC_Routines_Today.reload();
         } else {
-            hide(today);
-            show(all);
-            show(statusCol);
+            hide(today); show(all); show(statusCol);
             qs("#btnAll")?.classList.replace("btn-outline-primary", "btn-primary");
             qs("#btnToday")?.classList.replace("btn-primary", "btn-outline-primary");
+            clearOtherSectionFiltersAndUrl("#allSection");
             if (window.LC_Routines_All?.applyFilters) window.LC_Routines_All.applyFilters();
         }
     }
@@ -42,15 +63,23 @@
     function initNav() {
         const btnToday = qs("#btnToday");
         const btnAll = qs("#btnAll");
-        btnToday?.addEventListener("click", () => {
+
+        btnToday?.addEventListener("click", (e) => {
+            e.preventDefault();
             const url = new URL(window.location.href);
             url.searchParams.set("section", "today");
-            window.location.href = url.toString();
+            url.searchParams.delete("allTagIds");
+            history.replaceState(null, "", url.toString());
+            switchSection("#todaySection");
         });
-        btnAll?.addEventListener("click", () => {
+
+        btnAll?.addEventListener("click", (e) => {
+            e.preventDefault();
             const url = new URL(window.location.href);
             url.searchParams.set("section", "all");
-            window.location.href = url.toString();
+            url.searchParams.delete("todayTagIds");
+            history.replaceState(null, "", url.toString());
+            switchSection("#allSection");
         });
 
         switchSection(getSectionFromUrl());
@@ -97,7 +126,6 @@
         }
     });
 
-
     function init() {
         initNav();
         initFilters();
@@ -105,7 +133,7 @@
         if (window.LC_Routines_All?.init) window.LC_Routines_All.init?.();
     }
 
-    return {init, switchSection};
+    return { init, switchSection };
 })();
 
 document.addEventListener('tagfilter:change', function (e) {

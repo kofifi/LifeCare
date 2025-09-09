@@ -88,7 +88,7 @@ namespace LifeCare.Controllers
             if (vm == null) return NotFound();
 
             vm.AvailableTags = await _routineService.GetUserTagsAsync(userId!);
-            
+
             var stepsJson = System.Text.Json.JsonSerializer.Serialize(
                 (vm.Steps ?? new List<RoutineStepVM>())
                 .OrderBy(s => s.Order)
@@ -190,7 +190,8 @@ namespace LifeCare.Controllers
                     out var d))
                 return BadRequest();
 
-            var ok = await _routineService.ToggleStepProductAsync(dto.RoutineId, dto.StepId, dto.ProductId, d, dto.Completed,
+            var ok = await _routineService.ToggleStepProductAsync(dto.RoutineId, dto.StepId, dto.ProductId, d,
+                dto.Completed,
                 userId);
             return ok ? Ok() : BadRequest();
         }

@@ -3,6 +3,8 @@
 
 @{
     ViewData["Title"] = "Twoje nawyki";
+    var allTagsVm = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>());
+    var tagNameById = allTagsVm.ToDictionary(t => t.Id, t => t.Name);
 }
 
 <div class="container py-4">
@@ -29,7 +31,7 @@
             SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
             QueryKey = "tagIds",
             Placeholder = "Filtruj nawyki po tagach…",
-            SubmitMode = "manual"   // możesz zostawić nawet "auto", ale trzymajmy spójnie jak w Routines/All
+            SubmitMode = "manual"
         })
     </div>
 
@@ -53,6 +55,18 @@
                            class="text-decoration-none text-light">
                             <strong>@habit.Name</strong><br/>
                             <small>@habit.Description</small>
+
+                            @if (habit.SelectedTagIds != null && habit.SelectedTagIds.Any())
+                            {
+                                <div class="mt-1">
+                                    @foreach (var tid in habit.SelectedTagIds)
+                                    {
+                                        var nm = tagNameById.ContainsKey(tid) ? tagNameById[tid] : tid.ToString();
+                                        <span class="badge bg-secondary me-1">@nm</span>
+                                    }
+                                </div>
+                            }
+
                         </a>
                     </div>
 

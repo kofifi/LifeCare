@@ -1,9 +1,14 @@
 ﻿@model LifeCare.ViewModels.HabitVM
-@using LifeCare.Models
 @{
-ViewData["Title"] = "Szczegóły nawyku";
-var color = Model.Color;
-var icon = Model.Icon;
+    ViewData["Title"] = "Szczegóły nawyku";
+    var color = Model.Color;
+    var icon = Model.Icon;
+}
+
+@using System.Linq
+@{
+    var tagDict = (Model.AvailableTags ?? Enumerable.Empty<LifeCare.ViewModels.TagVM>()).ToDictionary(t => t.Id, t => t.Name);
+    var habitTags = (Model.SelectedTagIds ?? new List<int>()).Select(id => tagDict.TryGetValue(id, out var n) ? n : id.ToString()).ToList();
 }
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/Chart.min.css"/>
@@ -48,29 +53,34 @@ var icon = Model.Icon;
 
             @if (Model.Type == HabitType.Checkbox)
             {
-            <div class="mb-2">
-                <span class="badge bg-secondary">Zadanie</span>
-            </div>
+                <div class="mb-2">
+                    <span class="badge bg-secondary">Zadanie</span>
+                </div>
             }
             else
             {
-            <div class="mb-2">
-                <span class="badge bg-secondary">Cel: @Model.TargetQuantity @Model.Unit</span>
-            </div>
+                <div class="mb-2">
+                    <span class="badge bg-secondary">Cel: @Model.TargetQuantity @Model.Unit</span>
+                </div>
+            }
+
+            @if (habitTags.Any())
+            {
+                <div class="text-muted">Tagi: @string.Join(", ", habitTags)</div>
             }
         </div>
     </div>
 
     @await Html.PartialAsync("~/Views/Shared/Stats/_StatsWeekChart.cshtml", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit", WeekTitle = "Wpisy (tydzień)" })
-    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsSummary.cshtml",   new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit" })
-    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsPieChart.cshtml",  new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit", PieTitle = "Ukończone vs częściowe vs pominięte" })
-    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsCalendar.cshtml",  new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit" })
+    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsSummary.cshtml", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit" })
+    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsPieChart.cshtml", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit", PieTitle = "Ukończone vs częściowe vs pominięte" })
+    @await Html.PartialAsync("~/Views/Shared/Stats/_StatsCalendar.cshtml", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "habit" })
 
     @await Html.PartialAsync("_HabitDeleteModal", Model)
 </div>
 
 @section Scripts {
-<partial name="_ValidationScriptsPartial" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="~/js/habits.details.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="~/js/habits.details.js" asp-append-version="true"></script>
 }

@@ -23,6 +23,7 @@ namespace LifeCare.Services
             var query = _db.Routines
                 .AsNoTracking()
                 .Include(r => r.Tags)
+                .Include(r => r.Steps)
                 .Where(r => r.UserId == userId);
 
             if (tagIds != null && tagIds.Count > 0)
@@ -56,6 +57,13 @@ namespace LifeCare.Services
 
             var vm = _mapper.Map<RoutineVM>(entity);
             vm.SelectedTagIds = entity.Tags?.Select(t => t.Id).ToList() ?? new List<int>();
+            vm.AvailableTags = await _db.Tags
+                .AsNoTracking()
+                .Where(t => t.UserId == userId)
+                .OrderBy(t => t.Name)
+                .Select(t => new TagVM { Id = t.Id, Name = t.Name })
+                .ToListAsync();
+
             return vm;
         }
 

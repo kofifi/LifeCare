@@ -55,6 +55,13 @@ namespace LifeCare.Services
 
             var vm = _mapper.Map<HabitVM>(habit);
             vm.SelectedTagIds = habit.Tags?.Select(t => t.Id).ToList() ?? new List<int>();
+            vm.AvailableTags = await _context.Tags
+                .AsNoTracking()
+                .Where(t => t.UserId == userId)
+                .OrderBy(t => t.Name)
+                .Select(t => new TagVM { Id = t.Id, Name = t.Name })
+                .ToListAsync();
+
             return vm;
         }
 

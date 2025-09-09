@@ -5,6 +5,12 @@
     var icon = Model.Icon;
 }
 
+@using System.Linq
+@{
+    var tagDict = (Model.AvailableTags ?? Enumerable.Empty<LifeCare.ViewModels.TagVM>()).ToDictionary(t => t.Id, t => t.Name);
+    var routineTags = (Model.SelectedTagIds ?? new List<int>()).Select(id => tagDict.TryGetValue(id, out var n) ? n : id.ToString()).ToList();
+}
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/Chart.min.css"/>
 
 <div class="container py-4" id="routine-root"
@@ -28,7 +34,9 @@
                            data-bs-target="#routineDeleteModal"
                            data-id="@Model.Id"
                            data-name="@Model.Name"
-                           data-no-bubble><i class="fa fa-trash me-2"></i>Usuń</a>
+                           data-no-bubble>
+                            <i class="fa fa-trash me-2"></i>Usuń
+                        </a>
                     </li>
                 </ul>
             </div>
@@ -40,6 +48,10 @@
             @if (!string.IsNullOrWhiteSpace(Model.Description))
             {
                 <div class="text-muted">@Model.Description</div>
+            }
+            @if (routineTags.Any())
+            {
+                <div class="text-muted mt-2">Tagi: @string.Join(", ", routineTags)</div>
             }
         </div>
     </div>
@@ -167,5 +179,5 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/stats.common.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/routines.details.css" asp-append-version="true"/>
-<link rel="stylesheet" href="~/css/stats.shared.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/stats.shared.css" asp-append-version="true"/>
 }

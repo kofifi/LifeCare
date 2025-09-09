@@ -3,6 +3,8 @@
     ViewData["Title"] = "Rutyny";
 
     Func<IEnumerable<TagVM>?, string> tagIds = ts => ts == null ? "" : string.Join(',', ts.Select(t => t.Id));
+    var allTagsVm = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>());
+    var tagNameById = allTagsVm.ToDictionary(t => t.Id, t => t.Name);
 
     bool IsActive(string? rrule)
     {
@@ -28,12 +30,14 @@
 }
 
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Rutyny</h2>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="fa fa-plus"></i>
-        </a>
-        <a asp-controller="Tags" asp-action="Index" class="btn btn-secondary">Tagi</a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Twoje rutyny</h2>
+        <div>
+            <a asp-action="Create" class="btn btn-primary me-2">
+                <i class="fa fa-plus"></i>
+            </a>
+            <a asp-controller="Tags" asp-action="Index" class="btn btn-secondary">Tagi</a>
+        </div>
     </div>
 
     <div class="mb-3">
@@ -125,11 +129,22 @@
                                     <div class="small text-muted">@($"{(int)r.TimeOfDay.Value.TotalHours:0}:{r.TimeOfDay.Value.Minutes:00}")</div>
                                 }
                                 <div class="small">Status: @(active ? "aktywna" : "nieaktywna")</div>
+                                
+                                @if (r.SelectedTagIds != null && r.SelectedTagIds.Any())
+                                {
+                                    <div class="mt-1">
+                                        @foreach (var tid in r.SelectedTagIds)
+                                        {
+                                            var nm = tagNameById.ContainsKey(tid) ? tagNameById[tid] : tid.ToString();
+                                            <span class="badge bg-secondary me-1">@nm</span>
+                                        }
+                                    </div>
+                                }
                             </div>
                         </div>
 
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary">@r.Steps.Count kroków</span>
+                            <span class="badge bg-secondary">@((r.Steps?.Count)) kroków</span>
 
                             <a class="icon-btn"
                                href='@Url.Action("Edit", "Routines", new { id = r.Id })'
@@ -233,5 +248,13 @@
     <script src="~/js/routines/routines.index.today.js" asp-append-version="true"></script>
     <script src="~/js/routines/routines.index.all.js" asp-append-version="true"></script>
     <script src="~/js/tags.js" asp-append-version="true"></script>
+
+    <script>
+    window.LC_TagDict = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                            ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
+                            .ToDictionary(t => t.Id.ToString(), t => t.Name)
+                        ));
+    </script>
+
     <script> window.LC_Routines_Index.init(); </script>
 }
