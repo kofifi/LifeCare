@@ -1,9 +1,9 @@
 ﻿@model LifeCare.ViewModels.HabitVM
-@await Html.PartialAsync("_CategoryModal", new LifeCare.ViewModels.CategoryVM())
 
 @{
     ViewData["Title"] = "Dodaj nawyk";
-    var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
+    var tagItems = Model.AvailableTags ?? new List<LifeCare.ViewModels.TagVM>();
+    var selected = Model.SelectedTagIds ?? new List<int>();
 }
 
 <h2 class="mb-4">Dodaj nawyk</h2>
@@ -41,7 +41,6 @@
         Label = "Ikona"
     })
 
-    <!-- Typ -->
     <div class="mb-3">
         <label asp-for="Type" class="form-label">Typ</label>
         <select asp-for="Type" class="form-select" id="habitType">
@@ -59,29 +58,34 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label">Kategoria</label>
+        <label class="form-label">Tagi</label>
         <div class="input-group">
-            <select asp-for="CategoryId" class="form-select" id="categorySelect">
-                <option value="">Brak</option>
-                @if (categories != null)
+            <select name="SelectedTagIds"
+                    id="SelectedTagIds"
+                    class="form-select"
+                    multiple
+                    style="min-height: 140px; width: 100%;">
+                @foreach (var t in tagItems)
                 {
-                    foreach (var category in categories)
+                    if (selected.Contains(t.Id))
                     {
-                        <option value="@category.Id">@category.Name</option>
+                        <option value="@t.Id" selected>@t.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@t.Id">@t.Name</option>
                     }
                 }
             </select>
-            <button type="button" class="btn btn-sm btn-outline-secondary ms-2"
-                    data-bs-toggle="modal" data-bs-target="#categoryModal"
-                    data-target-select="categorySelect">
-                <i class="fa fa-plus"></i> Nowa
-            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnAddTag">+ Nowy</button>
         </div>
     </div>
 
     <button type="submit" class="btn btn-primary">Zapisz</button>
     <a asp-action="Index" class="btn btn-secondary">Anuluj</a>
 </form>
+
+@await Html.PartialAsync("_TagModal", new TagVM())
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial"/>
@@ -106,5 +110,30 @@
     });
     </script>
 
-    <script src="~/js/site-category-modal.js" asp-append-version="true"></script>
+    <script src="~/js/habit.js" asp-append-version="true"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const el = document.getElementById('SelectedTagIds');
+        if (!el) return;
+        window.__TagChoices = new Choices(el, {
+            removeItemButton: true,
+            shouldSort: true,
+            placeholderValue: 'Wybierz tagi…',
+            searchPlaceholderValue: 'Szukaj…',
+            noResultsText: 'Brak wyników',
+            noChoicesText: 'Brak tagów',
+            itemSelectText: ''
+        });
+    });
+</script>
+
+}
+
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/tags.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
 }

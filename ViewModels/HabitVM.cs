@@ -17,9 +17,10 @@ namespace LifeCare.ViewModels
         public HabitType Type { get; set; }
         public string? Unit { get; set; }
         public int? TargetQuantity { get; set; }
-        public int? CategoryId { get; set; }
         public int Order { get; set; }
 
         public DateTime StartDateUtc { get; set; }
+        public List<int> SelectedTagIds { get; set; } = new();
+        public List<TagVM> AvailableTags { get; set; } = new();
     }
 }

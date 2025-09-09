@@ -25,10 +25,8 @@ namespace LifeCare.Models
         public bool ReminderEnabled { get; set; }
         public int? ReminderMinutesBefore { get; set; }
 
-        public int? CategoryId { get; set; }
-        public Category? Category { get; set; }
-
         public ICollection<RoutineStep> Steps { get; set; } = new List<RoutineStep>();
         public ICollection<RoutineEntry> Entries { get; set; } = new List<RoutineEntry>();
+        public ICollection<Tag> Tags { get; set; } = new List<Tag>();
     }
 }

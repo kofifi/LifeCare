@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using LifeCare.Data;
 using LifeCare.Models;
-using LifeCare.Services.Interfaces;
 using LifeCare.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
@@ -20,29 +18,45 @@ namespace LifeCare.Services
             _mapper = mapper;
         }
 
-        public Task<List<Category>> GetUserCategoriesAsync(string userId)
+        public async Task<List<RoutineVM>> GetAllRoutinesAsync(string userId, List<int>? tagIds)
         {
-            return _db.Categories
-                .Where(c => c.UserId == userId)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
-        }
+            var query = _db.Routines
+                .AsNoTracking()
+                .Include(r => r.Tags)
+                .Where(r => r.UserId == userId);
 
-        public async Task<List<RoutineVM>> GetAllRoutinesAsync(string userId)
-        {
-            return await _db.Routines
-                .Where(r => r.UserId == userId)
+            if (tagIds != null && tagIds.Count > 0)
+            {
+                query = query.Where(r => r.Tags.Any(t => tagIds.Contains(t.Id)));
+            }
+
+            var list = await query
                 .OrderBy(r => r.Order)
-                .ProjectTo<RoutineVM>(_mapper.ConfigurationProvider)
                 .ToListAsync();
+
+            var result = list.Select(r =>
+            {
+                var vm = _mapper.Map<RoutineVM>(r);
+                vm.SelectedTagIds = r.Tags?.Select(t => t.Id).ToList() ?? new List<int>();
+                return vm;
+            }).ToList();
+
+            return result;
         }
 
         public async Task<RoutineVM?> GetRoutineAsync(int id, string userId)
         {
-            return await _db.Routines
-                .Where(r => r.UserId == userId && r.Id == id)
-                .ProjectTo<RoutineVM>(_mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync();
+            var entity = await _db.Routines
+                .AsNoTracking()
+                .Include(r => r.Tags)
+                .Include(r => r.Steps).ThenInclude(s => s.Products)
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.Id == id);
+
+            if (entity == null) return null;
+
+            var vm = _mapper.Map<RoutineVM>(entity);
+            vm.SelectedTagIds = entity.Tags?.Select(t => t.Id).ToList() ?? new List<int>();
+            return vm;
         }
 
         public async Task<int> CreateRoutineAsync(RoutineVM vm, string userId)
@@ -60,7 +74,14 @@ namespace LifeCare.Services
 
             entity.Order = (maxOrder ?? -1) + 1;
 
-            entity.CategoryId = vm.CategoryId;
+            // TAGI (opcjonalne)
+            if (vm.SelectedTagIds != null && vm.SelectedTagIds.Count > 0)
+            {
+                var tags = await _db.Tags
+                    .Where(t => t.UserId == userId && vm.SelectedTagIds.Contains(t.Id))
+                    .ToListAsync();
+                foreach (var t in tags) entity.Tags.Add(t);
+            }
 
             _db.Routines.Add(entity);
             await _db.SaveChangesAsync();
@@ -111,6 +132,7 @@ namespace LifeCare.Services
         public async Task UpdateRoutineAsync(RoutineVM vm, string userId)
         {
             var entity = await _db.Routines
+                .Include(r => r.Tags)
                 .Include(r => r.Steps).ThenInclude(s => s.Products)
                 .Include(r => r.Entries)
                 .ThenInclude(e => e.StepEntries)
@@ -124,7 +146,15 @@ namespace LifeCare.Services
 
             _mapper.Map(vm, entity);
             entity.StartDateUtc = newStart;
-            entity.CategoryId = vm.CategoryId;
+
+            entity.Tags.Clear();
+            if (vm.SelectedTagIds != null && vm.SelectedTagIds.Count > 0)
+            {
+                var tags = await _db.Tags
+                    .Where(t => t.UserId == userId && vm.SelectedTagIds.Contains(t.Id))
+                    .ToListAsync();
+                foreach (var t in tags) entity.Tags.Add(t);
+            }
 
             if (vm.ResetStats)
             {
@@ -266,7 +296,6 @@ namespace LifeCare.Services
             }
         }
 
-
         public async Task DeleteRoutineAsync(int id, string userId)
         {
             var entity = await _db.Routines.FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
@@ -299,6 +328,7 @@ namespace LifeCare.Services
 
             var routines = await _db.Routines
                 .Include(r => r.Steps).ThenInclude(s => s.Products)
+                .Include(r => r.Tags)
                 .Include(r => r.Entries.Where(e => e.Date == dateUtc))
                 .ThenInclude(e => e.StepEntries)
                 .ThenInclude(se => se.ProductEntries)
@@ -339,7 +369,7 @@ namespace LifeCare.Services
                     TimeOfDay = r.TimeOfDay,
                     TotalSteps = todaysSteps.Count,
                     Completed = entry?.Completed ?? false,
-                    CategoryId = r.CategoryId
+                    TagIds = r.Tags?.Select(t => t.Id).ToList() ?? new List<int>() // <<<<< TAGI dla filtrowania "dziś"
                 };
 
                 int done = 0;
@@ -1009,7 +1039,6 @@ namespace LifeCare.Services
                     if (!OccursOnDate(routine.StartDateUtc, stepRule, dOnly))
                         continue;
 
-                    // zaplanowane wykonanie kroku
                     var agg = stepAgg[step.Id];
                     agg.total++;
 
@@ -1190,6 +1219,16 @@ namespace LifeCare.Services
             }
 
             return result;
+        }
+
+        public Task<List<TagVM>> GetUserTagsAsync(string userId)
+        {
+            return _db.Tags
+                .AsNoTracking()
+                .Where(t => t.UserId == userId)
+                .OrderBy(t => t.Name)
+                .Select(t => new TagVM { Id = t.Id, Name = t.Name })
+                .ToListAsync();
         }
     }
 }

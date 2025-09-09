@@ -1,0 +1,50 @@
+﻿@model LifeCare.ViewModels.TagFilterVM
+@{
+    var itemsJson = System.Text.Json.JsonSerializer.Serialize(
+        (Model.Tags ?? Enumerable.Empty<LifeCare.ViewModels.TagVM>())
+        .Select(t => new { id = t.Id, name = t.Name })
+    );
+    var selectedJson = System.Text.Json.JsonSerializer.Serialize(Model.SelectedIds ?? Enumerable.Empty<int>());
+    var action = string.IsNullOrWhiteSpace(Model.FormAction)
+        ? Context.Request.Path + Context.Request.QueryString
+        : Model.FormAction;
+
+    var currentSection = string.IsNullOrWhiteSpace(Model.Section) ? "today" : Model.Section;
+    var submitMode = string.IsNullOrWhiteSpace(Model.SubmitMode) ? "manual" : Model.SubmitMode;
+    var placeholder = string.IsNullOrWhiteSpace(Model.Placeholder) ? "Wszystkie tagi" : Model.Placeholder;
+}
+
+<form method="get" action="@action" class="mb-3">
+    <input type="hidden" name="section" value="@currentSection"/>
+    <div class="tf"
+         data-items='@itemsJson'
+         data-selected-ids='@selectedJson'
+         data-placeholder='@placeholder'
+         data-query-key='@(string.IsNullOrWhiteSpace(Model.QueryKey) ? "tagIds" : Model.QueryKey)'
+         data-submit-mode='@submitMode'
+         data-section='@currentSection'>
+
+        <div class="tf-display form-select-like" tabindex="0" aria-haspopup="listbox" aria-expanded="false">
+            <div class="tf-chips"></div>
+
+            <button type="button" class="tf-reset" title="Wyczyść" aria-label="Wyczyść filtrowanie">
+                <i class="fa fa-rotate-right"></i>
+            </button>
+
+            <button type="button" class="tf-apply-inline" title="Zastosuj" aria-label="Zastosuj">
+                <i class="fa fa-filter"></i>
+            </button>
+        </div>
+
+        <div class="tf-dropdown" role="listbox">
+            <div class="tf-search">
+                <input type="search" placeholder="Szukaj tagów…" autocomplete="off"/>
+            </div>
+
+            <ul class="tf-list"></ul>
+        </div>
+    </div>
+</form>
+
+<link rel="stylesheet" href="~/css/tags.css" asp-append-version="true"/>
+<script src="~/js/tags.js" asp-append-version="true"></script>

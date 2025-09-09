@@ -1,0 +1,29 @@
+﻿@model LifeCare.ViewModels.TagVM
+
+<div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel"
+     data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <form id="tagForm" method="post" action="/Tags/Create" class="needs-validation" novalidate>
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tagModalLabel">Dodaj tag</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="tagName" class="form-label">Nazwa</label>
+                        <input type="text" id="tagName" name="name" class="form-control" required />
+                        <div class="invalid-feedback">Podaj nazwę tagu.</div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Dodaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

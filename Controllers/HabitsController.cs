@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
 using LifeCare.Models;
 using LifeCare.Services.Interfaces;
 using LifeCare.ViewModels;
@@ -18,21 +15,22 @@ namespace LifeCare.Controllers
         private readonly IHabitService _habitService;
         private readonly UserManager<User> _userManager;
 
+
         public record HabitEntryDto(DateTime Date, bool Completed, float? Quantity);
 
-        public HabitsController(IHabitService habitService, UserManager<User> userManager)
+        public HabitsController(IHabitService habitService, UserManager<User> userManager, ITagService tagService,
+            IMapper mapper)
         {
             _habitService = habitService;
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index([FromQuery] List<int> tagIds)
         {
             var userId = _userManager.GetUserId(User);
-            var habits = await _habitService.GetAllHabitsAsync(userId);
-            var categories = await _habitService.GetUserCategoriesAsync(userId);
-
-            ViewBag.Categories = categories;
+            var habits = await _habitService.GetAllHabitsAsync(userId!, tagIds);
+            ViewBag.AvailableTags = await _habitService.GetUserTagsAsync(userId!);
+            ViewBag.SelectedTagIds = tagIds ?? new List<int>();
             return View(habits);
         }
 
@@ -46,7 +44,6 @@ namespace LifeCare.Controllers
                 return NotFound();
             }
 
-            ViewBag.Categories = await _habitService.GetUserCategoriesAsync(userId);
             return View(habit);
         }
 
@@ -54,28 +51,30 @@ namespace LifeCare.Controllers
         public async Task<IActionResult> Create()
         {
             var userId = _userManager.GetUserId(User);
-            ViewBag.Categories = await _habitService.GetUserCategoriesAsync(userId);
-
-            return View(new HabitVM
+            var vm = new HabitVM
             {
                 Type = HabitType.Checkbox,
                 Color = "#3b82f6",
-                Icon = "fa-dumbbell"
-            });
+                Icon = "fa-dumbbell",
+                AvailableTags = await _habitService.GetUserTagsAsync(userId!)
+            };
+            return View(vm);
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HabitVM habitVM)
         {
+            var userId = _userManager.GetUserId(User);
+
             if (!ModelState.IsValid)
             {
-                ViewBag.Categories = await _habitService.GetUserCategoriesAsync(_userManager.GetUserId(User));
+                habitVM.AvailableTags = await _habitService.GetUserTagsAsync(userId!);
                 return View(habitVM);
             }
 
-            var userId = _userManager.GetUserId(User);
-            await _habitService.CreateHabitAsync(habitVM, userId);
+            await _habitService.CreateHabitAsync(habitVM, userId!);
             return RedirectToAction(nameof(Index));
         }
 
@@ -83,12 +82,11 @@ namespace LifeCare.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             var userId = _userManager.GetUserId(User);
-            var habit = await _habitService.GetHabitByIdAsync(id, userId);
-            if (habit == null) return NotFound();
-
-            ViewBag.Categories = await _habitService.GetUserCategoriesAsync(userId);
-            return View(habit);
+            var vm = await _habitService.GetHabitByIdAsync(id, userId!);
+            vm.AvailableTags = await _habitService.GetUserTagsAsync(userId!);
+            return View(vm);
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -98,15 +96,14 @@ namespace LifeCare.Controllers
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Categories = await _habitService.GetUserCategoriesAsync(userId);
+                habitVM.AvailableTags = await _habitService.GetUserTagsAsync(userId!);
                 return View(habitVM);
             }
 
-            var existing = await _habitService.GetHabitByIdAsync(habitVM.Id, userId);
+            var existing = await _habitService.GetHabitByIdAsync(habitVM.Id, userId!);
             if (existing == null) return NotFound();
 
-            await _habitService.UpdateHabitAsync(habitVM, userId); // << bez var updated
-
+            await _habitService.UpdateHabitAsync(habitVM, userId!);
             TempData["Toast.Success"] = "Zaktualizowano nawyk.";
             return RedirectToAction(nameof(Details), new { id = habitVM.Id });
         }

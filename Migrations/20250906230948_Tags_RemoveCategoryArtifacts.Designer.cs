@@ -4,6 +4,7 @@ using LifeCare.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeCare.Migrations
 {
     [DbContext(typeof(LifeCareDbContext))]
-    partial class LifeCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250906230948_Tags_RemoveCategoryArtifacts")]
+    partial class Tags_RemoveCategoryArtifacts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -870,7 +873,7 @@ namespace LifeCare.Migrations
             modelBuilder.Entity("LifeCare.Models.Tag", b =>
                 {
                     b.HasOne("LifeCare.Models.User", "User")
-                        .WithMany("Tags")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1010,8 +1013,6 @@ namespace LifeCare.Migrations
                         .IsRequired();
 
                     b.Navigation("Routines");
-
-                    b.Navigation("Tags");
 
                     b.Navigation("WorkoutPlans");
                 });

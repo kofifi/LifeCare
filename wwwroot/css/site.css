@@ -1,9 +1,7 @@
 :root {
-  /** Base colors */
   --clr-dark-a0: #000000;
   --clr-light-a0: #ffffff;
 
-  /** Theme primary colors (blue) */
   --clr-primary-a0: #003366;
   --clr-primary-a10: #004080;
   --clr-primary-a20: #0059b3;
@@ -11,7 +9,6 @@
   --clr-primary-a40: #3399ff; /* bright accent */
   --clr-primary-a50: #66b3ff;
 
-  /** Theme surface colors (dark grays for contrast) */
   --clr-surface-a0: #0d0d0d;
   --clr-surface-a10: #1a1a1a;
   --clr-surface-a20: #2a2a2a;
@@ -19,7 +16,6 @@
   --clr-surface-a40: #555555;
   --clr-surface-a50: #707070;
 
-  /** Theme tonal surface colors (cooler tones to match blue) */
   --clr-surface-tonal-a0: #1a222d;
   --clr-surface-tonal-a10: #243344;
   --clr-surface-tonal-a20: #2e445c;
@@ -27,13 +23,11 @@
   --clr-surface-tonal-a40: #4d6a91;
   --clr-surface-tonal-a50: #5f80ac;
 
-  /* Bootstrap variable overrides */
   --bs-body-bg: var(--clr-surface-a10);
   --bs-body-color: var(--clr-light-a0);
   --bs-primary: var(--clr-primary-a30);
   --bs-primary-rgb: 0, 115, 230;
 
-  /* Soft design tokens */
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 10px;
@@ -53,7 +47,6 @@ html, body {
   background-color: var(--bs-body-bg);
 }
 
-/* ===== Soft cards, inputs, headings ===================================== */
 .soft-card {
   background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   background-color: var(--clr-surface-a20);
@@ -99,7 +92,6 @@ html, body {
 h2.h5 { letter-spacing: .2px; }
 .form-label { opacity: .95; font-weight: 500; }
 
-/* ===== Buttons (gradient + glow, rounded) =============================== */
 .btn { border-radius: var(--radius-md); }
 .btn-lg { border-radius: var(--radius-lg); }
 
@@ -127,7 +119,6 @@ h2.h5 { letter-spacing: .2px; }
   opacity: 0.7;
 }
 
-/* ===== Mobile action bar (blurred, rounded, above footer) =============== */
 .action-bar {
   position: sticky;
   bottom: 70px; /* adjust to your footer height */
@@ -142,12 +133,10 @@ h2.h5 { letter-spacing: .2px; }
   box-shadow: var(--shadow-1);
 }
 
-/* Prevent overlap with the action bar on small screens */
 @media (max-width: 767.98px) {
   .mobile-sticky-spacer { height: 90px; }
 }
 
-/* Ciemny wygląd dla input[type=color] zgodny z motywem */
 input[type="color"].form-control-color {
   -webkit-appearance: none;
   appearance: none;
@@ -167,7 +156,6 @@ input[type="color"].form-control-color:focus {
   transform: translateY(-1px);
 }
 
-/* WebKit/Blink – ciemny wrapper i ramka swatcha */
 input[type="color"].form-control-color::-webkit-color-swatch-wrapper {
   padding: 0;
   background: var(--field-bg);
@@ -179,15 +167,12 @@ input[type="color"].form-control-color::-webkit-color-swatch {
   border-radius: calc(var(--radius-md) - 3px);
 }
 
-/* Firefox */
 input[type="color"].form-control-color::-moz-color-swatch {
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: calc(var(--radius-md) - 3px);
   background-clip: padding-box;
 }
 
-/* ===== Habit details page styles ======================================== */
-/* Ensure small chart wrapper has consistent height */
 .chart-wrap-sm { height: 240px; }
 @media (min-width: 992px) {
   .chart-wrap-sm { height: 200px; }
@@ -244,7 +229,6 @@ input[type="color"].form-control-color::-moz-color-swatch {
 
 #habit-root .badge.bg-warning.text-dark { color: #111 !important; }
 
-/* ===== Habit edit view adjustments ====================================== */
 .form-control[readonly],
 .form-control:disabled,
 .form-select:disabled {
@@ -258,7 +242,6 @@ input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
 }
 
-/* ===== Icon picker styles =============================================== */
 [data-iconpicker-root] { color: var(--bs-body-color, #fff); }
 
 [data-iconpicker-root] .icon-preview {
@@ -309,6 +292,87 @@ input[type=number]::-webkit-inner-spin-button {
 [data-iconpicker-root] .icon-option i {
   font-size: 22px;
   color: var(--clr-light-a0, #fff);
+}
+
+.choices {
+  color: var(--bs-body-color);
+}
+
+.choices__inner {
+  background-color: var(--field-bg);
+  border: var(--field-border);
+  border-radius: var(--radius-md);
+  color: var(--bs-body-color);
+  min-height: calc(2.5rem + 2px);
+  padding: .375rem .5rem;
+  transition: box-shadow .18s ease, border-color .18s ease, transform .08s ease;
+}
+
+.choices.is-focused .choices__inner,
+.choices.is-open .choices__inner {
+  border: var(--field-border-focus);
+  box-shadow: 0 0 0 6px rgba(0,115,230,.15);
+  transform: translateY(-1px);
+}
+
+.choices__input {
+  background-color: transparent;
+  color: var(--bs-body-color);
+}
+
+.choices__list--multiple {
+  display: inline-flex;
+  gap: .375rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.choices__list--multiple .choices__item {
+  background-color: var(--clr-surface-a30);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--clr-light-a0);
+  border-radius: .625rem;
+  padding: .25rem .5rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.choices__list--multiple .choices__item.is-highlighted {
+  background: linear-gradient(135deg, var(--clr-primary-a30), var(--clr-primary-a40));
+  border-color: var(--clr-primary-a30);
+  color: #fff;
+}
+
+.choices[data-type*="select-multiple"] .choices__button,
+.choices[data-type*="select-one"] .choices__button {
+  filter: invert(1) grayscale(1);
+  opacity: .85;
+}
+
+.choices__list--dropdown,
+.choices__list[aria-expanded] {
+  background-color: var(--clr-surface-a20);
+  border: var(--field-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+}
+
+.choices__list--dropdown .choices__item--selectable,
+.choices__list[aria-expanded] .choices__item--selectable {
+  color: var(--bs-body-color);
+}
+
+.choices__list--dropdown .choices__item--selectable.is-highlighted,
+.choices__list[aria-expanded] .choices__item--selectable.is-highlighted {
+  background-color: var(--clr-surface-a30);
+}
+
+.choices__placeholder {
+  opacity: .7;
+}
+
+.form-select-sm + .choices .choices__inner {
+  min-height: calc(2rem + 2px);
+  padding: .25rem .5rem;
 }
 
 

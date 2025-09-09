@@ -10,10 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<LifeCareDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddDefaultIdentity<User>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-    })
+builder.Services.AddDefaultIdentity<User>(options => { options.SignIn.RequireConfirmedAccount = false; })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<LifeCareDbContext>();
 
@@ -21,15 +18,13 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IHabitService, HabitService>();
 builder.Services.AddScoped<IRoutineService, RoutineService>();
+builder.Services.AddScoped<ITagService, TagService>();
 
 builder.Services.AddSingleton<IGitInfoService, GitInfoService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
-builder.Services.AddAntiforgery(options =>
-{
-    options.HeaderName = "RequestVerificationToken";
-});
+builder.Services.AddAntiforgery(options => { options.HeaderName = "RequestVerificationToken"; });
 
 var app = builder.Build();
 
@@ -66,7 +61,7 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
         }
     }
-    
+
     string adminEmail = "admin@lifecare.com";
     string adminPassword = "Admin123!";
     string adminDisplayName = "Admin";

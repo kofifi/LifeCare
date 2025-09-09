@@ -4,10 +4,9 @@
 
 @{
     ViewData["Title"] = "Edytuj nawyk";
-    var categories = ViewBag.Categories as List<Category>;
+    var tagItems = Model.AvailableTags ?? new List<LifeCare.ViewModels.TagVM>();
+    var selected = Model.SelectedTagIds ?? new List<int>();
 }
-
-@await Html.PartialAsync("_CategoryModal", new LifeCare.ViewModels.CategoryVM())
 
 <h2 class="mb-4">Edytuj nawyk</h2>
 
@@ -65,21 +64,26 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label">Kategoria</label>
+        <label class="form-label">Tagi</label>
         <div class="input-group">
-            <select asp-for="CategoryId"
-                    id="editCategorySelect"
+            <select name="SelectedTagIds"
+                    id="SelectedTagIds"
                     class="form-select"
-                    asp-items="@(new SelectList(categories ?? new List<Category>(), "Id", "Name", Model.CategoryId))">
-                <option value="">(brak)</option>
+                    multiple
+                    style="min-height: 140px; width: 100%;">
+                @foreach (var t in tagItems)
+                {
+                    if (selected.Contains(t.Id))
+                    {
+                        <option value="@t.Id" selected>@t.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                }
             </select>
-            <button type="button"
-                    class="btn btn-sm btn-outline-secondary ms-2"
-                    data-bs-toggle="modal"
-                    data-bs-target="#categoryModal"
-                    data-target-select="editCategorySelect">
-                <i class="fa fa-plus"></i> Nowa
-            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnAddTag">+ Nowy</button>
         </div>
     </div>
 
@@ -91,9 +95,13 @@
     </div>
 </form>
 
+@await Html.PartialAsync("_TagModal", new TagVM())
+
 @section Scripts {
-    <script src="~/js/site-category-modal.js" asp-append-version="true"></script>
+    <script src="~/js/habit.js" asp-append-version="true"></script>
+
     <partial name="_ValidationScriptsPartial"/>
+
     <script>
     document.getElementById('toggleDescription').addEventListener('click', function () {
         const desc = document.getElementById('descriptionWrapper');
@@ -109,9 +117,29 @@
         document.getElementById('quantityFields').style.display = isQuantity ? 'block' : 'none';
     })();
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const el = document.getElementById('SelectedTagIds');
+        if (!el) return;
+        window.__TagChoices = new Choices(el, {
+            removeItemButton: true,
+            shouldSort: true,
+            placeholderValue: 'Wybierz tagi…',
+            searchPlaceholderValue: 'Szukaj…',
+            noResultsText: 'Brak wyników',
+            noChoicesText: 'Brak tagów',
+            itemSelectText: ''
+        });
+    });
+</script>
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/tags.css" asp-append-version="true"/>
+
     <style>
     .form-control[readonly],
     .form-control:disabled,

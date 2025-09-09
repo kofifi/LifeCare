@@ -1,9 +1,9 @@
 @model LifeCare.ViewModels.RoutineVM
-@await Html.PartialAsync("_CategoryModal", new LifeCare.ViewModels.CategoryVM())
 
 @{
     ViewData["Title"] = "Edytuj rutynę";
-    var categories = ViewBag.Categories as List<LifeCare.Models.Category>;
+    var tagItems = Model.AvailableTags ?? new List<LifeCare.ViewModels.TagVM>();
+    var selected = Model.SelectedTagIds ?? new List<int>();
     var stepsJson = (string?)(ViewBag.StepsJson ?? "[]");
 }
 
@@ -160,21 +160,26 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label">Kategoria</label>
+        <label class="form-label">Tagi</label>
         <div class="input-group">
-            <select asp-for="CategoryId"
-                    id="editCategorySelect"
-                    class="form-select"
-                    asp-items="@(new SelectList(categories ?? new List<Category>(), "Id", "Name", Model.CategoryId))">
-                <option value="">(brak)</option>
+            <select name="SelectedTagIds"
+                    id="SelectedTagIds"
+                    class="form-select form-control"
+                    multiple
+                    style="min-height: 140px; width: 100%;">
+                @foreach (var t in tagItems)
+                {
+                    if (selected.Contains(t.Id))
+                    {
+                        <option value="@t.Id" selected>@t.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                }
             </select>
-            <button type="button"
-                    class="btn btn-sm btn-outline-secondary ms-2"
-                    data-bs-toggle="modal"
-                    data-bs-target="#categoryModal"
-                    data-target-select="editCategorySelect">
-                <i class="fa fa-plus"></i> Nowa
-            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnAddTag">+ Nowy</button>
         </div>
     </div>
 
@@ -199,6 +204,13 @@
 </form>
 
 @await Html.PartialAsync("_RoutineProductModal")
+@await Html.PartialAsync("_TagModal", new TagVM())
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/routines.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/tags.css" asp-append-version="true"/>
+}
 
 @section Scripts {
     <script>window.__LC_IS_EDIT = true;</script>
@@ -208,7 +220,6 @@
     <script src="~/js/routines/routines.common.js" asp-append-version="true"></script>
     <script src="~/js/routines/routines.create.js" asp-append-version="true"></script>
     <script src="~/js/routines/routines.steps.js" asp-append-version="true"></script>
-    <script src="~/js/site-category-modal.js" asp-append-version="true"></script>
 
     <script>
         (function hydrateFromRRule(){
@@ -265,4 +276,20 @@
             if (el) el.value = r;
         });
     </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const el = document.getElementById('SelectedTagIds');
+        if (!el) return;
+        window.__TagChoices = new Choices(el, {
+            removeItemButton: true,
+            shouldSort: true,
+            placeholderValue: 'Wybierz tagi…',
+            searchPlaceholderValue: 'Szukaj…',
+            noResultsText: 'Brak wyników',
+            noChoicesText: 'Brak tagów',
+            itemSelectText: ''
+        });
+    });
+</script>
 }

@@ -16,9 +16,6 @@ public class Habit
     public string? Unit { get; set; }
     public int? TargetQuantity { get; set; }
 
-    public int? CategoryId { get; set; }
-    public Category? Category { get; set; }
-
     public string UserId { get; set; }
     public User User { get; set; }
 
@@ -27,4 +24,5 @@ public class Habit
     public DateTime StartDateUtc { get; set; }
 
     public ICollection<HabitEntry> Entries { get; set; }
+    public ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }

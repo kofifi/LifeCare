@@ -3,6 +3,7 @@
         selectedDate: new Date(),
         weekOffset: 0,
         expanded: new Set(),
+        tagIds: []
     };
 
     const qs = (sel, root = document) => root.querySelector(sel);
@@ -11,7 +12,7 @@
     function fmtYmd(d) {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     }
-
+    
     function isSameDay(a, b) {
         return a.getFullYear() === b.getFullYear() &&
             a.getMonth() === b.getMonth() &&
@@ -27,9 +28,10 @@
         return t.toString().slice(0, 5);
     }
 
-    function getSelectedCategoryId() {
-        const sel = qs("#categoryFilter");
-        return sel ? sel.value : "";
+    function getSelectedTagIdsFromUrl() {
+        const p = new URLSearchParams(window.location.search);
+        const ids = p.getAll("tagIds").map(x => parseInt(x, 10)).filter(n => !isNaN(n));
+        return ids;
     }
 
     function isInteractiveTarget(e) {
@@ -39,13 +41,32 @@
     }
 
     async function loadForDate(dateStr) {
-        const res = await fetch(`/Routines/ForDate?date=${encodeURIComponent(dateStr)}&_=${Date.now()}`);
+        const url = new URL(window.location.origin + `/Routines/ForDate`);
+        url.searchParams.set("date", dateStr);
+        const tagIds = getSelectedTagIdsFromUrl();
+        for (const id of tagIds) url.searchParams.append("tagIds", String(id));
+        url.searchParams.set("_", Date.now().toString());
+
+        const res = await fetch(url.toString());
         const list = await res.json();
-        renderList(list, dateStr);
+
+        let filtered = list;
+        if (tagIds.length > 0) {
+            filtered = list.filter(it => {
+                const arr = Array.isArray(it.tagIds) ? it.tagIds : [];
+                return tagIds.every(t => arr.includes(t));
+            });
+        }
+
+        renderList(filtered, dateStr);
     }
 
     async function reload() {
         await loadForDate(fmtYmd(state.selectedDate));
+    }
+
+    function setTags(ids) {
+        state.tagIds = (ids || []).map(String);
     }
 
     function updateTitle() {
@@ -122,14 +143,22 @@
     function renderList(list, dateStr) {
         const host = qs("#todayList");
         if (!host) return;
+
+        const filteredByTags = (function(){
+            if (!state.tagIds.length) return list;
+            return list.filter(r => {
+                const ids = (r.selectedTagIds && Array.isArray(r.selectedTagIds))
+                    ? r.selectedTagIds.map(x => String(x))
+                    : [];
+                if (!ids.length) return false;
+                return state.tagIds.every(id => ids.includes(id));
+            });
+        })();
+        const filtered = filteredByTags;
+        
         host.innerHTML = "";
 
-        const selectedCat = getSelectedCategoryId();
-        const filtered = selectedCat
-            ? list.filter((x) => String(x.categoryId || "") === String(selectedCat))
-            : list;
-
-        if (!filtered.length) {
+        if (!list.length) {
             host.innerHTML = `<div class="soft-card text-muted">Brak rutyn na ten dzień.</div>`;
             return;
         }
@@ -154,19 +183,19 @@
         </div>
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-secondary">${r.doneSteps}/${r.totalSteps}</span>
-        
+
           <button class="icon-btn" type="button" data-edit
                   title="Edytuj" aria-label="Edytuj">
             <i class="fa fa-edit"></i>
           </button>
-        
+
           <button class="icon-btn icon-btn-danger" type="button" data-delete
                   data-bs-toggle="modal" data-bs-target="#routineDeleteModal"
                   data-id="${r.routineId}" data-name="${r.name}"
                   title="Usuń" aria-label="Usuń">
             <i class="fa fa-trash"></i>
           </button>
-        
+
           <button class="btn btn-outline-secondary btn-sm" data-toggle-steps type="button" title="Rozwiń">
             <i class="fa fa-chevron-down"></i>
           </button>
@@ -182,8 +211,7 @@
           </div>
         </div>
         <div class="d-flex flex-column gap-2" data-steps></div>
-        <div class="d-flex justify-content-end mt-3">
-        </div>
+        <div class="d-flex justify-content-end mt-3"></div>
       `;
 
             const stepsHost = qs("[data-steps]", body);
@@ -294,7 +322,7 @@
                 }
             });
 
-            const toggleBtn = qs("[data-toggle-steps]", header);
+            const toggleBtn = header.querySelector("[data-toggle-steps]");
             const setArrow = (open) => (toggleBtn.innerHTML = `<i class="fa fa-chevron-${open ? "up" : "down"}"></i>`);
 
             toggleBtn.addEventListener("click", (ev) => {
@@ -312,7 +340,7 @@
                 }
             });
 
-            const checkAllEl = qs(`#checkall_${r.routineId}`, body);
+            const checkAllEl = body.querySelector(`#checkall_${r.routineId}`);
             const allChecked = r.totalSteps > 0 && r.steps.every((s) => s.completed || s.skipped);
             checkAllEl.checked = allChecked;
 
@@ -352,7 +380,6 @@
                 ev.stopPropagation();
             });
 
-
             card.appendChild(body);
             host.appendChild(card);
         });
@@ -366,5 +393,6 @@
     return {
         init,
         reload,
+        setTags
     };
 })();

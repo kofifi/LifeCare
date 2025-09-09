@@ -40,3 +40,80 @@
         }
     });
 })();
+
+(function () {
+    function wireRoutineDeleteModal() {
+        var modalEl = document.getElementById('routineDeleteModal');
+        if (!modalEl) return;
+
+        modalEl.addEventListener('show.bs.modal', function (e) {
+            var btn = e.relatedTarget;                  // <button ... data-id data-name>
+            if (!btn) return;
+
+            var id = btn.getAttribute('data-id') || '';
+            var name = btn.getAttribute('data-name') || '';
+
+            var idInput = modalEl.querySelector('#deleteRoutineId');
+            var nameSpan = modalEl.querySelector('#deleteRoutineName');
+
+            if (idInput) idInput.value = id;
+            if (nameSpan) nameSpan.textContent = name;
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireRoutineDeleteModal);
+    } else {
+        wireRoutineDeleteModal();
+    }
+})();
+
+window.LC_Routines_All = (function () {
+    const state = { tagIds: [] };
+
+    function setTags(ids) {
+        state.tagIds = (ids || []).map(String);
+    }
+
+    function cardHasAllTags(card) {
+        if (!tagIds.length) return true;
+        const raw = card.getAttribute('data-tags') || '';
+        if (!raw) return false;
+        const have = raw.split(',').map(s => s.trim()).filter(Boolean);
+        return tagIds.every(id => have.includes(id));
+    }
+
+    function applyFilters() {
+        const host = document.getElementById('allList');
+        if (!host) return;
+
+        const statusVal = (document.getElementById('statusFilter')?.value || '').toLowerCase();
+
+        host.querySelectorAll('.clickable-card').forEach(card => {
+            const activeOk =
+                !statusVal ||
+                (statusVal === 'active'   && card.dataset.active === '1') ||
+                (statusVal === 'inactive' && card.dataset.active === '0');
+
+            const tagAttr = (card.getAttribute('data-tags') || '')
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            const tagsOk = !state.tagIds.length || state.tagIds.every(id => tagAttr.includes(id));
+
+            card.style.display = (activeOk && tagsOk) ? '' : 'none';
+        });
+    }
+
+    function init() {
+        applyFilters();
+        document.querySelector('.tf-status-apply')?.addEventListener('click', function (e) {
+            e.preventDefault();
+            applyFilters();
+        });
+        document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
+    }
+
+    return { init, applyFilters, setTags };
+})();

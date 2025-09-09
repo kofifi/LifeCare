@@ -11,7 +11,7 @@ public class LifeCareDbContext : IdentityDbContext<User>
 
     public DbSet<Habit> Habits { get; set; }
     public DbSet<HabitEntry> HabitEntries { get; set; }
-    public DbSet<Category> Categories { get; set; }
+    public DbSet<Tag> Tags { get; set; }
     public DbSet<Routine> Routines { get; set; }
     public DbSet<RoutineStep> RoutineSteps { get; set; }
     public DbSet<RoutineEntry> RoutineEntries { get; set; }
@@ -26,34 +26,53 @@ public class LifeCareDbContext : IdentityDbContext<User>
     {
         base.OnModelCreating(modelBuilder);
 
-        // HABITS
         modelBuilder.Entity<Habit>()
             .HasOne(h => h.User)
             .WithMany(u => u.Habits)
             .HasForeignKey(h => h.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // HABIT ENTRIES
         modelBuilder.Entity<HabitEntry>()
             .HasOne(e => e.Habit)
             .WithMany(h => h.Entries)
             .HasForeignKey(e => e.HabitId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // CATEGORY
+        
         modelBuilder.Entity<Habit>()
-            .HasOne(h => h.Category)
-            .WithMany(c => c.Habits)
-            .HasForeignKey(h => h.CategoryId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasMany(h => h.Tags)
+            .WithMany(t => t.Habits)
+            .UsingEntity<Dictionary<string, object>>(
+                "HabitTags",
+                j => j.HasOne<Tag>()
+                    .WithMany()
+                    .HasForeignKey("TagsId")
+                    .OnDelete(DeleteBehavior.NoAction),
+                j => j.HasOne<Habit>()
+                    .WithMany()
+                    .HasForeignKey("HabitsId")
+                    .OnDelete(DeleteBehavior.Cascade)
+            );
 
-        modelBuilder.Entity<Category>()
-            .HasOne(c => c.User)
-            .WithMany(u => u.HabitCategories)
-            .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Routine>()
+            .HasMany(r => r.Tags)
+            .WithMany(t => t.Routines)
+            .UsingEntity<Dictionary<string, object>>(
+                "RoutineTags",
+                j => j.HasOne<Tag>()
+                    .WithMany()
+                    .HasForeignKey("TagsId")
+                    .OnDelete(DeleteBehavior.NoAction),
+                j => j.HasOne<Routine>()
+                    .WithMany()
+                    .HasForeignKey("RoutinesId")
+                    .OnDelete(DeleteBehavior.Cascade)
+            );
 
-        // USER PROFILE
+
+        modelBuilder.Entity<Tag>()
+            .HasIndex(t => new { t.UserId, t.Name })
+            .IsUnique();
+
         modelBuilder.Entity<UserProfile>()
             .HasOne(p => p.User)
             .WithOne(u => u.Profile)
@@ -66,21 +85,18 @@ public class LifeCareDbContext : IdentityDbContext<User>
             .HasForeignKey(s => s.RoutineId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Routine -> Entries
         modelBuilder.Entity<RoutineEntry>()
             .HasOne(e => e.Routine)
             .WithMany(r => r.Entries)
             .HasForeignKey(e => e.RoutineId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // RoutineEntry -> StepEntries
         modelBuilder.Entity<RoutineStepEntry>()
             .HasOne(se => se.RoutineEntry)
             .WithMany(e => e.StepEntries)
             .HasForeignKey(se => se.RoutineEntryId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // RoutineStep -> StepEntries
         modelBuilder.Entity<RoutineStepEntry>()
             .HasOne(se => se.RoutineStep)
             .WithMany(s => s.StepEntries)

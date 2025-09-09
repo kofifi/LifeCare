@@ -1,0 +1,118 @@
+﻿@model IEnumerable<LifeCare.ViewModels.TagVM>
+@{
+    ViewData["Title"] = "Tagi";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Tagi</h2>
+        <button class="btn btn-primary" data-role="tag-open-create">
+            <i class="fa fa-plus me-1"></i> Nowy tag
+        </button>
+    </div>
+
+    <div class="soft-card">
+        <div class="table-responsive">
+            <table class="table" id="tags-table">
+                <thead>
+                <tr>
+                    <th style="width:80px">ID</th>
+                    <th>Nazwa</th>
+                    <th style="width:160px" class="text-end">Akcje</th>
+                </tr>
+                </thead>
+                <tbody id="tagsTableBody">
+                @foreach (var t in Model)
+                {
+                    <tr data-id="@t.Id">
+                        <td>@t.Id</td>
+                        <td class="tag-name">@t.Name</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary me-2" data-role="tag-open-edit" data-id="@t.Id" data-name="@t.Name">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" data-role="tag-open-delete" data-id="@t.Id" data-name="@t.Name">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="tagCreateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content bg-dark text-white" id="tagCreateForm">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h5 class="modal-title">Nowy tag</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="tagCreateName">Nazwa</label>
+                    <input class="form-control" id="tagCreateName" name="name" required/>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Anuluj</button>
+                <button class="btn btn-primary" type="submit">Dodaj</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="tagEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content bg-dark text-white" id="tagEditForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="tagEditId"/>
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj tag</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="tagEditName">Nazwa</label>
+                    <input class="form-control" id="tagEditName" name="name" required/>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Anuluj</button>
+                <button class="btn btn-primary" type="submit">Zapisz</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="tagDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content bg-dark text-white" id="tagDeleteForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="tagDeleteId"/>
+            <div class="modal-header">
+                <h5 class="modal-title">Usuń tag</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Czy na pewno chcesz usunąć tag <strong id="tagDeleteName"></strong>?</p>
+                <p class="text-muted small mb-0">Jeśli tag jest przypięty do nawyków lub rutyn, zostanie z nich usunięty.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Anuluj</button>
+                <button class="btn btn-danger" type="submit">Usuń</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/tags.css" asp-append-version="true"/>
+}
+
+@section Scripts{
+    <script src="~/js/tags.crud.js" asp-append-version="true"></script>
+}

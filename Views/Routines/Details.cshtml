@@ -24,7 +24,11 @@
                         <a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.Id"><i class="fa fa-edit me-2"></i>Edytuj</a>
                     </li>
                     <li>
-                        <a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@Model.Id"><i class="fa fa-trash me-2"></i>Usuń</a>
+                        <a class="dropdown-item text-danger" data-bs-toggle="modal"
+                           data-bs-target="#routineDeleteModal"
+                           data-id="@Model.Id"
+                           data-name="@Model.Name"
+                           data-no-bubble><i class="fa fa-trash me-2"></i>Usuń</a>
                     </li>
                 </ul>
             </div>
@@ -108,6 +112,7 @@
         </div>
     </div>
 
+    @await Html.PartialAsync("_RoutineDeleteModal")
     @await Html.PartialAsync("Stats/_StatsWeekChart", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine", WeekTitle = "Wykonane kroki (tydzień)" })
     @await Html.PartialAsync("Stats/_StatsSummary", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine" })
     @await Html.PartialAsync("Stats/_StatsSkips", new LifeCare.ViewModels.StatsPartialsVM { Prefix = "routine", ShowSkips = true, SkipsTitle = "Najczęściej pomijane kroki" })

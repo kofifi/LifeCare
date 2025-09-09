@@ -20,10 +20,11 @@ public class RoutineVM
     public bool ReminderEnabled { get; set; }
     public int? ReminderMinutesBefore { get; set; }
 
-    public int? CategoryId { get; set; }
-    public string? CategoryName { get; set; }
 
     public int Order { get; set; }
+    public List<int> SelectedTagIds { get; set; } = new();
+    public List<TagVM> AvailableTags { get; set; } = new();
+    
     public bool ResetStats { get; set; }
 
     public List<RoutineStepVM> Steps { get; set; } = new();

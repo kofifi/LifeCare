@@ -2,7 +2,6 @@
 using AutoMapper.QueryableExtensions;
 using LifeCare.Data;
 using LifeCare.Models;
-using LifeCare.Services.Interfaces;
 using LifeCare.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,33 +18,63 @@ namespace LifeCare.Services
             _mapper = mapper;
         }
 
-        public async Task<List<HabitVM>> GetAllHabitsAsync(string userId)
+        public async Task<List<HabitVM>> GetAllHabitsAsync(string userId, List<int>? tagIds)
         {
-            var habits = await _context.Habits
-                .Include(h => h.Category)
-                .Where(h => h.UserId == userId)
+            var query = _context.Habits
+                .AsNoTracking()
+                .Include(h => h.Tags)
+                .Where(h => h.UserId == userId);
+
+            if (tagIds != null && tagIds.Count > 0)
+            {
+                query = query.Where(h => h.Tags.Any(t => tagIds.Contains(t.Id)));
+            }
+
+            var habits = await query
                 .OrderBy(h => h.Order)
                 .ToListAsync();
 
-            return _mapper.Map<List<HabitVM>>(habits);
+            var result = habits.Select(h =>
+            {
+                var vm = _mapper.Map<HabitVM>(h);
+                vm.SelectedTagIds = h.Tags?.Select(t => t.Id).ToList() ?? new List<int>();
+                return vm;
+            }).ToList();
+
+            return result;
         }
 
         public async Task<HabitVM> GetHabitByIdAsync(int habitId, string userId)
         {
             var habit = await _context.Habits
-                .Include(h => h.Category)
+                .AsNoTracking()
+                .Include(h => h.Tags)
                 .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
 
-            return _mapper.Map<HabitVM>(habit);
+            if (habit == null) return null!;
+
+            var vm = _mapper.Map<HabitVM>(habit);
+            vm.SelectedTagIds = habit.Tags?.Select(t => t.Id).ToList() ?? new List<int>();
+            return vm;
         }
 
         public async Task CreateHabitAsync(HabitVM habitVM, string userId)
         {
             var habit = _mapper.Map<Habit>(habitVM);
             habit.UserId = userId;
-            
-            var maxOrder = await _context.Habits.Where(h => h.UserId == userId).MaxAsync(h => (int?)h.Order) ?? -1;
+
+            var maxOrder = await _context.Habits.Where(h => h.UserId == userId)
+                .MaxAsync(h => (int?)h.Order) ?? -1;
             habit.Order = maxOrder + 1;
+
+            if (habitVM.SelectedTagIds != null && habitVM.SelectedTagIds.Count > 0)
+            {
+                var tags = await _context.Tags
+                    .Where(t => t.UserId == userId && habitVM.SelectedTagIds.Contains(t.Id))
+                    .ToListAsync();
+
+                foreach (var t in tags) habit.Tags.Add(t);
+            }
 
             _context.Habits.Add(habit);
             await _context.SaveChangesAsync();
@@ -54,30 +83,36 @@ namespace LifeCare.Services
         public async Task UpdateHabitAsync(HabitVM habitVM, string userId)
         {
             var existing = await _context.Habits
+                .Include(h => h.Tags)
                 .FirstOrDefaultAsync(h => h.Id == habitVM.Id && h.UserId == userId);
+
             if (existing == null) return;
 
+            var keepOrder = existing.Order;
             _mapper.Map(habitVM, existing);
+            existing.Order = keepOrder;
+
+            existing.Tags.Clear();
+            if (habitVM.SelectedTagIds != null && habitVM.SelectedTagIds.Count > 0)
+            {
+                var tags = await _context.Tags
+                    .Where(t => t.UserId == userId && habitVM.SelectedTagIds.Contains(t.Id))
+                    .ToListAsync();
+
+                foreach (var t in tags) existing.Tags.Add(t);
+            }
+
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteHabitAsync(int habitId, string userId)
         {
             var habit = await _context.Habits
-                .Include(h => h.Category)
                 .FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
             if (habit == null) return;
 
             _context.Habits.Remove(habit);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<List<Category>> GetUserCategoriesAsync(string userId)
-        {
-            return await _context.Set<Category>()
-                .Where(c => c.UserId == userId)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
         }
 
         public async Task UpdateHabitOrderAsync(List<int> orderedHabitIds, string userId)
@@ -254,6 +289,16 @@ namespace LifeCare.Services
 
             return (overallPercent, currentStreak, bestStreak, totalDays, completedDays, skipped, partialDays,
                 start.ToUniversalTime());
+        }
+
+        public async Task<List<TagVM>> GetUserTagsAsync(string userId)
+        {
+            return await _context.Tags
+                .AsNoTracking()
+                .Where(t => t.UserId == userId)
+                .OrderBy(t => t.Name)
+                .Select(t => new TagVM { Id = t.Id, Name = t.Name })
+                .ToListAsync();
         }
     }
 }

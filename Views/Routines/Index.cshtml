@@ -1,7 +1,8 @@
 ﻿@model IEnumerable<LifeCare.ViewModels.RoutineVM>
 @{
     ViewData["Title"] = "Rutyny";
-    var categories = ViewBag.Categories as List<Category>;
+
+    Func<IEnumerable<TagVM>?, string> tagIds = ts => ts == null ? "" : string.Join(',', ts.Select(t => t.Id));
 
     bool IsActive(string? rrule)
     {
@@ -14,10 +15,10 @@
         DateTime until;
         if (DateOnly.TryParse(raw, out var d1)) until = d1.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         else if (DateTime.TryParseExact(raw, "yyyyMMdd'T'HHmmss'Z'", null,
-            System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var z))
+                     System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var z))
             until = z;
         else if (DateTime.TryParseExact(raw, "yyyyMMdd", null,
-            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var ymd))
+                     System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var ymd))
             until = ymd;
         else if (DateTime.TryParse(raw, out var any)) until = any;
         else return true;
@@ -32,34 +33,13 @@
         <a asp-action="Create" class="btn btn-primary">
             <i class="fa fa-plus"></i>
         </a>
+        <a asp-controller="Tags" asp-action="Index" class="btn btn-secondary">Tagi</a>
     </div>
 
     <div class="mb-3">
         <div class="btn-group" role="group" aria-label="Sekcja">
             <button class="btn btn-primary" id="btnToday" data-target="#todaySection">Dzisiejsze rutyny</button>
             <button class="btn btn-outline-primary" id="btnAll" data-target="#allSection">Wszystkie rutyny</button>
-        </div>
-    </div>
-
-    <div class="row g-2 mb-3">
-        <div class="col-md-6">
-            <select class="form-select" id="categoryFilter">
-                <option value="">Wszystkie kategorie</option>
-                @if (categories != null)
-                {
-                    foreach (var c in categories)
-                    {
-                        <option value="@c.Id">@c.Name</option>
-                    }
-                }
-            </select>
-        </div>
-        <div class="col-md-6" id="statusFilterCol">
-            <select class="form-select" id="statusFilter">
-                <option value="">Wszystkie statusy</option>
-                <option value="active">Aktywne</option>
-                <option value="inactive">Nieaktywne</option>
-            </select>
         </div>
     </div>
 
@@ -70,6 +50,17 @@
             <button id="nextWeek" class="btn btn-outline-secondary">&raquo;</button>
         </div>
 
+        @await Html.PartialAsync("_TagFilter", new TagFilterVM
+        {
+            Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
+            SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
+            QueryKey = "tagIds",
+            Placeholder = "Filtruj rutyny po tagach…",
+            SubmitMode = "manual",
+            Section = "today"
+        })
+
+
         <div class="d-flex align-items-center justify-content-between">
             <h5 class="mb-2" id="todayTitle">Dzisiejsze rutyny</h5>
         </div>
@@ -77,14 +68,43 @@
     </section>
 
     <section id="allSection" class="d-none">
+
+        <div class="row g-2 mb-3">
+            <div class="col-md-6">
+                @await Html.PartialAsync("_TagFilter", new TagFilterVM
+                {
+                    Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
+                    SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
+                    QueryKey = "tagIds",
+                    Placeholder = "Filtruj rutyny po tagach…",
+                    SubmitMode = "manual",
+                    Section = "all"
+                })
+            </div>
+
+            <div class="col-md-6" id="statusFilterCol">
+                <div class="tf-status-wrap position-relative">
+                    <select class="form-select tf-compat-select pe-5" id="statusFilter">
+                        <option value="">Wszystkie statusy</option>
+                        <option value="active">Aktywne</option>
+                        <option value="inactive">Nieaktywne</option>
+                    </select>
+
+                    <button type="button" class="tf-status-apply" title="Zastosuj filtr statusu" aria-label="Zastosuj filtr statusu">
+                        <i class="fa fa-filter"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <h5 class="mb-2">Wszystkie rutyny</h5>
         <div class="d-flex flex-column gap-3" id="allList">
             @foreach (var r in Model)
             {
                 var active = IsActive(r.RRule);
                 <div class="soft-card clickable-card"
-                     data-category-id="@r.CategoryId"
                      data-active="@(active ? "1" : "0")"
+                     data-tags="@(r.SelectedTagIds == null ? "" : string.Join(',', r.SelectedTagIds))"
                      data-routine-id="@r.Id"
                      data-href="/Routines/Details/@r.Id"
                      style="border-left:8px solid @r.Color;">
@@ -93,7 +113,9 @@
                             <i class="fa @r.Icon fa-lg" style="color:@r.Color;"></i>
                             <div>
                                 <a asp-action="Details" asp-route-id="@r.Id"
-                                   class="text-reset text-decoration-none fw-semibold">@r.Name</a>
+                                   class="text-reset text-decoration-none fw-semibold">
+                                    @r.Name
+                                </a>
                                 @if (!string.IsNullOrWhiteSpace(r.Description))
                                 {
                                     <div class="small text-muted">@r.Description</div>
@@ -110,13 +132,14 @@
                             <span class="badge bg-secondary">@r.Steps.Count kroków</span>
 
                             <a class="icon-btn"
-                               href='@Url.Action("Edit","Routines",new { id = r.Id })'
+                               href='@Url.Action("Edit", "Routines", new { id = r.Id })'
                                title="Edytuj"
                                data-no-bubble>
                                 <i class="fa fa-edit"></i>
                             </a>
 
                             <button type="button"
+                                    id="deleteButton"
                                     class="icon-btn icon-btn-danger"
                                     title="Usuń"
                                     data-bs-toggle="modal"
@@ -201,12 +224,14 @@
 @await Html.PartialAsync("_RoutineDeleteModal")
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/routines.index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/routines.index.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/tags.css" asp-append-version="true"/>
 }
 
 @section Scripts {
     <script src="~/js/routines/routines.index.common.js" asp-append-version="true"></script>
     <script src="~/js/routines/routines.index.today.js" asp-append-version="true"></script>
     <script src="~/js/routines/routines.index.all.js" asp-append-version="true"></script>
+    <script src="~/js/tags.js" asp-append-version="true"></script>
     <script> window.LC_Routines_Index.init(); </script>
 }
