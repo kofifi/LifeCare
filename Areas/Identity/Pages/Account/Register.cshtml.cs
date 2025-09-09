@@ -47,14 +47,14 @@ namespace LifeCare.Areas.Identity.Pages.Account
 
         public class InputModel
         {
-            public bool EnableProfile { get; set; } // poprawna detekcja checkboxa
+            public bool EnableProfile { get; set; }
             public int? Age { get; set; }
-            public string Gender { get; set; }
+            public string? Gender { get; set; }
             public float? Weight { get; set; }
             public float? Height { get; set; }
-            public string Goal { get; set; }
+            public string? Goal { get; set; }
             public float? TargetWeight { get; set; }
-            public string ActivityLevel { get; set; }
+            public string? ActivityLevel { get; set; }
 
             [Required]
             [Display(Name = "Login")]
@@ -81,6 +81,17 @@ namespace LifeCare.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            if (!Input.EnableProfile)
+            {
+                ModelState.Remove("Input.Age");
+                ModelState.Remove("Input.Gender");
+                ModelState.Remove("Input.Weight");
+                ModelState.Remove("Input.Height");
+                ModelState.Remove("Input.Goal");
+                ModelState.Remove("Input.TargetWeight");
+                ModelState.Remove("Input.ActivityLevel");
+            }
+            
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 

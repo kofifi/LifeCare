@@ -25,8 +25,11 @@
             </div>
         </div>
     </div>
-    <section class="news mt-5 text-center">
-        <h3 class="mb-3">Latest Updates</h3>
-        <a class="btn btn-outline-primary" href="/News">View recent commits</a>
-    </section>
+    @if (User.IsInRole("Admin"))
+    {
+        <section class="news mt-5 text-center">
+            <h3 class="mb-3">Latest Updates</h3>
+            <a class="btn btn-outline-primary" href="/News">View recent commits</a>
+        </section>
+    }
 </section>

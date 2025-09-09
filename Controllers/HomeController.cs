@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Claims;
 using LifeCare.Data;
 using LifeCare.Models;
 using LifeCare.ViewModels;
@@ -22,11 +23,13 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var model = new HomeDashboardVM
         {
-            UsersCount = await _context.Users.CountAsync(),
-            HabitsCount = await _context.Habits.CountAsync(),
-            RoutinesCount = await _context.Routines.CountAsync()
+            HabitsCount = await _context.Habits.Where(h => h.UserId == userId).CountAsync(),
+            RoutinesCount = await _context.Routines.Where(r => r.UserId == userId).CountAsync(),
+            TasksCount = 0
         };
 
         return View(model);

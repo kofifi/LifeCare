@@ -19,6 +19,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IHabitService, HabitService>();
 builder.Services.AddScoped<IRoutineService, RoutineService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 
 builder.Services.AddSingleton<IGitInfoService, GitInfoService>();
 

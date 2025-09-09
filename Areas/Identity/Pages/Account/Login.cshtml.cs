@@ -120,11 +120,11 @@ namespace LifeCare.Areas.Identity.Pages.Account
                     var user = await _userManager.GetUserAsync(User);
                     if (await _userManager.IsInRoleAsync(user, "Admin"))
                     {
-                        return LocalRedirect("/Admin/Dashboard");
+                        return LocalRedirect("/Home/Index");
                     }
                     else
                     {
-                        return LocalRedirect("/User/Dashboard");
+                        return LocalRedirect("/Home/Index");
                     }
                 }
 

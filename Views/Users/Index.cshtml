@@ -1,0 +1,39 @@
+﻿@model IEnumerable<LifeCare.ViewModels.AdminUsers.AdminUserListItemVM>
+@{
+    ViewData["Title"] = "Users";
+}
+<div class="container py-4 admin-users">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Users</h2>
+        <a asp-action="Create" class="btn btn-primary">Create</a>
+    </div>
+
+    <table class="table table-dark table-striped align-middle">
+        <thead>
+        <tr>
+            <th>Email</th>
+            <th>Display name</th>
+            <th>Admin</th>
+            <th style="width:220px"></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Email</td>
+                <td>@u.DisplayName</td>
+                <td>@(u.IsAdmin ? "Yes" : "No")</td>
+                <td class="text-end">
+                    <a asp-action="Details" asp-route-id="@u.Id" class="btn btn-outline-secondary btn-sm">Details</a>
+                    <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-outline-primary btn-sm">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@u.Id" class="btn btn-outline-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.users.css" asp-append-version="true" />
+}

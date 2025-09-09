@@ -6,13 +6,13 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"] - LifeCare</title>
-    
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/LifeCare.styles.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    <link rel="stylesheet" href="~/css/tags.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <link rel="stylesheet" href="~/css/tags.css" asp-append-version="true"/>
 
 
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
@@ -32,15 +32,24 @@
             </button>
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav flex-grow-1">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Users" asp-action="Index">Użytkownicy</a>
+                        </li>
+                    }
                     <li class="nav-item">
                         <a class="nav-link" asp-area="" asp-controller="Habits" asp-action="Index">Nawyki</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" asp-area="" asp-controller="Routines" asp-action="Index">Rutyny</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="News" asp-action="Index">Najnowsze zmiany</a>
-                    </li>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="News" asp-action="Index">Najnowsze zmiany</a>
+                        </li>
+                    }
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     @if (User.Identity?.IsAuthenticated ?? false)
@@ -52,7 +61,9 @@
                                 <span>@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Profil</a></li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Profil</a>
+                                </li>
                                 <li>
                                     <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post">
                                         <button type="submit" class="dropdown-item">Wyloguj</button>

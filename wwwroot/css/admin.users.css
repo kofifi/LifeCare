@@ -1,0 +1,138 @@
+﻿.admin-users .card {
+    background: var(--clr-surface-a20);
+    border: var(--border-soft);
+    color: var(--bs-body-color);
+    box-shadow: var(--shadow-soft);
+}
+.admin-users .card-header,
+.admin-users .card-footer {
+    background: var(--clr-surface-a30);
+    border-bottom: var(--border-soft);
+    color: var(--bs-body-color);
+}
+.admin-users .card-body {
+    background: transparent;
+    color: var(--bs-body-color);
+}
+
+.admin-users a { color: var(--clr-primary-a40); text-decoration: none; }
+.admin-users a:hover { color: var(--clr-primary-a50); }
+
+.admin-users .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--bs-body-color);
+    color: var(--bs-body-color);
+}
+.admin-users .table thead,
+.admin-users .table thead.table-light {
+    --bs-table-bg: var(--clr-surface-a30);
+    --bs-table-color: var(--bs-body-color);
+    background: var(--clr-surface-a30);
+    color: var(--bs-body-color);
+}
+.admin-users .table-bordered { border-color: rgba(255,255,255,0.12); }
+.admin-users .table-bordered > :not(caption) > * { border-color: rgba(255,255,255,0.12); }
+.admin-users .table-bordered > :not(caption) > * > * { border-color: rgba(255,255,255,0.12); background: var(--clr-surface-a20); }
+.admin-users .table-striped > tbody > tr:nth-of-type(odd) { --bs-table-accent-bg: var(--clr-surface-a30); color: var(--bs-body-color); }
+
+.admin-users .list-group-item {
+    background: var(--clr-surface-a20);
+    border: var(--border-soft);
+    color: var(--bs-body-color);
+}
+
+.admin-users .form-control,
+.admin-users .form-select {
+    background-color: var(--field-bg);
+    border: var(--field-border);
+    color: var(--bs-body-color);
+}
+.admin-users .form-control:focus,
+.admin-users .form-select:focus {
+    border: var(--field-border-focus);
+    box-shadow: 0 0 0 6px rgba(0,115,230,.15);
+}
+.admin-users .form-check-input {
+    background-color: var(--field-bg);
+    border-color: rgba(255,255,255,0.18);
+}
+.admin-users .form-check-input:checked {
+    background-color: var(--clr-primary-a30);
+    border-color: var(--clr-primary-a30);
+}
+
+.admin-users .dropdown-menu {
+    background: var(--clr-surface-a20);
+    border: var(--border-soft);
+    color: var(--bs-body-color);
+}
+.admin-users .dropdown-item { color: var(--bs-body-color); }
+.admin-users .dropdown-item:hover { background: var(--clr-surface-a30); color: var(--clr-light-a0); }
+
+.admin-users .badge.bg-secondary {
+    background: var(--clr-surface-a30) !important;
+    color: var(--bs-body-color) !important;
+    border: var(--border-soft);
+}
+
+.admin-users .btn-light {
+    background: var(--clr-surface-a30) !important;
+    color: var(--clr-light-a0) !important;
+    border-color: rgba(255,255,255,.12) !important;
+}
+.admin-users .btn-light:hover {
+    background: var(--clr-surface-a40) !important;
+    border-color: rgba(255,255,255,.16) !important;
+}
+
+.admin-users .btn-outline-secondary {
+    border-color: var(--clr-surface-a50);
+    color: var(--bs-body-color);
+}
+.admin-users .btn-outline-secondary:hover {
+    background: var(--clr-surface-a30);
+    color: var(--clr-light-a0);
+}
+
+.admin-users .alert {
+    background: var(--clr-surface-a20);
+    border: var(--border-soft);
+    color: var(--bs-body-color);
+}
+
+.admin-users a:not(.btn) {
+    color: var(--clr-primary-a40);
+    text-decoration: none;
+}
+.admin-users a:not(.btn):hover {
+    color: var(--clr-primary-a50);
+}
+
+/* tekst na przyciskach */
+.admin-users a.btn,
+.admin-users button.btn {
+    color: var(--clr-light-a0) !important;
+}
+
+/* outline primary w ciemnym motywie (bez niebieskiego tekstu) */
+.admin-users .btn-outline-primary {
+    --bs-btn-color: var(--bs-body-color);
+    --bs-btn-border-color: rgba(255,255,255,.24);
+    --bs-btn-hover-bg: var(--clr-surface-a30);
+    --bs-btn-hover-color: var(--clr-light-a0);
+    --bs-btn-hover-border-color: rgba(255,255,255,.32);
+    --bs-btn-active-bg: var(--clr-surface-a40);
+    --bs-btn-active-color: var(--clr-light-a0);
+    --bs-btn-active-border-color: rgba(255,255,255,.36);
+}
+
+/* przycisk-link też bez niebieskiego tekstu */
+.admin-users .btn-link {
+    color: var(--bs-body-color) !important;
+    text-decoration-color: rgba(255,255,255,.4);
+}
+.admin-users .btn-link:hover {
+    color: var(--clr-light-a0) !important;
+    text-decoration-color: rgba(255,255,255,.6);
+}
+
