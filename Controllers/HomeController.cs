@@ -26,6 +26,7 @@ public class HomeController : Controller
         {
             UsersCount = await _context.Users.CountAsync(),
             HabitsCount = await _context.Habits.CountAsync(),
+            RoutinesCount = await _context.Routines.CountAsync()
         };
 
         return View(model);
