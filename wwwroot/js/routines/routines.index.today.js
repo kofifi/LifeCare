@@ -40,16 +40,18 @@
             url.searchParams.delete("todayTagIds");
             (ids || []).forEach(id => url.searchParams.append("todayTagIds", String(id)));
             window.history.replaceState(null, "", url.toString());
-        } catch { /* no-op */ }
+        } catch { /* no-op */
+        }
     }
-    
+
     function setUrlTagIds(ids) {
         try {
             const url = new URL(window.location.href);
             url.searchParams.delete("tagIds");
             (ids || []).forEach(id => url.searchParams.append("tagIds", String(id)));
             window.history.replaceState(null, "", url.toString());
-        } catch { /* no-op */ }
+        } catch { /* no-op */
+        }
     }
 
     function isInteractiveTarget(e) {
@@ -65,8 +67,9 @@
     }
 
     function escapeHtml(s) {
-        return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
+
     function tagsHtml(ids) {
         const dict = window.LC_TagDict || {};
         const names = (ids || []).map(String).map(id => dict[id] || id);
@@ -214,98 +217,129 @@
             const header = document.createElement("div");
             header.className = "d-flex align-items-center justify-content-between gap-3";
             header.innerHTML = `
-        <div class="d-flex align-items-center gap-3">
-          <i class="fa ${r.icon}" style="color:${r.color}"></i>
-          <div>
-            <div class="fw-semibold ${r.completed ? "strike" : ""}">${r.name}</div>
-            ${r.description ? `<div class="small text-muted">${r.description}</div>` : ``}
-            ${r.timeOfDay ? `<div class="small text-muted">${fmtTimeMaybe(r.timeOfDay)}</div>` : ``}
-            ${tagsHtml(getRoutineTagIds(r))}
-          </div>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-secondary">${r.doneSteps}/${r.totalSteps}</span>
-
-          <button class="icon-btn" type="button" data-edit
-                  title="Edytuj" aria-label="Edytuj">
-            <i class="fa fa-edit"></i>
-          </button>
-
-          <button class="icon-btn icon-btn-danger" type="button" data-delete
-                  data-bs-toggle="modal" data-bs-target="#routineDeleteModal"
-                  data-id="${r.routineId}" data-name="${r.name}"
-                  title="Usuń" aria-label="Usuń">
-            <i class="fa fa-trash"></i>
-          </button>
-
-          <button class="btn btn-outline-secondary btn-sm" data-toggle-steps type="button" title="Rozwiń">
-            <i class="fa fa-chevron-down"></i>
-          </button>
-        </div>
-      `;
+                <div class="d-flex align-items-center gap-3">
+                  <i class="fa ${r.icon}" style="color:${r.color}"></i>
+                  <div>
+                    <div class="fw-semibold ${r.completed ? "strike" : ""}">${r.name}</div>
+                    ${r.description ? `<div class="small text-muted">${r.description}</div>` : ``}
+                    ${r.timeOfDay ? `<div class="small text-muted">${fmtTimeMaybe(r.timeOfDay)}</div>` : ``}
+                    ${tagsHtml(getRoutineTagIds(r))}
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-secondary">${r.doneSteps}/${r.totalSteps}</span>
+        
+                  <button class="icon-btn" type="button" data-edit
+                          title="Edytuj" aria-label="Edytuj">
+                    <i class="fa fa-edit"></i>
+                  </button>
+        
+                  <button class="icon-btn icon-btn-danger" type="button" data-delete
+                          data-bs-toggle="modal" data-bs-target="#routineDeleteModal"
+                          data-id="${r.routineId}" data-name="${r.name}"
+                          title="Usuń" aria-label="Usuń">
+                    <i class="fa fa-trash"></i>
+                  </button>
+        
+                  <button class="btn btn-outline-secondary btn-sm" data-toggle-steps type="button" title="Rozwiń">
+                    <i class="fa fa-chevron-down"></i>
+                  </button>
+                </div>
+            `;
 
             const body = document.createElement("div");
             body.className = "mt-2 d-none";
             body.innerHTML = `
-        <div class="d-flex align-items-center justify-content-end mb-2">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="checkall_${r.routineId}">
-          </div>
-        </div>
-        <div class="d-flex flex-column gap-2" data-steps></div>
-        <div class="d-flex justify-content-end mt-3"></div>
-      `;
+                <div class="d-flex align-items-center justify-content-end mb-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="checkall_${r.routineId}">
+                  </div>
+                </div>
+                <div class="d-flex flex-column gap-2" data-steps></div>
+                <div class="d-flex justify-content-end mt-3"></div>
+            `;
 
             const stepsHost = qs("[data-steps]", body);
 
             r.steps.forEach((s, idx) => {
-                const isAny = s.rotationEnabled && (s.rotationMode || "").toUpperCase() === "ANY";
+                const mode = (s.rotationMode || "").toUpperCase();
+                const hasMultiple = Array.isArray(s.products) && s.products.length > 1;
+                const isAny = s.rotationEnabled && mode === "ANY";
+                const isNone = !s.rotationEnabled && hasMultiple;
+
                 const showStepCheckbox = !isAny;
+                const showProductCheckboxes = isAny || isNone;
+
+                let labelText = "";
+                let labelTitle = "";
+                if (s.rotationEnabled && mode === "ANY") {
+                    labelText = "Wybierz z wielu";
+                    labelTitle = "Wybierz co najmniej jeden produkt/działanie z listy, aby krok został wykonany.";
+                } else if (s.rotationEnabled) {
+                    labelText = "Rotacja";
+                    labelTitle = "Produkty/działania używane naprzemiennie (po kolei).";
+                } else if (hasMultiple) {
+                    labelText = "Brak rotacji";
+                    labelTitle = "Aby zakończyć krok, musisz zaznaczyć wszystkie dostępne produkty/działania.";
+                }
+                const rotationLabel = labelText
+                    ? `<span class="daily-step-rotation" title="${escapeHtml(labelTitle)}">${labelText}</span>`
+                    : "";
+
+                const stepCheckboxChecked =
+                    isNone && showStepCheckbox && showProductCheckboxes && Array.isArray(s.products) && s.products.length
+                        ? s.products.every(p => !!p.completed)
+                        : !!s.completed;
 
                 const row = document.createElement("div");
                 row.className = `step-card ${s.completed || s.skipped ? "completed" : ""}`;
 
                 const headerHtml = `
-          <div class="d-flex align-items-start justify-content-between">
-            <div class="me-3 flex-grow-1">
-              <div class="step-title">
-                <span class="step-num">${idx + 1}</span>
-                <span>${s.name}</span>
-              </div>
-              ${s.description ? `<div class="product-note mt-1">${s.description}</div>` : ``}
-            </div>
-            ${showStepCheckbox ? `
-              <div class="form-check mt-1">
-                <input class="form-check-input" type="checkbox" ${s.completed ? "checked" : ""} data-step-id="${s.stepId}">
-              </div>` : ``}
-          </div>
-        `;
+                  ${rotationLabel}
+                  <div class="d-flex align-items-start justify-content-between">
+                    <div class="me-3 flex-grow-1">
+                      <div class="step-title">
+                        <span class="step-num">${idx + 1}</span>
+                        <span>${s.name}</span>
+                      </div>
+                      ${s.description ? `<div class="product-note mt-1">${s.description}</div>` : ``}
+                    </div>
+                    ${showStepCheckbox ? `
+                      <div class="form-check mt-1">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               ${stepCheckboxChecked ? "checked" : ""}
+                               data-step-id="${s.stepId}"
+                               data-step-mode="${isAny ? "ANY" : (isNone ? "NONE" : "OTHER")}">
+                      </div>` : ``}
+                  </div>
+                `;
 
                 let productsHtml = "";
                 if (s.products && s.products.length) {
                     productsHtml = `
-            <div class="mt-2 d-flex flex-column gap-2">
-              ${s.products.map(p => `
-                <div class="product-row">
-                  ${p.imageUrl ? `<img src="${p.imageUrl}" alt="">` : ``}
-                  <div class="flex-grow-1">
-                    <div class="product-name-line">
-                      <div class="fw-semibold">${p.name}</div>
-                      ${p.note ? `<div class="product-note">— ${p.note}</div>` : ``}
-                    </div>
-                    ${p.url ? `<div class="small"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
-                  </div>
-                  ${isAny ? `
-                    <div class="form-check mt-1">
-                      <input class="form-check-input" type="checkbox"
-                             data-prod-id="${p.productId}"
-                             data-step-id="${s.stepId}"
-                             ${p.completed ? "checked" : ""}>
-                    </div>` : ``}
-                </div>
-              `).join("")}
-            </div>
-          `;
+                        <div class="mt-2 d-flex flex-column gap-2">
+                          ${s.products.map(p => `
+                            <div class="product-row">
+                              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="">` : ``}
+                              <div class="flex-grow-1">
+                                <div class="product-name-line">
+                                  <div class="fw-semibold">${p.name}</div>
+                                  ${p.note ? `<div class="product-note">— ${p.note}</div>` : ``}
+                                </div>
+                                ${p.url ? `<div class="small"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
+                              </div>
+                              ${showProductCheckboxes ? `
+                                <div class="form-check mt-1">
+                                  <input class="form-check-input" type="checkbox"
+                                         data-prod-id="${p.productId}"
+                                         data-step-id="${s.stepId}"
+                                         ${p.completed ? "checked" : ""}>
+                                </div>` : ``}
+                            </div>
+                          `).join("")}
+                        </div>
+                    `;
                 }
 
                 row.innerHTML = `${headerHtml}${productsHtml}`;
@@ -340,6 +374,28 @@
                         e.target.checked = !completed;
                         alert("Błąd zapisu.");
                     } else {
+                        const rowEl = e.target.closest(".step-card");
+                        const stepCb = rowEl.querySelector('input[type="checkbox"][data-step-id]:not([data-prod-id])');
+                        const productCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
+                        const allCompleted = productCbs.length > 0 && productCbs.every(cb => cb.checked === true);
+
+                        if (stepCb) stepCb.checked = allCompleted;
+
+                        try {
+                            await fetch("/Routines/ToggleStep", {
+                                method: "POST",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({
+                                    routineId: r.routineId,
+                                    stepId,
+                                    date: dateStr,
+                                    completed: allCompleted,
+                                    note: null
+                                }),
+                            });
+                        } catch { /* no-op */
+                        }
+
                         await reload();
                     }
                     return;
@@ -347,7 +403,73 @@
 
                 if (e.target.matches("input[type=checkbox][data-step-id]") && !e.target.hasAttribute("data-prod-id")) {
                     const stepId = parseInt(e.target.getAttribute("data-step-id"), 10);
+                    const mode = (e.target.getAttribute("data-step-mode") || "OTHER").toUpperCase();
                     const completed = e.target.checked;
+
+                    if (mode === "NONE") {
+                        const rowEl = e.target.closest(".step-card");
+                        const prodCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
+
+                        if (!prodCbs.length) {
+                            const ok = await fetch("/Routines/ToggleStep", {
+                                method: "POST",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({
+                                    routineId: r.routineId,
+                                    stepId,
+                                    date: dateStr,
+                                    completed,
+                                    note: null
+                                }),
+                            }).then((x) => x.ok);
+
+                            if (!ok) {
+                                e.target.checked = !completed;
+                                alert("Błąd zapisu.");
+                            } else {
+                                await reload();
+                            }
+                            return;
+                        }
+
+                        try {
+                            const results = await Promise.all(prodCbs.map(cb => {
+                                const prodId = parseInt(cb.getAttribute("data-prod-id"), 10);
+                                cb.checked = completed;
+                                return fetch("/Routines/ToggleProduct", {
+                                    method: "POST",
+                                    headers: {"Content-Type": "application/json"},
+                                    body: JSON.stringify({
+                                        routineId: r.routineId,
+                                        stepId,
+                                        productId: prodId,
+                                        date: dateStr,
+                                        completed
+                                    }),
+                                }).then(x => x.ok);
+                            }));
+
+                            if (results.some(ok => !ok)) throw new Error("partial-fail");
+
+                            await fetch("/Routines/ToggleStep", {
+                                method: "POST",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({
+                                    routineId: r.routineId,
+                                    stepId,
+                                    date: dateStr,
+                                    completed,
+                                    note: null
+                                }),
+                            });
+
+                            await reload();
+                        } catch {
+                            e.target.checked = !completed;
+                            alert("Nie udało się zapisać wszystkich pozycji.");
+                        }
+                        return;
+                    }
 
                     const ok = await fetch("/Routines/ToggleStep", {
                         method: "POST",

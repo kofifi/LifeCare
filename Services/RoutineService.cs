@@ -82,7 +82,6 @@ namespace LifeCare.Services
 
             entity.Order = (maxOrder ?? -1) + 1;
 
-            // TAGI (opcjonalne)
             if (vm.SelectedTagIds != null && vm.SelectedTagIds.Count > 0)
             {
                 var tags = await _db.Tags

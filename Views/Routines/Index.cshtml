@@ -201,10 +201,33 @@
                             {
                                 idx++;
                                 <div class="step-card">
-                                    @if (s.RotationEnabled)
-                                    {
-                                        <span class="step-rotation">Rotacja: @(s.RotationMode?.ToUpper())</span>
+                                    @{
+                                        var productsCount = s.Products?.Count ?? 0;
+                                        var rotMode = (s.RotationMode ?? "").ToUpperInvariant();
+                                        string rotText = null;
+                                        string rotTitle = null;
+
+                                        if (s.RotationEnabled && rotMode == "ANY")
+                                        {
+                                            rotText = "Wybierz z wielu";
+                                            rotTitle = "Wybierz co najmniej jeden produkt/działanie z listy, aby krok został wykonany.";
+                                        }
+                                        else if (s.RotationEnabled)
+                                        {
+                                            rotText = "Rotacja";
+                                            rotTitle = "Produkty/działania używane naprzemiennie (po kolei).";
+                                        }
+                                        else if (productsCount > 1)
+                                        {
+                                            rotText = "Brak rotacji";
+                                            rotTitle = "Aby zakończyć krok, musisz zaznaczyć wszystkie dostępne produkty/działania.";
+                                        }
                                     }
+                                    @if (!string.IsNullOrEmpty(rotText))
+                                    {
+                                        <span class="step-rotation" title="@rotTitle">@rotText</span>
+                                    }
+
                                     <div class="step-title">
                                         <span class="step-num">@idx</span>
                                         <span>@s.Name</span>
@@ -257,6 +280,7 @@
 @await Html.PartialAsync("_RoutineDeleteModal")
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/routines.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/routines.index.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/tags.css" asp-append-version="true"/>
 }

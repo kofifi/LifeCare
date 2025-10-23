@@ -135,21 +135,3 @@
 
     return { init, switchSection };
 })();
-
-document.addEventListener('tagfilter:change', function (e) {
-    e.preventDefault();
-    const sec = (e.detail?.section || 'today').toLowerCase();
-    const ids = e.detail?.selectedIds || [];
-
-    if (sec === 'all') {
-        if (window.LC_Routines_All?.setTags && window.LC_Routines_All?.applyFilters) {
-            window.LC_Routines_All.setTags(ids);
-            window.LC_Routines_All.applyFilters();
-        }
-    } else {
-        if (window.LC_Routines_Today?.setTags && window.LC_Routines_Today?.reload) {
-            window.LC_Routines_Today.setTags(ids);
-            window.LC_Routines_Today.reload();
-        }
-    }
-});
