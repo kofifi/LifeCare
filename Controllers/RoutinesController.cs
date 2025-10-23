@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using LifeCare.Models;
 using LifeCare.Helpers;
 
-
 namespace LifeCare.Controllers
 {
     [Authorize]
@@ -50,7 +49,6 @@ namespace LifeCare.Controllers
             {
                 Color = "#3b82f6",
                 Icon = "fa-spa",
-                RRule = "FREQ=DAILY;INTERVAL=1",
                 AvailableTags = await _routineService.GetUserTagsAsync(userId!)
             };
             return View(vm);
@@ -63,9 +61,6 @@ namespace LifeCare.Controllers
             var userId = _userManager.GetUserId(User);
 
             vm.Steps = RoutineStepsJsonHelper.Parse(stepsJson);
-
-            if (string.IsNullOrWhiteSpace(vm.RRule))
-                vm.RRule = null;
 
             if (vm.Steps == null || vm.Steps.Count == 0)
                 ModelState.AddModelError(nameof(vm.Steps), "Dodaj przynajmniej jeden krok.");
@@ -89,7 +84,7 @@ namespace LifeCare.Controllers
 
             vm.AvailableTags = await _routineService.GetUserTagsAsync(userId!);
 
-            var stepsJson = System.Text.Json.JsonSerializer.Serialize(
+            var stepsJson = JsonSerializer.Serialize(
                 (vm.Steps ?? new List<RoutineStepVM>())
                 .OrderBy(s => s.Order)
                 .Select(s => new
@@ -98,6 +93,7 @@ namespace LifeCare.Controllers
                     name = s.Name,
                     minutes = s.EstimatedMinutes,
                     desc = s.Description,
+                    rrule = s.RRule, // <<< WAŻNE
                     rotation = new { enabled = s.RotationEnabled, mode = s.RotationMode },
                     products = (s.Products ?? new List<RoutineStepProductVM>())
                         .OrderBy(p => p.Id)
@@ -138,7 +134,7 @@ namespace LifeCare.Controllers
             var userId = _userManager.GetUserId(User);
             var routine = await _routineService.GetRoutineAsync(id, userId);
             if (routine == null) return NotFound();
-            return View(routine); // prosty widok potwierdzenia
+            return View(routine);
         }
 
         [HttpPost, ActionName("Delete")]
@@ -191,8 +187,7 @@ namespace LifeCare.Controllers
                 return BadRequest();
 
             var ok = await _routineService.ToggleStepProductAsync(dto.RoutineId, dto.StepId, dto.ProductId, d,
-                dto.Completed,
-                userId);
+                dto.Completed, userId);
             return ok ? Ok() : BadRequest();
         }
 
@@ -226,11 +221,14 @@ namespace LifeCare.Controllers
                 .OrderBy(s => s.Order)
                 .Select(s => new
                 {
+                    id = s.Id,
                     name = s.Name,
                     minutes = s.EstimatedMinutes,
                     desc = s.Description,
+                    rrule = s.RRule, // <<< WAŻNE
                     products = (s.Products ?? new List<RoutineStepProductVM>()).Select(p => new
                     {
+                        id = p.Id,
                         name = p.Name,
                         note = p.Note,
                         url = p.Url,
@@ -246,7 +244,7 @@ namespace LifeCare.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var userId = _userManager.GetUserId(User);
-            var vm = await _routineService.GetRoutineAsync(id, userId); // już masz
+            var vm = await _routineService.GetRoutineAsync(id, userId);
             if (vm == null) return NotFound();
             return View(vm);
         }

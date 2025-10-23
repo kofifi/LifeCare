@@ -348,15 +348,7 @@ namespace LifeCare.Services
 
             foreach (var r in routines)
             {
-                if (!OccursOnDate(r.StartDateUtc, r.RRule, date))
-                    continue;
-
-                var todaysSteps = r.Steps
-                    .OrderBy(s => s.Order)
-                    .Where(s => OccursOnDate(r.StartDateUtc,
-                        string.IsNullOrWhiteSpace(s.RRule) ? r.RRule : s.RRule, date))
-                    .ToList();
-
+                var todaysSteps = StepsForDate(r, date);
                 if (!todaysSteps.Any())
                     continue;
 
@@ -377,7 +369,7 @@ namespace LifeCare.Services
                     TimeOfDay = r.TimeOfDay,
                     TotalSteps = todaysSteps.Count,
                     Completed = entry?.Completed ?? false,
-                    TagIds = r.Tags?.Select(t => t.Id).ToList() ?? new List<int>() // <<<<< TAGI dla filtrowania "dziś"
+                    TagIds = r.Tags?.Select(t => t.Id).ToList() ?? new List<int>()
                 };
 
                 int done = 0;
@@ -426,8 +418,7 @@ namespace LifeCare.Services
 
                         if (mode == "ALL")
                         {
-                            var occIdx = GetOccurrenceIndex(r.StartDateUtc,
-                                string.IsNullOrWhiteSpace(s.RRule) ? r.RRule : s.RRule, date);
+                            var occIdx = GetOccurrenceIndex(r.StartDateUtc, s.RRule, date);
                             if (occIdx < 0) occIdx = 0;
 
                             var pick = allProducts[occIdx % allProducts.Count];
@@ -544,10 +535,7 @@ namespace LifeCare.Services
                 routine.Entries.Add(entry);
             }
 
-            var todaysSteps = routine.Steps.Where(s =>
-                    OccursOnDate(routine.StartDateUtc, string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
-                        date))
-                .ToList();
+            var todaysSteps = StepsForDate(routine, date);
 
             foreach (var s in todaysSteps)
             {
@@ -610,10 +598,7 @@ namespace LifeCare.Services
                 .ToListAsync();
 
             var todaysStepIds = allSteps
-                .Where(s => OccursOnDate(
-                    routine.StartDateUtc,
-                    string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
-                    date))
+                .Where(s => OccursOnDate(routine.StartDateUtc, s.RRule, date))
                 .Select(s => s.Id)
                 .ToList();
 
@@ -723,9 +708,7 @@ namespace LifeCare.Services
                 routine.Entries.Add(entry);
             }
 
-            var todaysSteps = routine.Steps.Where(s =>
-                OccursOnDate(routine.StartDateUtc, string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule, date)
-            ).ToList();
+            var todaysSteps = StepsForDate(routine, date);
 
             foreach (var s in todaysSteps)
             {
@@ -944,17 +927,11 @@ namespace LifeCare.Services
 
             if (routine == null) throw new KeyNotFoundException();
 
-            DateTime? until = null;
-            if (!string.IsNullOrWhiteSpace(routine.RRule))
-            {
-                var map = ParseRRule(routine.RRule);
-                if (map.TryGetValue("UNTIL", out var raw) && TryParseUntil(raw, out var u))
-                    until = u.Date;
-            }
-
             var start = routine.StartDateUtc.Date;
             var today = DateTime.UtcNow.Date;
-            var end = until.HasValue && until.Value < today ? until.Value : today;
+
+            var stepsUntil = GetStepsMaxUntilUtc(routine)?.Date;
+            var end = (stepsUntil.HasValue && stepsUntil.Value < today) ? stepsUntil.Value : today;
 
             int totalOcc = 0, completedDays = 0, partialDays = 0, skippedDays = 0;
             int currentStreak = 0, bestStreak = 0;
@@ -967,20 +944,7 @@ namespace LifeCare.Services
             {
                 var dOnly = DateOnly.FromDateTime(day);
 
-                if (!string.IsNullOrWhiteSpace(routine.RRule) &&
-                    !OccursOnDate(routine.StartDateUtc, routine.RRule, dOnly))
-                {
-                    continue;
-                }
-
-                var todaysSteps = routine.Steps
-                    .Where(s =>
-                        OccursOnDate(
-                            routine.StartDateUtc,
-                            string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
-                            dOnly))
-                    .ToList();
-
+                var todaysSteps = StepsForDate(routine, dOnly);
                 if (todaysSteps.Count == 0)
                     continue;
 
@@ -1023,7 +987,7 @@ namespace LifeCare.Services
             var stats = new RoutineStatsVM
             {
                 StartDateUtc = routine.StartDateUtc,
-                EndDateUtc = until,
+                EndDateUtc = stepsUntil,
                 TotalOccurrences = totalOcc,
                 CompletedDays = completedDays,
                 PartialDays = partialDays,
@@ -1043,8 +1007,7 @@ namespace LifeCare.Services
 
                 foreach (var step in routine.Steps)
                 {
-                    var stepRule = string.IsNullOrWhiteSpace(step.RRule) ? routine.RRule : step.RRule;
-                    if (!OccursOnDate(routine.StartDateUtc, stepRule, dOnly))
+                    if (!OccursOnDate(routine.StartDateUtc, step.RRule, dOnly))
                         continue;
 
                     var agg = stepAgg[step.Id];
@@ -1088,7 +1051,7 @@ namespace LifeCare.Services
                     CompletedCount = stepAgg.TryGetValue(s.Id, out var v2) ? v2.comp : 0,
                     TotalEntries = stepAgg.TryGetValue(s.Id, out var v3) ? v3.total : 0
                 })
-                .Where(x => x.SkippedCount > 0) // nie pokazuj zer
+                .Where(x => x.SkippedCount > 0)
                 .OrderByDescending(x => x.SkippedCount)
                 .ThenBy(x => x.Name)
                 .Take(5)
@@ -1112,13 +1075,7 @@ namespace LifeCare.Services
             var list = new List<RoutineDayEntryVM>();
             for (var d = from; d <= to; d = d.AddDays(1))
             {
-                if (!OccursOnDate(routine.StartDateUtc, routine.RRule, d)) continue;
-
-                var todaysSteps = routine.Steps.Where(s =>
-                        OccursOnDate(routine.StartDateUtc, string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
-                            d))
-                    .ToList();
-
+                var todaysSteps = StepsForDate(routine, d);
                 if (todaysSteps.Count == 0) continue;
 
                 var dateUtc = d.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
@@ -1146,15 +1103,11 @@ namespace LifeCare.Services
 
             var routine = await _db.Routines
                 .Include(r => r.Steps)
-                .Include(r => r.Entries.Where(e =>
-                    e.Date.Year == year && e.Date.Month == month))
+                .Include(r => r.Entries.Where(e => e.Date.Year == year && e.Date.Month == month))
                 .ThenInclude(e => e.StepEntries)
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.UserId == userId);
 
             if (routine == null) return new Dictionary<string, string>();
-
-            var first = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
-            var last = first.AddMonths(1).AddDays(-1);
 
             var steps = routine.Steps.Select(s => new { s.Id, s.RRule }).ToList();
 
@@ -1166,17 +1119,9 @@ namespace LifeCare.Services
                 var dUtc = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
                 var d = DateOnly.FromDateTime(dUtc);
 
-                bool outOfRange = false;
-                if (dUtc.Date < routine.StartDateUtc.Date) outOfRange = true;
+                var key = $"{year}-{month:00}-{day:00}";
 
-                if (!outOfRange && !string.IsNullOrWhiteSpace(routine.RRule))
-                {
-                    var occurs = OccursOnDate(routine.StartDateUtc, routine.RRule, d);
-                    if (!occurs) outOfRange = true;
-                }
-
-                string key = $"{year}-{month:00}-{day:00}";
-
+                bool outOfRange = dUtc.Date < routine.StartDateUtc.Date;
                 if (outOfRange)
                 {
                     result[key] = "off";
@@ -1184,10 +1129,7 @@ namespace LifeCare.Services
                 }
 
                 var todaysStepIds = steps
-                    .Where(s => OccursOnDate(
-                        routine.StartDateUtc,
-                        string.IsNullOrWhiteSpace(s.RRule) ? routine.RRule : s.RRule,
-                        d))
+                    .Where(s => OccursOnDate(routine.StartDateUtc, s.RRule, d))
                     .Select(s => s.Id)
                     .ToList();
 
@@ -1237,6 +1179,39 @@ namespace LifeCare.Services
                 .OrderBy(t => t.Name)
                 .Select(t => new TagVM { Id = t.Id, Name = t.Name })
                 .ToListAsync();
+        }
+
+        private static bool AnyStepOccursOnDate(Routine routine, DateOnly date)
+        {
+            foreach (var s in routine.Steps)
+            {
+                if (OccursOnDate(routine.StartDateUtc, s.RRule, date))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static List<RoutineStep> StepsForDate(Routine routine, DateOnly date)
+        {
+            return routine.Steps
+                .Where(s => OccursOnDate(routine.StartDateUtc, s.RRule, date))
+                .OrderBy(s => s.Order)
+                .ToList();
+        }
+
+        private static DateTime? GetStepsMaxUntilUtc(Routine routine)
+        {
+            DateTime? max = null;
+            foreach (var s in routine.Steps)
+            {
+                if (string.IsNullOrWhiteSpace(s.RRule)) continue;
+                var map = ParseRRule(s.RRule);
+                if (map.TryGetValue("UNTIL", out var raw) && TryParseUntil(raw, out var u))
+                    max = (max == null || u > max.Value) ? u : max;
+            }
+
+            return max;
         }
     }
 }

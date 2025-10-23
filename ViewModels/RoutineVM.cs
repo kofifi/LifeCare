@@ -15,7 +15,6 @@ public class RoutineVM
 
     public DateTime StartDateUtc { get; set; } = DateTime.UtcNow.Date;
     public TimeSpan? TimeOfDay { get; set; }
-    public string? RRule { get; set; }
 
     public bool ReminderEnabled { get; set; }
     public int? ReminderMinutesBefore { get; set; }

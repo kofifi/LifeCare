@@ -16,8 +16,7 @@
 <div class="container py-4" id="routine-root"
      data-routine-id="@Model.Id"
      data-color="@Model.Color"
-     data-start-utc="@Model.StartDateUtc.ToString("yyyy-MM-dd")"
-     data-rrule="@(Model.RRule ?? "")">
+     data-start-utc="@Model.StartDateUtc.ToString("yyyy-MM-dd")">
 
     <div class="position-relative mb-4">
         <div class="position-absolute top-0 end-0">
@@ -139,41 +138,41 @@
     <script src="~/js/routines/routines.details.js" asp-append-version="true"></script>
 
     <script>
-      (async function(){
+    (async function(){
         const root = document.getElementById('routine-root');
         const routineId = +root.dataset.routineId;
         await StatsCommon.init({
-          kind: 'routine',
-          selectors: {
-            pieCanvas:   '#routine_pieChart',
-            weekCanvas:  '#routine_weekChart',
-            weekLabel:   '#routine_weekLabel',
-            monthLabel:  '#routine_monthLabel',
-            monthBody:   '#routine_monthBody',
-            statsRow:    '#routine_statsRow',
-            overallPercent: '#routine_overallPercent',
-            currentStreak:  '#routine_currentStreak',
-            bestStreak:     '#routine_bestStreak',
-            totalCount:     '#routine_totalCount',
-            completedCount: '#routine_completedCount',
-            partialCount:   '#routine_partialCount',
-            skippedCount:   '#routine_skippedCount',
-            rangeInfo:      '#routine_rangeInfo',
-            skipsCard:      '#routine_skipsCard',
-            skipsList:      '#routine_skipsList',
-            prevWeek:  '#routine_prevWeek',
-            nextWeek:  '#routine_nextWeek',
-            prevMonth: '#routine_prevMonth',
-            nextMonth: '#routine_nextMonth'
-          },
-          endpoints: {
-            stats: (  )      => `/Routines/RoutineStats?routineId=${routineId}`,
-            week:  (f,t)     => `/Routines/RoutineEntries?routineId=${routineId}&from=${f}&to=${t}`,
-            month: (y,m)     => `/Routines/RoutineMonth?routineId=${routineId}&year=${y}&month=${m}`
-          }
+            kind: 'routine',
+            selectors: {
+                pieCanvas:   '#routine_pieChart',
+                weekCanvas:  '#routine_weekChart',
+                weekLabel:   '#routine_weekLabel',
+                monthLabel:  '#routine_monthLabel',
+                monthBody:   '#routine_monthBody',
+                statsRow:    '#routine_statsRow',
+                overallPercent: '#routine_overallPercent',
+                currentStreak:  '#routine_currentStreak',
+                bestStreak:     '#routine_bestStreak',
+                totalCount:     '#routine_totalCount',
+                completedCount: '#routine_completedCount',
+                partialCount:   '#routine_partialCount',
+                skippedCount:   '#routine_skippedCount',
+                rangeInfo:      '#routine_rangeInfo',
+                skipsCard:      '#routine_skipsCard',
+                skipsList:      '#routine_skipsList',
+                prevWeek:  '#routine_prevWeek',
+                nextWeek:  '#routine_nextWeek',
+                prevMonth: '#routine_prevMonth',
+                nextMonth: '#routine_nextMonth'
+            },
+            endpoints: {
+                stats: (  )      => `/Routines/RoutineStats?routineId=${routineId}`,
+                week:  (f,t)     => `/Routines/RoutineEntries?routineId=${routineId}&from=${f}&to=${t}`,
+                month: (y,m)     => `/Routines/RoutineMonth?routineId=${routineId}&year=${y}&month=${m}`
+            }
         });
-      })();
-    </script>
+    })();
+</script>
 }
 
 @section Styles {

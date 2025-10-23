@@ -20,7 +20,6 @@ namespace LifeCare.Models
 
         public DateTime StartDateUtc { get; set; }
         public TimeSpan? TimeOfDay { get; set; }
-        public string? RRule { get; set; }
 
         public bool ReminderEnabled { get; set; }
         public int? ReminderMinutesBefore { get; set; }

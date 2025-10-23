@@ -21,6 +21,232 @@
 
         const state = { steps: [] };
 
+        const startInput = () => document.getElementById('startDate');
+
+        function addDays(d, n){ const x = new Date(d); x.setUTCDate(x.getUTCDate()+n); return x; }
+        function addMonths(d, n){ const x = new Date(d); x.setUTCMonth(x.getUTCMonth()+n); return x; }
+        function fmtDateUTC(d){
+            const y = d.getUTCFullYear();
+            const m = String(d.getUTCMonth()+1).padStart(2,'0');
+            const da = String(d.getUTCDate()).padStart(2,'0');
+            return `${y}-${m}-${da}`;
+        }
+
+        function parseRRule(rrule){
+            if (!rrule) return {};
+            return rrule.split(';')
+                .map(s=>s.split('='))
+                .filter(a=>a.length===2)
+                .reduce((m,[k,v]) => (m[k.toUpperCase()] = v.toUpperCase(), m), {});
+        }
+
+        function ensureUniqueRadioNames(stepCard){
+            let uid = stepCard.getAttribute('data-step-uid');
+            if (!uid) {
+                uid = 's' + Math.random().toString(36).slice(2,8);
+                stepCard.setAttribute('data-step-uid', uid);
+            }
+            const freqName = `freq_${uid}`;
+            const endName  = `end_${uid}`;
+            stepCard.querySelectorAll('input.step-freq[name="__freq__"]').forEach(r => r.name = freqName);
+            stepCard.querySelectorAll('input.step-end-mode[name="__end__"]').forEach(r => r.name = endName);
+            return { freqName, endName };
+        }
+
+        function toggleFreqBlocks(recur, freq){
+            const w = recur.querySelector('.step-weekly');
+            const m = recur.querySelector('.step-monthly');
+            if (w) w.classList.toggle('d-none', freq!=='WEEKLY');
+            if (m) m.classList.toggle('d-none', freq!=='MONTHLY');
+        }
+
+        function hydrateStepRecurrence(stepCard, rrule){
+            const recur = stepCard.querySelector('[data-recur]');
+            if (!recur) return;
+
+            const noRepeat = recur.querySelector('.step-no-repeat');
+            const body = recur.querySelector('.step-recur-body');
+            const { freqName, endName } = ensureUniqueRadioNames(stepCard);
+
+            const map = parseRRule(rrule || '');
+
+            const monthlyGrid = recur.querySelector('.step-monthly .d-grid');
+            if (monthlyGrid && !monthlyGrid.querySelector('.step-md-btn[data-day="31"]')){
+                monthlyGrid.innerHTML = Array.from({length:31}, (_,i)=>i+1)
+                    .map(d=>`<button type="button" class="btn btn-outline-secondary btn-sm step-md-btn" data-day="${d}">${d}</button>`)
+                    .join('');
+            }
+
+            if (!rrule || (map.COUNT === '1')) {
+                noRepeat.checked = true;
+                body.classList.add('d-none');
+                return;
+            }
+
+            noRepeat.checked = false;
+            body.classList.remove('d-none');
+
+            const interval = parseInt(map.INTERVAL || '1', 10);
+            recur.querySelector('.step-interval-input').value = interval;
+            recur.querySelectorAll('.step-interval-btn').forEach(b => {
+                b.classList.toggle('active', +b.dataset.val === interval);
+            });
+
+            const freq = map.FREQ || 'DAILY';
+            stepCard.querySelectorAll(`input.step-freq[name="${freqName}"]`).forEach(r => {
+                r.checked = (r.value === freq);
+            });
+            toggleFreqBlocks(recur, freq);
+
+            if (freq === 'WEEKLY' && map.BYDAY){
+                const set = new Set(map.BYDAY.split(','));
+                recur.querySelectorAll('.step-day-btn').forEach(b => {
+                    b.classList.toggle('active', set.has(b.dataset.day));
+                });
+            }
+
+            if (freq === 'MONTHLY' && map.BYMONTHDAY){
+                const set = new Set(map.BYMONTHDAY.split(',').map(Number));
+                recur.querySelectorAll('.step-md-btn').forEach(b => {
+                    b.classList.toggle('active', set.has(+b.dataset.day));
+                });
+            }
+
+            const endSwitch = recur.querySelector('.step-end-switch');
+            const endBody = recur.querySelector('.step-end-body');
+            const endModeRadios = stepCard.querySelectorAll(`.step-end-mode[name="${endName}"]`);
+            const endDate = recur.querySelector('.step-end-date');
+
+            if (map.UNTIL){
+                endSwitch.checked = true;
+                endBody.classList.remove('d-none');
+                if (/^\d{4}-\d{2}-\d{2}$/.test(map.UNTIL)){
+                    endModeRadios.forEach(r => r.checked = (r.value === 'DATE'));
+                    endDate.value = map.UNTIL;
+                } else {
+                    endModeRadios.forEach(r => r.checked = (r.value === 'AFTER'));
+                }
+            } else {
+                endSwitch.checked = false;
+                endBody.classList.add('d-none');
+            }
+        }
+
+        function buildStepRRule(stepCard){
+            const recur = stepCard.querySelector('[data-recur]');
+            if (!recur) return null;
+
+            const noRepeat = recur.querySelector('.step-no-repeat');
+            if (noRepeat.checked) return 'COUNT=1';
+
+            const { freqName, endName } = ensureUniqueRadioNames(stepCard);
+
+            const interval = parseInt(recur.querySelector('.step-interval-input').value || '1', 10) || 1;
+            const freq = stepCard.querySelector(`input.step-freq[name="${freqName}"]:checked`)?.value || 'DAILY';
+
+            const parts = [];
+            parts.push(`FREQ=${freq}`);
+            if (interval > 1) parts.push(`INTERVAL=${interval}`);
+
+            if (freq === 'WEEKLY'){
+                const activeDays = Array.from(recur.querySelectorAll('.step-day-btn.active')).map(b => b.dataset.day);
+                if (activeDays.length > 0) parts.push(`BYDAY=${activeDays.join(',')}`);
+            }
+            if (freq === 'MONTHLY'){
+                const activeMd = Array.from(recur.querySelectorAll('.step-md-btn.active')).map(b => +b.dataset.day);
+                if (activeMd.length > 0) parts.push(`BYMONTHDAY=${activeMd.join(',')}`);
+            }
+
+            const endSwitch = recur.querySelector('.step-end-switch');
+            if (endSwitch.checked){
+                const endMode = stepCard.querySelector(`.step-end-mode[name="${endName}"]:checked`)?.value || 'AFTER';
+                const startStr = (startInput()?.value || '').trim(); // yyyy-MM-dd
+                if (endMode === 'DATE'){
+                    const u = recur.querySelector('.step-end-date').value;
+                    if (u) parts.push(`UNTIL=${u}`);
+                } else {
+                    if (startStr){
+                        const [y,m,d] = startStr.split('-').map(Number);
+                        const start = new Date(Date.UTC(y, m-1, d));
+                        const count = Math.max(1, parseInt(recur.querySelector('.step-end-count').value || '30', 10));
+                        const unit = recur.querySelector('.step-end-unit').value; // DAYS/WEEKS/MONTHS
+                        let until = new Date(start);
+                        if (unit === 'DAYS')   until = addDays(start, count);
+                        if (unit === 'WEEKS')  until = addDays(start, count*7);
+                        if (unit === 'MONTHS') until = addMonths(start, count);
+                        parts.push(`UNTIL=${fmtDateUTC(until)}`);
+                    }
+                }
+            }
+
+            return parts.join(';');
+        }
+
+        function wireStepRecurrence(stepCard, stepObj){
+            const recur = stepCard.querySelector('[data-recur]');
+            if (!recur) return;
+
+            ensureUniqueRadioNames(stepCard);
+
+            recur.addEventListener('click', (e)=>{
+                const b = e.target.closest('.step-interval-btn');
+                if (!b) return;
+                recur.querySelectorAll('.step-interval-btn').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                recur.querySelector('.step-interval-input').value = b.dataset.val;
+                stepObj.rrule = buildStepRRule(stepCard) || null;
+                syncHidden();
+            });
+
+            stepCard.addEventListener('change', (e)=>{
+                const r = e.target.closest('input.step-freq');
+                if (!r) return;
+                toggleFreqBlocks(recur, r.value);
+                stepObj.rrule = buildStepRRule(stepCard) || null;
+                syncHidden();
+            });
+
+            recur.addEventListener('click', (e)=>{
+                const d = e.target.closest('.step-day-btn');
+                if (d) {
+                    d.classList.toggle('active');
+                    stepObj.rrule = buildStepRRule(stepCard) || null;
+                    syncHidden();
+                    return;
+                }
+                const md = e.target.closest('.step-md-btn');
+                if (md) {
+                    md.classList.toggle('active');
+                    stepObj.rrule = buildStepRRule(stepCard) || null;
+                    syncHidden();
+                    return;
+                }
+            });
+
+            recur.querySelector('.step-no-repeat').addEventListener('change', (e)=>{
+                const body = recur.querySelector('.step-recur-body');
+                body.classList.toggle('d-none', e.target.checked);
+                stepObj.rrule = buildStepRRule(stepCard) || null;
+                syncHidden();
+            });
+
+            recur.querySelector('.step-end-switch').addEventListener('change', (e)=>{
+                recur.querySelector('.step-end-body').classList.toggle('d-none', !e.target.checked);
+                stepObj.rrule = buildStepRRule(stepCard) || null;
+                syncHidden();
+            });
+
+            recur.addEventListener('change', (e)=>{
+                if (e.target.classList.contains('step-end-mode')
+                    || e.target.classList.contains('step-end-count')
+                    || e.target.classList.contains('step-end-unit')
+                    || e.target.classList.contains('step-end-date')) {
+                    stepObj.rrule = buildStepRRule(stepCard) || null;
+                    syncHidden();
+                }
+            });
+        }
+
         function syncHidden() {
             stepsJsonEl.value = JSON.stringify(state.steps || []);
         }
@@ -80,6 +306,102 @@
             <textarea rows="2" class="form-control step-desc-input">${step.desc || ''}</textarea>
           </div>
           
+          <div class="step-recur mt-3" data-recur>
+              <div class="d-flex justify-content-between align-items-center">
+                <strong>Powtarzalność</strong>
+                <div class="form-check form-switch">
+                  <input class="form-check-input step-no-repeat" type="checkbox">
+                  <label class="form-check-label">Nigdy</label>
+                </div>
+              </div>
+            
+              <div class="step-recur-body mt-2">
+                <div class="mb-2">
+                  <div class="btn-group flex-wrap" role="group" aria-label="Interwał">
+                    <input type="hidden" class="step-interval-input" value="1"/>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn active" data-val="1">Każdy</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="2">2</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="3">3</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="4">4</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="5">5</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="6">6</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="7">7</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="8">8</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="9">9</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm step-interval-btn" data-val="10">10</button>
+                  </div>
+                  <div class="form-text">Interwał (np. „co 2 tygodnie”)</div>
+                </div>
+            
+                <div class="mb-2">
+                  <div class="form-check">
+                    <input class="form-check-input step-freq" type="radio" name="__freq__" value="DAILY" checked>
+                    <label class="form-check-label">Dzień</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input step-freq" type="radio" name="__freq__" value="WEEKLY">
+                    <label class="form-check-label">Tydzień</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input step-freq" type="radio" name="__freq__" value="MONTHLY">
+                    <label class="form-check-label">Miesiąc</label>
+                  </div>
+                </div>
+            
+                <div class="mb-2 step-weekly d-none">
+                  <div class="mb-1">W wybranych dniach:</div>
+                  <div class="btn-group flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary btn-sm step-day-btn" data-day="MO">Pn</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm step-day-btn" data-day="TU">Wt</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm step-day-btn" data-day="WE">Śr</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm step-day-btn" data-day="TH">Cz</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm step-day-btn" data-day="FR">Pt</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm step-day-btn" data-day="SA">Sb</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm step-day-btn" data-day="SU">Nd</button>
+                  </div>
+                </div>
+            
+                <div class="mb-2 step-monthly d-none">
+                  <div class="mb-1">Dni miesiąca:</div>
+                  <div class="d-grid" style="grid-template-columns: repeat(7, minmax(0,1fr)); gap:.25rem;">
+                  </div>
+                </div>
+            
+                <div class="mt-3">
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input step-end-switch" type="checkbox">
+                    <label class="form-check-label">Zakończ się po pewnym czasie</label>
+                  </div>
+            
+                  <div class="step-end-body d-none">
+                    <div class="mb-3">
+                      <div class="form-check">
+                        <input class="form-check-input step-end-mode" type="radio" name="__end__" value="AFTER" checked>
+                        <label class="form-check-label">Po czasie</label>
+                      </div>
+            
+                      <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                        <input type="number" class="form-control step-end-count" min="1" value="30" style="max-width: 140px;"/>
+                        <select class="form-select step-end-unit" style="max-width: 200px;">
+                          <option value="DAYS">dniach</option>
+                          <option value="WEEKS">tygodniach</option>
+                          <option value="MONTHS">miesiącach</option>
+                        </select>
+                      </div>
+                    </div>
+            
+                    <div class="mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input step-end-mode" type="radio" name="__end__" value="DATE">
+                        <label class="form-check-label">Do dnia</label>
+                      </div>
+                      <input type="date" class="form-control mt-1 step-end-date" style="max-width: 260px;"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+          
           <div class="row g-2 mt-2">
             <div class="col-sm-6">
                 <label class="form-label mb-1">Czas (min)</label>
@@ -134,18 +456,23 @@
 
             $$('.step-card', stepsRoot).forEach((card, idx) => {
                 const list = card.querySelector('.product-list');
-                if (!list) return;
-                new Sortable(list, {
-                    handle: '.product-drag',
-                    animation: 150,
-                    onEnd: (evt) => {
-                        const s = state.steps[idx];
-                        const moved = s.products.splice(evt.oldIndex, 1)[0];
-                        s.products.splice(evt.newIndex, 0, moved);
-                        syncHidden();
-                        render();
-                    }
-                });
+                if (list) {
+                    new Sortable(list, {
+                        handle: '.product-drag',
+                        animation: 150,
+                        onEnd: (evt) => {
+                            const s = state.steps[idx];
+                            const moved = s.products.splice(evt.oldIndex, 1)[0];
+                            s.products.splice(evt.newIndex, 0, moved);
+                            syncHidden();
+                            render();
+                        }
+                    });
+                }
+
+                const step = state.steps[idx];
+                wireStepRecurrence(card, step);
+                hydrateStepRecurrence(card, step.rrule || null);
             });
 
             const addBelow = document.createElement('div');
@@ -157,7 +484,7 @@
             stepsRoot.appendChild(addBelow);
 
             $('#addStepBtnBottom')?.addEventListener('click', () => {
-                state.steps.push({ name: '', minutes: 0, desc: '', products: [], rotation: { enabled: false, mode: 'ALL' } });
+                state.steps.push({ id: 0, name: '', minutes: 0, desc: '', products: [], rotation: { enabled: false, mode: 'ALL' }, rrule: 'COUNT=1' });
                 render();
             });
 
@@ -166,7 +493,7 @@
 
         if (addStepBtn) {
             addStepBtn.addEventListener('click', () => {
-                state.steps.push({ id: 0, name: '', minutes: 0, desc: '', products: [], rotation: { enabled: false, mode: 'ALL' } });
+                state.steps.push({ id: 0, name: '', minutes: 0, desc: '', products: [], rotation: { enabled: false, mode: 'ALL' }, rrule: 'COUNT=1' });
                 render();
             });
         }
@@ -255,6 +582,9 @@
                 render();
             }
 
+            const newR = buildStepRRule(card);
+            step.rrule = newR || null;
+
             syncHidden();
         });
 
@@ -323,11 +653,22 @@
         try {
             if (stepsJsonEl.value) {
                 const parsed = JSON.parse(stepsJsonEl.value);
-                if (Array.isArray(parsed)) state.steps = parsed;
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(s => { if (typeof s.rrule === 'undefined') s.rrule = 'COUNT=1'; });
+                    state.steps = parsed;
+                }
             }
         } catch {}
 
         render();
+
+        $('#startDate')?.addEventListener('change', ()=>{
+            $$('.step-card', stepsRoot).forEach((card, idx)=>{
+                const newR = buildStepRRule(card);
+                state.steps[idx].rrule = newR || null;
+            });
+            syncHidden();
+        });
 
         form.addEventListener('submit', (e) => {
             let ok = true;
@@ -339,6 +680,10 @@
                     if (!inp.value.trim()) inp.classList.add('is-invalid'); else inp.classList.remove('is-invalid');
                 });
             } else {
+                $$('.step-card', stepsRoot).forEach((card, idx)=>{
+                    const r = buildStepRRule(card);
+                    state.steps[idx].rrule = r || null;
+                });
                 syncHidden();
             }
         });

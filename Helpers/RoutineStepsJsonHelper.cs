@@ -1,67 +1,107 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using LifeCare.ViewModels;
 
-namespace LifeCare.Helpers;
-
-internal static class RoutineStepsJsonHelper
+namespace LifeCare.Helpers
 {
-    public static List<RoutineStepVM> Parse(string? json)
+    public static class RoutineStepsJsonHelper
     {
-        var result = new List<RoutineStepVM>();
-        if (string.IsNullOrWhiteSpace(json)) return result;
-
-        using var doc = JsonDocument.Parse(json);
-        if (doc.RootElement.ValueKind != JsonValueKind.Array) return result;
-
-        int order = 0;
-        foreach (var el in doc.RootElement.EnumerateArray())
+        private sealed class StepDto
         {
-            var vm = new RoutineStepVM
-            {
-                Id = el.TryGetProperty("id", out var idEl) && idEl.TryGetInt32(out var idVal) ? idVal : 0,
-                Name = el.TryGetProperty("name", out var name) ? name.GetString() ?? "" : "",
-                EstimatedMinutes = el.TryGetProperty("minutes", out var minutes) && minutes.TryGetInt32(out var m) ? m : (int?)null,
-                Description = el.TryGetProperty("desc", out var desc) ? desc.GetString() : null,
-                Order = order++
-            };
+            [JsonPropertyName("id")] public int? Id { get; set; }
+            [JsonPropertyName("name")] public string? Name { get; set; }
+            [JsonPropertyName("minutes")] public int? Minutes { get; set; }
+            [JsonPropertyName("desc")] public string? Desc { get; set; }
 
-            if (el.TryGetProperty("rotation", out var rot) && rot.ValueKind == JsonValueKind.Object)
+            public sealed class RotationDto
             {
-                vm.RotationEnabled = rot.TryGetProperty("enabled", out var en) && en.GetBoolean();
-                vm.RotationMode = rot.TryGetProperty("mode", out var md) ? md.GetString()?.ToUpperInvariant() : null;
+                [JsonPropertyName("enabled")] public bool? Enabled { get; set; }
+                [JsonPropertyName("mode")] public string? Mode { get; set; }
             }
 
-            if (el.TryGetProperty("products", out var prods) && prods.ValueKind == JsonValueKind.Array)
+            [JsonPropertyName("rotation")] public RotationDto? Rotation { get; set; }
+
+            [JsonPropertyName("rrule")] public string? RRule { get; set; }
+
+            public sealed class ProductDto
             {
-                foreach (var p in prods.EnumerateArray())
-                {
-                    var nameP = p.TryGetProperty("name", out var nEl) ? nEl.GetString() : null;
-                    if (string.IsNullOrWhiteSpace(nameP)) continue;
-
-                    var pid =
-                        (p.TryGetProperty("id", out var pidEl) && pidEl.TryGetInt32(out var pidVal)) ? pidVal :
-                        (p.TryGetProperty("productId", out var pid2) && pid2.TryGetInt32(out var pid2Val)) ? pid2Val : 0;
-
-                    vm.Products.Add(new RoutineStepProductVM
-                    {
-                        Id = pid,
-                        Name = nameP!,
-                        Note = p.TryGetProperty("note", out var note) ? note.GetString() : null,
-                        Url  = p.TryGetProperty("url",  out var url)  ? url.GetString()  : null,
-                        ImageUrl = p.TryGetProperty("imageUrl", out var img) ? img.GetString() : null
-                    });
-                }
+                [JsonPropertyName("id")] public int? Id { get; set; }
+                [JsonPropertyName("name")] public string? Name { get; set; }
+                [JsonPropertyName("note")] public string? Note { get; set; }
+                [JsonPropertyName("url")] public string? Url { get; set; }
+                [JsonPropertyName("imageUrl")] public string? ImageUrl { get; set; }
             }
 
-            if (vm.Products.Count < 2)
-            {
-                vm.RotationEnabled = false;
-                vm.RotationMode = null;
-            }
-
-            result.Add(vm);
+            [JsonPropertyName("products")] public List<ProductDto>? Products { get; set; }
         }
 
-        return result;
+        public static List<RoutineStepVM> Parse(string? stepsJson)
+        {
+            var result = new List<RoutineStepVM>();
+            if (string.IsNullOrWhiteSpace(stepsJson))
+                return result;
+
+            StepDto[]? items;
+            try
+            {
+                items = JsonSerializer.Deserialize<StepDto[]>(stepsJson, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    ReadCommentHandling = JsonCommentHandling.Skip,
+                    AllowTrailingCommas = true
+                });
+            }
+            catch
+            {
+                return result;
+            }
+
+            if (items == null || items.Length == 0)
+                return result;
+
+            int order = 0;
+            foreach (var s in items)
+            {
+                var name = (s.Name ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(name)) continue;
+
+                var vm = new RoutineStepVM
+                {
+                    Id = s.Id ?? 0,
+                    Name = name,
+                    EstimatedMinutes = Math.Max(0, s.Minutes ?? 0),
+                    Description = string.IsNullOrWhiteSpace(s.Desc) ? null : s.Desc!.Trim(),
+                    Order = order++,
+
+                    RotationEnabled = s.Rotation?.Enabled ?? false,
+                    RotationMode = string.IsNullOrWhiteSpace(s.Rotation?.Mode) ? null : s.Rotation!.Mode!.Trim(),
+
+                    RRule = string.IsNullOrWhiteSpace(s.RRule) ? null : s.RRule!.Trim()
+                };
+
+                if (s.Products != null && s.Products.Count > 0)
+                {
+                    vm.Products = s.Products
+                        .Where(p => !string.IsNullOrWhiteSpace(p.Name))
+                        .Select(p => new RoutineStepProductVM
+                        {
+                            Id = p.Id ?? 0,
+                            Name = p.Name!.Trim(),
+                            Note = string.IsNullOrWhiteSpace(p.Note) ? null : p.Note!.Trim(),
+                            Url = string.IsNullOrWhiteSpace(p.Url) ? null : p.Url!.Trim(),
+                            ImageUrl = string.IsNullOrWhiteSpace(p.ImageUrl) ? null : p.ImageUrl!.Trim()
+                        })
+                        .ToList();
+                }
+                else
+                {
+                    vm.Products = new List<RoutineStepProductVM>();
+                }
+
+                result.Add(vm);
+            }
+
+            return result;
+        }
     }
 }

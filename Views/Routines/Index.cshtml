@@ -6,26 +6,45 @@
     var allTagsVm = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>());
     var tagNameById = allTagsVm.ToDictionary(t => t.Id, t => t.Name);
 
-    bool IsActive(string? rrule)
+    bool IsActiveBySteps(IEnumerable<LifeCare.ViewModels.RoutineStepVM>? steps)
     {
-        if (string.IsNullOrWhiteSpace(rrule)) return true; // brak UNTIL => aktywna
-        var parts = rrule.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(p => p.Split('=')).Where(a => a.Length == 2)
-            .ToDictionary(a => a[0].ToUpperInvariant(), a => a[1], StringComparer.OrdinalIgnoreCase);
-        if (!parts.TryGetValue("UNTIL", out var raw) || string.IsNullOrWhiteSpace(raw)) return true;
+        if (steps == null) return true;
 
-        DateTime until;
-        if (DateOnly.TryParse(raw, out var d1)) until = d1.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        else if (DateTime.TryParseExact(raw, "yyyyMMdd'T'HHmmss'Z'", null,
-                     System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var z))
-            until = z;
-        else if (DateTime.TryParseExact(raw, "yyyyMMdd", null,
-                     System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var ymd))
-            until = ymd;
-        else if (DateTime.TryParse(raw, out var any)) until = any;
-        else return true;
+        DateTime? maxUntil = null;
+        foreach (var s in steps)
+        {
+            var rrule = s.RRule;
+            if (string.IsNullOrWhiteSpace(rrule))
+            {
+                return true;
+            }
 
-        return DateTime.UtcNow.Date <= until.Date;
+            var parts = rrule.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(p => p.Split('=')).Where(a => a.Length == 2)
+                .ToDictionary(a => a[0].ToUpperInvariant(), a => a[1], StringComparer.OrdinalIgnoreCase);
+
+            if (!parts.TryGetValue("UNTIL", out var raw) || string.IsNullOrWhiteSpace(raw))
+            {
+                return true;
+            }
+
+            DateTime until;
+            if (DateOnly.TryParse(raw, out var d1)) until = d1.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            else if (DateTime.TryParseExact(raw, "yyyyMMdd'T'HHmmss'Z'", null,
+                         System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var z))
+                until = z;
+            else if (DateTime.TryParseExact(raw, "yyyyMMdd", null,
+                         System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var ymd))
+                until = ymd;
+            else if (DateTime.TryParse(raw, out var any)) until = any;
+            else continue;
+
+            if (maxUntil == null || until.Date > maxUntil.Value.Date)
+                maxUntil = until.Date;
+        }
+
+        if (maxUntil == null) return true;
+        return DateTime.UtcNow.Date <= maxUntil.Value.Date;
     }
 }
 
@@ -63,7 +82,6 @@
             SubmitMode = "manual",
             Section = "today"
         })
-
 
         <div class="d-flex align-items-center justify-content-between">
             <h5 class="mb-2" id="todayTitle">Dzisiejsze rutyny</h5>
@@ -105,7 +123,7 @@
         <div class="d-flex flex-column gap-3" id="allList">
             @foreach (var r in Model)
             {
-                var active = IsActive(r.RRule);
+                var active = IsActiveBySteps(r.Steps);
                 <div class="soft-card clickable-card"
                      data-active="@(active ? "1" : "0")"
                      data-tags="@(r.SelectedTagIds == null ? "" : string.Join(',', r.SelectedTagIds))"
@@ -129,7 +147,7 @@
                                     <div class="small text-muted">@($"{(int)r.TimeOfDay.Value.TotalHours:0}:{r.TimeOfDay.Value.Minutes:00}")</div>
                                 }
                                 <div class="small">Status: @(active ? "aktywna" : "nieaktywna")</div>
-                                
+
                                 @if (r.SelectedTagIds != null && r.SelectedTagIds.Any())
                                 {
                                     <div class="mt-1">
