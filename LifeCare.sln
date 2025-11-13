@@ -1,6 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LifeCare", "LifeCare.csproj", "{017B4748-CBFA-4017-8D7F-3F9CCBE4AE5E}"
+# 
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LifeCareTests", "LifeCareTests\LifeCareTests.csproj", "{52344D3A-6D9C-4990-B827-BEB2309C725C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LifeCare", "LifeCare\LifeCare.csproj", "{8D8571F2-C048-4951-B1EB-D9CB02588C80}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -8,9 +11,13 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{017B4748-CBFA-4017-8D7F-3F9CCBE4AE5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{017B4748-CBFA-4017-8D7F-3F9CCBE4AE5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{017B4748-CBFA-4017-8D7F-3F9CCBE4AE5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{017B4748-CBFA-4017-8D7F-3F9CCBE4AE5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52344D3A-6D9C-4990-B827-BEB2309C725C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52344D3A-6D9C-4990-B827-BEB2309C725C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52344D3A-6D9C-4990-B827-BEB2309C725C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52344D3A-6D9C-4990-B827-BEB2309C725C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D8571F2-C048-4951-B1EB-D9CB02588C80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D8571F2-C048-4951-B1EB-D9CB02588C80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D8571F2-C048-4951-B1EB-D9CB02588C80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D8571F2-C048-4951-B1EB-D9CB02588C80}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
