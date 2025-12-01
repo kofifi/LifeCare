@@ -27,7 +27,8 @@ public class MappingProfile : Profile
         CreateMap<Routine, RoutineVM>()
             .ForMember(d => d.Steps, o => o.MapFrom(s => s.Steps))
             .ForMember(d => d.SelectedTagIds, o => o.MapFrom(s => s.Tags.Select(t => t.Id)))
-            .ForMember(d => d.AvailableTags, o => o.Ignore());
+            .ForMember(d => d.AvailableTags, o => o.Ignore())
+            .ForMember(d => d.IsActive, m => m.Ignore());
 
         CreateMap<RoutineVM, Routine>()
             .ForMember(d => d.Id,       o => o.Ignore())

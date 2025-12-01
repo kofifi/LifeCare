@@ -27,7 +27,8 @@ public class RoutineServiceTests
             c.CreateMap<Routine, RoutineVM>()
                 .ForMember(d => d.SelectedTagIds, m => m.Ignore())
                 .ForMember(d => d.AvailableTags, m => m.Ignore())
-                .ForMember(d => d.ResetStats, m => m.Ignore());
+                .ForMember(d => d.ResetStats, m => m.Ignore())
+                .ForMember(d => d.IsActive, m => m.Ignore());   // <── TO DODAJ
 
             c.CreateMap<RoutineVM, Routine>()
                 .ForMember(d => d.UserId, m => m.Ignore())
@@ -468,4 +469,65 @@ public class RoutineServiceTests
         stats.OverallPercent.Should().BeApproximately(50.0, 0.001);
 
     }
+    
+    [Fact]
+    public async Task GetAllRoutinesAsync_StepUntilInPast_MarksRoutineInactive()
+    {
+        using var db = NewDb(nameof(GetAllRoutinesAsync_StepUntilInPast_MarksRoutineInactive));
+        var mapper = NewMapper();
+        var svc = new RoutineService(db, mapper);
+
+        var routine = new Routine
+        {
+            UserId = "u1",
+            Name = "R",
+            StartDateUtc = DateTime.UtcNow.Date.AddDays(-10),
+            Steps = new List<RoutineStep>
+            {
+                new()
+                {
+                    Name = "S1",
+                    RRule = $"FREQ=DAILY;UNTIL={DateTime.UtcNow.AddDays(-1):yyyy-MM-dd}"
+                }
+            }
+        };
+
+        db.Routines.Add(routine);
+        await db.SaveChangesAsync();
+
+        var list = await svc.GetAllRoutinesAsync("u1", null);
+        list.Should().HaveCount(1);
+        list[0].IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetAllRoutinesAsync_StepUntilInFuture_MarksRoutineActive()
+    {
+        using var db = NewDb(nameof(GetAllRoutinesAsync_StepUntilInFuture_MarksRoutineActive));
+        var mapper = NewMapper();
+        var svc = new RoutineService(db, mapper);
+
+        var routine = new Routine
+        {
+            UserId = "u1",
+            Name = "R",
+            StartDateUtc = DateTime.UtcNow.Date.AddDays(-1),
+            Steps = new List<RoutineStep>
+            {
+                new()
+                {
+                    Name = "S1",
+                    RRule = $"FREQ=DAILY;UNTIL={DateTime.UtcNow.AddDays(5):yyyy-MM-dd}"
+                }
+            }
+        };
+
+        db.Routines.Add(routine);
+        await db.SaveChangesAsync();
+
+        var list = await svc.GetAllRoutinesAsync("u1", null);
+        list.Should().HaveCount(1);
+        list[0].IsActive.Should().BeTrue();
+    }
+
 }

@@ -377,9 +377,19 @@
                         const rowEl = e.target.closest(".step-card");
                         const stepCb = rowEl.querySelector('input[type="checkbox"][data-step-id]:not([data-prod-id])');
                         const productCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
-                        const allCompleted = productCbs.length > 0 && productCbs.every(cb => cb.checked === true);
 
-                        if (stepCb) stepCb.checked = allCompleted;
+                        const mode = (stepCb?.getAttribute("data-step-mode") || "ANY").toUpperCase();
+
+                        let stepCompleted;
+
+                        if (mode === "ANY") {
+                            const anyCompleted = productCbs.some(cb => cb.checked === true);
+                            stepCompleted = anyCompleted;
+                        } else {
+                            const allCompleted = productCbs.length > 0 && productCbs.every(cb => cb.checked === true);
+                            stepCompleted = allCompleted;
+                            if (stepCb) stepCb.checked = allCompleted;
+                        }
 
                         try {
                             await fetch("/Routines/ToggleStep", {
@@ -389,12 +399,11 @@
                                     routineId: r.routineId,
                                     stepId,
                                     date: dateStr,
-                                    completed: allCompleted,
+                                    completed: stepCompleted,
                                     note: null
                                 }),
                             });
-                        } catch { /* no-op */
-                        }
+                        } catch { /* no-op */ }
 
                         await reload();
                     }

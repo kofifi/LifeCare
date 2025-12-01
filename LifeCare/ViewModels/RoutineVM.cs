@@ -14,6 +14,7 @@ public class RoutineVM
     public string Icon { get; set; } = "fa-dumbbell";
 
     public DateTime StartDateUtc { get; set; } = DateTime.UtcNow.Date;
+    public bool IsActive { get; set; }
     public TimeSpan? TimeOfDay { get; set; }
 
     public bool ReminderEnabled { get; set; }

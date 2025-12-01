@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using FluentAssertions;
 using LifeCare.Data;
 using LifeCare.Models;
@@ -25,13 +23,12 @@ public class RoutineRotationTests
     {
         var cfg = new MapperConfiguration(c =>
         {
-            // Entity -> VM
             c.CreateMap<Routine, RoutineVM>()
                 .ForMember(d => d.SelectedTagIds, m => m.Ignore())
                 .ForMember(d => d.AvailableTags, m => m.Ignore())
-                .ForMember(d => d.ResetStats, m => m.Ignore());
+                .ForMember(d => d.ResetStats, m => m.Ignore())
+                .ForMember(d => d.IsActive, m => m.Ignore());   // <── TO DODAJ
 
-            // VM -> Entity  (ważne: NIE mapuj Steps; serwis tworzy je ręcznie)
             c.CreateMap<RoutineVM, Routine>()
                 .ForMember(d => d.UserId, m => m.Ignore())
                 .ForMember(d => d.User, m => m.Ignore())

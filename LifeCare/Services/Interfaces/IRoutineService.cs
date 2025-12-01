@@ -1,5 +1,7 @@
 ﻿using LifeCare.ViewModels;
 
+namespace LifeCare.Services.Interfaces;
+
 public interface IRoutineService
 {
     Task<List<RoutineVM>> GetAllRoutinesAsync(string userId, List<int>? tagIds = null);

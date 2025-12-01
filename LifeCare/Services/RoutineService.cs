@@ -4,6 +4,7 @@ using LifeCare.Models;
 using LifeCare.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using LifeCare.Services.Interfaces;
 
 namespace LifeCare.Services
 {
@@ -35,10 +36,13 @@ namespace LifeCare.Services
                 .OrderBy(r => r.Order)
                 .ToListAsync();
 
+            var now = DateTime.UtcNow;
+
             var result = list.Select(r =>
             {
                 var vm = _mapper.Map<RoutineVM>(r);
                 vm.SelectedTagIds = r.Tags?.Select(t => t.Id).ToList() ?? new List<int>();
+                vm.IsActive = IsRoutineActive(vm.Steps, now);
                 return vm;
             }).ToList();
 
@@ -63,6 +67,8 @@ namespace LifeCare.Services
                 .OrderBy(t => t.Name)
                 .Select(t => new TagVM { Id = t.Id, Name = t.Name })
                 .ToListAsync();
+
+            vm.IsActive = IsRoutineActive(vm.Steps, DateTime.UtcNow);
 
             return vm;
         }
@@ -519,9 +525,10 @@ namespace LifeCare.Services
         public async Task<bool> MarkAllStepsAsync(int routineId, DateOnly date, string userId)
         {
             var routine = await _db.Routines
-                .Include(r => r.Steps)
+                .Include(r => r.Steps).ThenInclude(s => s.Products)
                 .Include(r => r.Entries.Where(e => e.Date == date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)))
                 .ThenInclude(e => e.StepEntries)
+                .ThenInclude(se => se.ProductEntries)
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.UserId == userId);
 
             if (routine == null) return false;
@@ -538,15 +545,7 @@ namespace LifeCare.Services
 
             foreach (var s in todaysSteps)
             {
-                var dupes = entry.StepEntries
-                    .Where(x => x.RoutineStepId == s.Id)
-                    .OrderByDescending(x => x.Id)
-                    .ToList();
-
-                var se = dupes.FirstOrDefault();
-                foreach (var d in dupes.Skip(1))
-                    _db.RoutineStepEntries.Remove(d);
-
+                var se = entry.StepEntries.FirstOrDefault(x => x.RoutineStepId == s.Id);
                 if (se == null)
                 {
                     se = new RoutineStepEntry { RoutineStepId = s.Id };
@@ -556,6 +555,23 @@ namespace LifeCare.Services
                 se.Completed = true;
                 se.Skipped = false;
                 se.CompletedAt = DateTime.UtcNow;
+
+                if (s.RotationEnabled &&
+                    string.Equals(s.RotationMode, "ANY", StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (var p in s.Products ?? Enumerable.Empty<RoutineStepProduct>())
+                    {
+                        var pe = se.ProductEntries.FirstOrDefault(x => x.RoutineStepProductId == p.Id);
+                        if (pe == null)
+                        {
+                            pe = new RoutineStepProductEntry { RoutineStepProductId = p.Id };
+                            se.ProductEntries.Add(pe);
+                        }
+
+                        pe.Completed = true;
+                        pe.CompletedAt = DateTime.UtcNow;
+                    }
+                }
             }
 
             entry.Completed = true;
@@ -745,7 +761,6 @@ namespace LifeCare.Services
             return true;
         }
 
-
         public async Task<bool> SetRoutineCompletedAsync(int routineId, DateOnly date, bool completed, string userId)
         {
             var dateUtc = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
@@ -811,11 +826,34 @@ namespace LifeCare.Services
             pe.Completed = completed;
             pe.CompletedAt = completed ? DateTime.UtcNow : null;
 
-            if (step.RotationEnabled && string.Equals(step.RotationMode, "ANY", StringComparison.OrdinalIgnoreCase))
+            var allProducts = (step.Products ?? new List<RoutineStepProduct>()).ToList();
+            var completedIds = se.ProductEntries
+                .Where(x => x.Completed)
+                .Select(x => x.RoutineStepProductId)
+                .ToHashSet();
+
+            var total = allProducts.Count;
+
+            var isAnyMode = step.RotationEnabled &&
+                            string.Equals(step.RotationMode, "ANY", StringComparison.OrdinalIgnoreCase);
+
+            if (isAnyMode)
             {
-                se.Completed = se.ProductEntries.Any(x => x.Completed);
-                if (!se.Completed) se.Skipped = false;
-                se.CompletedAt = se.Completed ? DateTime.UtcNow : null;
+                var anyCompleted = se.ProductEntries.Any(x => x.Completed);
+
+                se.Completed = anyCompleted;
+                if (!anyCompleted) se.Skipped = false;
+                se.CompletedAt = anyCompleted ? DateTime.UtcNow : null;
+            }
+            else
+            {
+                if (total >= 1)
+                {
+                    var allCompleted = allProducts.All(p => completedIds.Contains(p.Id));
+                    se.Completed = allCompleted;
+                    if (!allCompleted) se.Skipped = false;
+                    se.CompletedAt = allCompleted ? DateTime.UtcNow : null;
+                }
             }
 
             entry.Completed = await AreAllScheduledStepsDoneAsync(routine, date);
@@ -1211,6 +1249,62 @@ namespace LifeCare.Services
             }
 
             return max;
+        }
+
+        private static bool IsRoutineActive(IEnumerable<RoutineStepVM>? steps, DateTime utcNow)
+        {
+            if (steps == null) return true;
+
+            DateTime? maxUntil = null;
+
+            foreach (var s in steps)
+            {
+                var rrule = s.RRule;
+                if (string.IsNullOrWhiteSpace(rrule))
+                    return true;
+
+                var parts = rrule
+                    .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(p => p.Split('='))
+                    .Where(a => a.Length == 2)
+                    .ToDictionary(a => a[0].ToUpperInvariant(), a => a[1], StringComparer.OrdinalIgnoreCase);
+
+                if (!parts.TryGetValue("UNTIL", out var raw) || string.IsNullOrWhiteSpace(raw))
+                    return true;
+
+                DateTime until;
+
+                if (DateOnly.TryParse(raw, out var d1))
+                {
+                    until = d1.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+                }
+                else if (DateTime.TryParseExact(raw, "yyyyMMdd'T'HHmmss'Z'", null,
+                             System.Globalization.DateTimeStyles.AdjustToUniversal |
+                             System.Globalization.DateTimeStyles.AssumeUniversal, out var z))
+                {
+                    until = z;
+                }
+                else if (DateTime.TryParseExact(raw, "yyyyMMdd", null,
+                             System.Globalization.DateTimeStyles.AssumeUniversal |
+                             System.Globalization.DateTimeStyles.AdjustToUniversal, out var ymd))
+                {
+                    until = ymd;
+                }
+                else if (DateTime.TryParse(raw, out var any))
+                {
+                    until = any;
+                }
+                else
+                {
+                    continue;
+                }
+
+                if (maxUntil == null || until.Date > maxUntil.Value.Date)
+                    maxUntil = until.Date;
+            }
+
+            if (maxUntil == null) return true;
+            return utcNow.Date <= maxUntil.Value.Date;
         }
     }
 }
