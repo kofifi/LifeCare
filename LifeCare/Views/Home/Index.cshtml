@@ -1,22 +1,21 @@
 @model LifeCare.ViewModels.HomeDashboardVM
+@using LifeCare.ViewModels
 
 @{
-    ViewData["Title"] = "Dashboard";
+ViewData["Title"] = "Dashboard";
 
-    var date = Model.SelectedDate;
-    var culture = new System.Globalization.CultureInfo("pl-PL");
-    var dateString = date.ToDateTime(TimeOnly.MinValue).ToString("dddd, dd MMMM yyyy", culture);
+var date = Model.SelectedDate;
+var culture = new System.Globalization.CultureInfo("pl-PL");
+var dateString = date.ToDateTime(TimeOnly.MinValue).ToString("dddd, dd MMMM yyyy", culture);
 
-    var allTagsVm = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>());
-    var selectedTagIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>());
+var prevDate = Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd");
+var nextDate = Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd");
 
-    var prevDate = Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd");
-    var nextDate = Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd");
+var dailyCompletionPercentage = Model.OverallCompletionPercentage;
+var currentStreak = Model.CurrentStreak;
 
-    var dailyCompletionPercentage = Model.OverallCompletionPercentage;
-    var currentStreak = Model.CurrentStreak;
-    var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
-        .ToDictionary(t => t.Id.ToString(), t => t.Name);
+var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
+.ToDictionary(t => t.Id.ToString(), t => t.Name);
 }
 
 @Html.AntiForgeryToken()
@@ -28,11 +27,13 @@
             <div class="text-muted text-capitalize">@dateString</div>
         </div>
         <div class="d-flex align-items-center">
+            <a asp-action="Index" asp-route-date="@prevDate" class="btn btn-outline-secondary me-2">&lt;</a>
+            <a asp-action="Index" class="btn btn-outline-primary me-2">Dziś</a>
+            <a asp-action="Index" asp-route-date="@nextDate" class="btn btn-outline-secondary">&gt;</a>
         </div>
     </header>
 
     <div class="row mb-5">
-
         <div class="col-6 col-md-4 mb-3">
             <div class="soft-card dark-card p-4 text-center rounded-lg shadow-lg"
                  style="background: #1E1E1E; border: 1px solid rgba(255, 255, 255, 0.05);">
@@ -63,6 +64,14 @@
     </div>
 
     <div id="dashboardTagFilterWrap" class="mb-4">
+        @await Html.PartialAsync("_TagFilter", new TagFilterVM
+        {
+        Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
+        SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
+        QueryKey = "tagIds",
+        Placeholder = "Filtruj nawyki i rutyny po tagach…",
+        SubmitMode = "manual"
+        })
     </div>
 
     <h3 class="text-light mb-3">Twoje Czynności</h3>
@@ -70,20 +79,27 @@
     <div class="d-flex flex-column gap-4" id="dailyActivitiesList">
 
         <h4 class="text-muted border-bottom pb-2 mt-4">Nawyki (Habits)</h4>
+
         @if (!Model.Habits.Any())
         {
         <p class="text-muted">Brak nawyków przypisanych do tego dnia.</p>
         }
         else
         {
-        <div class="d-flex flex-wrap gap-3 habits-grid">
+        <div id="habit-list" class="d-flex flex-wrap gap-3 habits-grid align-items-stretch">
             @foreach (var h in Model.Habits.OrderBy(x => x.HabitId))
             {
             <div class="habit-card"
-                 data-habit-id="@h.HabitId"
+                 data-id="@h.HabitId"
+                 data-type="@(h.IsQuantityType ? "quantity" : "checkbox")"
+                 data-target="@h.TargetQuantity"
+                 data-unit="jedn."
+                 data-name="@h.Name"
                  data-tags="@(h.SelectedTagIds != null ? string.Join(',', h.SelectedTagIds) : "")"
-                 style="flex: 1 1 300px; min-width: 250px;"> <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-center"
-                                                                  style="border-left: 8px solid @h.Color; background: #181818;">
+                 style="width: calc((100% - 2rem) / 3); min-width: 250px; flex-grow: 0; flex-shrink: 0;">
+
+                <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-start h-100"
+                     style="border-left: 8px solid @h.Color; background: #181818;">
 
                     <i class="me-3 fa @h.Icon fa-2x" style="color: @h.Color;"></i>
 
@@ -91,20 +107,20 @@
                         <strong class="@(h.IsCompleted ? "text-decoration-line-through text-muted" : "text-white")">@h.Name</strong><br />
 
                         @{
-                        // Upewnij się, że słownik tagDict jest zdefiniowany na początku Index.cshtml
                         var habitTagNames = h.SelectedTagIds
                         .Select(id => tagDict.TryGetValue(id.ToString(), out var name) ? name : $"ID:{id}")
                         .ToList();
                         }
                         @if (habitTagNames.Any())
                         {
-                        <div class="d-flex flex-wrap gap-1 mt-1">
+                        <div class="d-flex flex-wrap gap-1 mt-1 mb-2">
                             @foreach (var tagName in habitTagNames)
                             {
                             <span class="tag-pill badge bg-surface-tonal text-white-50">@tagName</span>
                             }
                         </div>
                         }
+
                         @if (h.IsQuantityType && h.TargetQuantity.HasValue)
                         {
                         <div class="progress mt-1" style="height: 5px;">
@@ -116,8 +132,8 @@
                                  style="width: @progressWidth%; background-color: @h.Color;"
                                  aria-valuenow="@progressWidth" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
-                        <small class="text-muted mt-1 d-block">
-                            @h.DoneQuantity / @h.TargetQuantity
+                        <small class="text-muted mt-1 d-block" data-habit-progress>
+                            @h.DoneQuantity/@h.TargetQuantity
                         </small>
                         }
                     </div>
@@ -130,14 +146,15 @@
 
                         @if (h.IsQuantityType && h.TargetQuantity.HasValue)
                         {
-                        <button class="btn btn-sm js-habit-quantity-btn" style="background: @h.Color; color: #121212;">
+                        <button class="btn btn-sm" style="background: @h.Color; color: #121212;" data-qty-plus>
                             +
                         </button>
                         }
                         else
                         {
                         <input type="checkbox"
-                               class="form-check-input js-habit-toggle big-checkbox"
+                               class="form-check-input big-checkbox"
+                               data-habit-checkbox
                                @(h.IsCompleted ? "checked" : "") />
                         }
                     </div>
@@ -154,174 +171,144 @@
     </div>
 </div>
 
+<div class="modal fade" id="quantityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj wykonanie</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong id="modalHabitName"></strong>
+                </p>
+                <p>Jednostka: <span id="modalUnit"></span></p>
+                <div class="mb-3">
+                    <label for="modalQuantityInput" class="form-label">Ilość wykonana dziś</label>
+                    <input type="number" class="form-control" id="modalQuantityInput" min="0"/>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmQuantityBtn" class="btn btn-success">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-    <script src="~/js/tags.js" asp-append-version="true"></script>
+<script src="~/js/tags.js" asp-append-version="true"></script>
+<script src="~/js/habit.js" asp-append-version="true"></script>
 
-    <script>
-        (function () {
-            const selectedDate = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
-            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-            const token = tokenInput ? tokenInput.value : '';
+<script>
+    window.LC_TagDict = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tagDict));
+</script>
 
-            document.querySelectorAll('.js-habit-toggle').forEach(cb => {
-                cb.addEventListener('change', async (e) => {
-                    const card = e.target.closest('.habit-card');
-                    if (!card) return;
+<script>
+    (function () {
+        const selectedDate = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
 
-                    const habitId = card.dataset.habitId;
+        const state = {
+            all: [],
+            tagIds: [],
+            expanded: new Set()
+        };
 
-                    await fetch('@Url.Action("ToggleHabitForDay", "Habits")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': token
-                        },
-                        body: JSON.stringify({
-                            habitId: parseInt(habitId),
-                            date: selectedDate
-                        })
-                    });
+        const qs = (sel, root = document) => root.querySelector(sel);
+        const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+        function fmtTimeMaybe(t) {
+            if (!t) return "";
+            if (typeof t === "string" && t.includes(":")) {
+                const [hh, mm] = t.split(":");
+                return `${parseInt(hh, 10)}:${mm}`;
+            }
+            return t.toString().slice(0, 5);
+        }
+
+        function escapeHtml(s) {
+            return String(s)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        function getRoutineTagIds(r) {
+            if (Array.isArray(r?.tagIds)) return r.tagIds.map(String);
+            if (Array.isArray(r?.selectedTagIds)) return r.selectedTagIds.map(String);
+            return [];
+        }
+
+        function tagsHtml(ids) {
+            const dict = window.LC_TagDict || {};
+            const names = (ids || []).map(String).map(id => dict[id] || id);
+            if (!names.length) return "";
+            return `<div class="mt-1 d-flex flex-wrap gap-1">${names.map(n => `<span class="tag-pill badge bg-surface-tonal text-white-50">${escapeHtml(n)}</span>`).join("")}</div>`;
+        }
+
+        async function loadRoutines() {
+            const host = document.getElementById('dashboardRoutinesList');
+            if (!host) return;
+
+            host.innerHTML = '<div class="soft-card text-muted">Ładowanie rutyn…</div>';
+
+            const url = new URL(window.location.origin + `/Routines/ForDate`);
+            url.searchParams.set("date", selectedDate);
+            url.searchParams.set("_", Date.now().toString());
+
+            try {
+                const res = await fetch(url.toString(), { cache: 'no-store' });
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                const list = await res.json();
+                state.all = Array.isArray(list) ? list : [];
+                renderRoutines();
+            } catch (err) {
+                host.innerHTML = `<div class="soft-card text-danger">Nie udało się pobrać rutyn.</div>`;
+                console.error('Dashboard routines load error:', err);
+            }
+        }
+
+        function renderRoutines() {
+            const host = document.getElementById('dashboardRoutinesList');
+            if (!host) return;
+
+            host.innerHTML = "";
+
+            let list = state.all;
+
+            if (state.tagIds.length > 0) {
+                const tags = state.tagIds;
+                list = list.filter(r => {
+                    const rTags = getRoutineTagIds(r);
+                    if (!rTags.length) return false;
+                    return tags.every(id => rTags.includes(String(id)));
                 });
-            });
-
-            document.querySelectorAll('.js-habit-quantity-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const card = e.target.closest('.habit-card');
-                    if (!card) return;
-
-                    const habitId = card.dataset.habitId;
-
-                    const input = prompt("Podaj ilość do dodania:");
-                    if (!input) return;
-
-                    const value = parseFloat(input.replace(',', '.'));
-                    if (isNaN(value)) return;
-
-                    await fetch('@Url.Action("UpdateHabitQuantityForDay", "Habits")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': token
-                        },
-                        body: JSON.stringify({
-                            habitId: parseInt(habitId),
-                            date: selectedDate,
-                            value: value
-                        })
-                    });
-
-                    location.reload();
-                });
-            });
-        })();
-    </script>
-
-    <script>
-        (function () {
-            const selectedDate = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
-
-            const state = {
-                all: [],          
-                tagIds: [],      
-                expanded: new Set()
-            };
-
-            const qs = (sel, root = document) => root.querySelector(sel);
-            const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-            function fmtTimeMaybe(t) {
-                if (!t) return "";
-                if (typeof t === "string" && t.includes(":")) {
-                    const [hh, mm] = t.split(":");
-                    return `${parseInt(hh, 10)}:${mm}`;
-                }
-                return t.toString().slice(0, 5);
             }
 
-            function escapeHtml(s) {
-                return String(s)
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;");
+            if (!list.length) {
+                host.innerHTML = `<div class="soft-card text-muted">Brak rutyn na ten dzień.</div>`;
+                return;
             }
 
-            function getRoutineTagIds(r) {
-                if (Array.isArray(r?.tagIds)) return r.tagIds.map(String);
-                if (Array.isArray(r?.selectedTagIds)) return r.selectedTagIds.map(String);
-                return [];
-            }
+            list.forEach(r => {
+                const card = document.createElement("div");
+                card.className = "routine-card dynamic-width clickable-card";
+                card.setAttribute("data-routine-id", r.routineId);
 
-            function tagsHtml(ids) {
-                const dict = window.LC_TagDict || {};
-                const names = (ids || []).map(String).map(id => dict[id] || id);
-                if (!names.length) return "";
-                return `<div class="mt-1 d-flex flex-wrap gap-1">${names.map(n => `<span class="tag-pill badge bg-surface-tonal text-white-50">${escapeHtml(n)}</span>`).join("")}</div>`;
-            }
+                const tagIds = getRoutineTagIds(r);
+                card.setAttribute("data-tags", tagIds.length ? tagIds.join(",") : "");
 
-            async function loadRoutines() {
-                const host = document.getElementById('dashboardRoutinesList');
-                if (!host) return;
+                if (r.completed) card.classList.add("completed");
 
-                host.innerHTML = '<div class="soft-card text-muted">Ładowanie rutyn…</div>';
+                const progressBadge = `<span class="badge bg-secondary">${r.doneSteps}/${r.totalSteps}</span>`;
+                const routineCompletedClass = r.completed ? "completed-routine" : "";
 
-                const url = new URL(window.location.origin + `/Routines/ForDate`);
-                url.searchParams.set("date", selectedDate);
-                url.searchParams.set("_", Date.now().toString());
+                const header = document.createElement("div");
+                header.className = `soft-card dark-card p-3 d-flex flex-row align-items-center justify-content-between rounded-top-lg rounded-bottom-0 ${routineCompletedClass}`;
+                header.style.borderLeft = `8px solid ${r.color || '#cccccc'}`;
+                header.style.background = '#181818';
+                header.style.marginBottom = '0';
 
-                try {
-                    const res = await fetch(url.toString(), { cache: 'no-store' });
-                    if (!res.ok) throw new Error("HTTP " + res.status);
-                    const list = await res.json();
-                    state.all = Array.isArray(list) ? list : [];
-                    renderRoutines();
-                } catch (err) {
-                    host.innerHTML = `<div class="soft-card text-danger">Nie udało się pobrać rutyn.</div>`;
-                    console.error('Dashboard routines load error:', err);
-                }
-            }
-
-            function renderRoutines() {
-                const host = document.getElementById('dashboardRoutinesList');
-                if (!host) return;
-
-                host.innerHTML = "";
-
-                let list = state.all;
-
-                if (state.tagIds.length > 0) {
-                    const tags = state.tagIds;
-                    list = list.filter(r => {
-                        const rTags = getRoutineTagIds(r);
-                        if (!rTags.length) return false;
-                        return tags.every(id => rTags.includes(String(id)));
-                    });
-                }
-
-                if (!list.length) {
-                    host.innerHTML = `<div class="soft-card text-muted">Brak rutyn na ten dzień.</div>`;
-                    return;
-                }
-
-                list.forEach(r => {
-                    const card = document.createElement("div");
-                    card.className = "routine-card dynamic-width clickable-card";
-                    card.setAttribute("data-routine-id", r.routineId);
-
-                    const tagIds = getRoutineTagIds(r);
-                    card.setAttribute("data-tags", tagIds.length ? tagIds.join(",") : "");
-
-                    if (r.completed) card.classList.add("completed");
-
-                    const progressBadge = `<span class="badge bg-secondary">${r.doneSteps}/${r.totalSteps}</span>`;
-                    const routineCompletedClass = r.completed ? "completed-routine" : "";
-
-                    const header = document.createElement("div");
-                    header.className = `soft-card dark-card p-3 d-flex flex-row align-items-center justify-content-between rounded-top-lg rounded-bottom-0 ${routineCompletedClass}`;
-                    header.style.borderLeft = `8px solid ${r.color || '#cccccc'}`;
-                    header.style.background = '#181818';
-                    header.style.marginBottom = '0';
-
-                    header.innerHTML = `
+                header.innerHTML = `
                         <div class="d-flex align-items-center gap-3 flex-grow-1">
                             <i class="fa ${r.icon} fa-2x" style="color:${r.color || '#cccccc'}"></i>
                             <div class="text-light flex-grow-1">
@@ -332,73 +319,73 @@
                         </div>
                         <div class="d-flex flex-column align-items-end gap-2 ms-2">
                             ${progressBadge}
-
                             <button class="btn btn-outline-secondary btn-sm" data-toggle-steps type="button" title="Rozwiń">
                                 <i class="fa fa-chevron-down"></i>
                             </button>
                         </div>
                     `;
 
-                    const body = document.createElement("div");
-                    body.className = "routine-steps-body d-none p-4 mb-4";
-                    body.style.backgroundColor = 'var(--clr-surface-a10)';
-                    body.style.borderLeft = `8px solid ${r.color || '#cccccc'}`;
-                    body.style.borderBottomLeftRadius = 'var(--radius-lg)';
-                    body.style.borderBottomRightRadius = 'var(--radius-lg)';
-                    body.style.boxShadow = 'var(--shadow-soft)';
-                    body.style.borderTop = '1px solid rgba(255, 255, 255, 0.08)';
+                const body = document.createElement("div");
+                body.className = "routine-steps-body d-none p-4 mb-4";
+                body.style.backgroundColor = 'var(--clr-surface-a10)';
+                body.style.borderLeft = `8px solid ${r.color || '#cccccc'}`;
+                body.style.borderBottomLeftRadius = 'var(--radius-lg)';
+                body.style.borderBottomRightRadius = 'var(--radius-lg)';
+                body.style.boxShadow = 'var(--shadow-soft)';
+                body.style.borderTop = '1px solid rgba(255, 255, 255, 0.08)';
 
-                    body.innerHTML = `
+                body.innerHTML = `
                         <div class="d-flex align-items-center justify-content-end mb-3">
-                            <div class="form-check" title="Zaznacz/Odznacz wszystkie kroki">
+                            <div class="form-check d-flex align-items-center gap-2" title="Zaznacz/Odznacz wszystkie kroki">
+                                <span class="small text-muted me-2"></span>
                                 <input class="form-check-input" type="checkbox" id="dash_checkall_${r.routineId}">
-                                <label class="form-check-label small text-muted" for="dash_checkall_${r.routineId}"></label>
                             </div>
                         </div>
                         <div class="d-flex flex-column gap-3" data-steps></div>
                     `;
 
-                    const stepsHost = qs("[data-steps]", body);
+                const stepsHost = qs("[data-steps]", body);
 
-                    r.steps.forEach((s, idx) => {
-                        const mode = (s.rotationMode || "").toUpperCase();
-                        const hasMultiple = Array.isArray(s.products) && s.products.length > 1;
-                        const isAny = s.rotationEnabled && mode === "ANY";
-                        const isNone = !s.rotationEnabled && hasMultiple;
+                r.steps.forEach((s, idx) => {
+                    const mode = (s.rotationMode || "").toUpperCase();
+                    const hasMultiple = Array.isArray(s.products) && s.products.length > 1;
+                    const isAny = s.rotationEnabled && mode === "ANY";
+                    const isNone = !s.rotationEnabled && hasMultiple;
 
-                        const showStepCheckbox = !isAny;
-                        const showProductCheckboxes = isAny || isNone;
+                    const showStepCheckbox = !isAny;
+                    const showProductCheckboxes = isAny || isNone;
 
-                        let labelText = "";
-                        let labelTitle = "";
-                        if (s.rotationEnabled && mode === "ANY") {
-                            labelText = "Wybierz z wielu";
-                            labelTitle = "Wybierz co najmniej jeden produkt/działanie z listy, aby krok został wykonany.";
-                        } else if (s.rotationEnabled) {
-                            labelText = "Rotacja";
-                            labelTitle = "Produkty/działania używane naprzemiennie (po kolei).";
-                        } else if (hasMultiple) {
-                            labelText = "Brak rotacji";
-                            labelTitle = "Aby zakończyć krok, musisz zaznaczyć wszystkie dostępne produkty/działania.";
-                        }
-                        const rotationLabel = labelText
-                            ? `<span class="daily-step-rotation badge bg-info me-1" title="${escapeHtml(labelTitle)}" style="background-color: var(--clr-primary-a40) !important; color: #111;">${labelText}</span>`
-                            : "";
+                    let labelText = "";
+                    let labelTitle = "";
+                    if (s.rotationEnabled && mode === "ANY") {
+                        labelText = "Wybierz z wielu";
+                        labelTitle = "Wybierz co najmniej jeden produkt/działanie z listy, aby krok został wykonany.";
+                    } else if (s.rotationEnabled) {
+                        labelText = "Rotacja";
+                        labelTitle = "Produkty/działania używane naprzemiennie (po kolei).";
+                    } else if (hasMultiple) {
+                        labelText = "Brak rotacji";
+                        labelTitle = "Aby zakończyć krok, musisz zaznaczyć wszystkie dostępne produkty/działania.";
+                    }
 
-                        const stepCheckboxChecked =
-                            isNone && showStepCheckbox && showProductCheckboxes && Array.isArray(s.products) && s.products.length
-                                ? s.products.every(p => !!p.completed)
-                                : !!s.completed;
+                    const rotationLabel = labelText
+                        ? `<span class="daily-step-rotation badge bg-info me-1" title="${escapeHtml(labelTitle)}" style="background-color: var(--clr-primary-a40) !important; color: #111;">${labelText}</span>`
+                        : "";
 
-                        const row = document.createElement("div");
-                        row.className = `step-card p-3 rounded-md ${s.completed || s.skipped ? "completed-step" : ""}`;
+                    const stepCheckboxChecked =
+                        isNone && showStepCheckbox && showProductCheckboxes && Array.isArray(s.products) && s.products.length
+                            ? s.products.every(p => !!p.completed)
+                            : !!s.completed;
 
-                        row.style.border = `1px solid var(--clr-surface-a30)`; 
-                        row.style.backgroundColor = 'var(--clr-surface-a10)'; 
-                        row.style.borderRadius = 'var(--radius-md)';
-                        row.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)';
+                    const row = document.createElement("div");
+                    row.className = `step-card p-3 rounded-md ${s.completed || s.skipped ? "completed-step" : ""}`;
 
-                        const headerHtml = `
+                    row.style.border = `1px solid var(--clr-surface-a30)`;
+                    row.style.backgroundColor = 'var(--clr-surface-a10)';
+                    row.style.borderRadius = 'var(--radius-md)';
+                    row.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)';
+
+                    const headerHtml = `
                             <div class="d-flex align-items-start justify-content-between">
                                 <div class="me-3 flex-grow-1">
                                     <div class="step-title fw-semibold text-white">
@@ -407,7 +394,9 @@
                                     </div>
                                     ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
                                 </div>
-                                <div class="text-end ms-2 d-flex align-items-center gap-2"> ${rotationLabel} ${showStepCheckbox ? `
+                                <div class="text-end ms-2 d-flex align-items-center gap-2">
+                                    ${rotationLabel}
+                                  ${showStepCheckbox ? `
                                     <div class="form-check m-0">
                                       <input class="form-check-input big-checkbox"
                                              type="checkbox"
@@ -419,10 +408,10 @@
                             </div>
                         `;
 
-                        let productsHtml = "";
-                        if (s.products && s.products.length) {
-                            productsHtml = `
-                                <div class="mt-3 d-flex flex-column gap-3" style="border-top: 1px dashed rgba(255, 255, 255, 0.08); padding-top: 1rem;">
+                    let productsHtml = "";
+                    if (s.products && s.products.length) {
+                        productsHtml = `
+                                <div class="mt-4 d-flex flex-column gap-4" style="border-top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.25rem;">
                                   ${s.products.map(p => `
                                     <div class="product-row d-flex align-items-center justify-content-between">
                                       <div class="d-flex align-items-start gap-3">
@@ -434,7 +423,7 @@
                                         </div>
                                       </div>
                                       ${showProductCheckboxes ? `
-                                        <div class="form-check mt-1 align-self-center"> 
+                                        <div class="form-check mt-1 align-self-center">
                                           <input class="form-check-input big-checkbox" type="checkbox"
                                                  data-prod-id="${p.productId}"
                                                  data-step-id="${s.stepId}"
@@ -444,108 +433,174 @@
                                   `).join("")}
                                 </div>
                             `;
-                        }
-
-                        row.innerHTML = `${headerHtml}${productsHtml}`;
-                        stepsHost.appendChild(row);
-                    });
-
-                    card.addEventListener("click", (e) => {
-                        const interactive = e.target.closest("a,button,input,label,.dropdown-menu,[data-bs-toggle]");
-                        if (interactive) return;
-                    });
-
-                    const toggleBtn = header.querySelector("[data-toggle-steps]");
-                    const setArrow = (open) => {
-                        toggleBtn.innerHTML = `<i class="fa fa-chevron-${open ? "up" : "down"}"></i>`;
-                    };
-
-                    toggleBtn.addEventListener("click", (ev) => {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                        const isOpen = !body.classList.contains("d-none");
-                        if (isOpen) {
-                            body.classList.add("d-none");
-                            state.expanded.delete(r.routineId);
-                            setArrow(false);
-                        } else {
-                            body.classList.remove("d-none");
-                            state.expanded.add(r.routineId);
-                            setArrow(true);
-                        }
-                    });
-
-                    const checkAllEl = body.querySelector(`#dash_checkall_${r.routineId}`);
-                    const allChecked = r.totalSteps > 0 && r.steps.every(s => s.completed || s.skipped);
-                    checkAllEl.checked = allChecked;
-
-                    checkAllEl.addEventListener("change", async (e) => {
-                        const completed = e.target.checked;
-
-                        const ok = await fetch("/Routines/SetAll", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ routineId: r.routineId, date: selectedDate, completed }),
-                        }).then(x => x.ok);
-
-                        if (ok) {
-                            await loadRoutines();
-                        } else {
-                            e.target.checked = !completed;
-                            alert("Nie udało się zapisać.");
-                        }
-                    });
-
-                    if (state.expanded.has(r.routineId)) {
-                        body.classList.remove("d-none");
-                        setArrow(true);
-                    } else {
-                        setArrow(false);
                     }
 
-                    stepsHost.addEventListener("change", async (e) => {
+                    row.innerHTML = `${headerHtml}${productsHtml}`;
+                    stepsHost.appendChild(row);
+                });
 
-                        if (e.target.matches("input[type=checkbox][data-prod-id]")) {
-                            const prodId = parseInt(e.target.getAttribute("data-prod-id"), 10);
-                            const stepId = parseInt(e.target.getAttribute("data-step-id"), 10);
-                            const completed = e.target.checked;
+                card.addEventListener("click", (e) => {
+                    const interactive = e.target.closest("a,button,input,label,.dropdown-menu,[data-bs-toggle]");
+                    if (interactive) return;
+                });
 
-                            const ok = await fetch("/Routines/ToggleProduct", {
+                const toggleBtn = header.querySelector("[data-toggle-steps]");
+                const setArrow = (open) => {
+                    toggleBtn.innerHTML = `<i class="fa fa-chevron-${open ? "up" : "down"}"></i>`;
+                };
+
+                toggleBtn.addEventListener("click", (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    const isOpen = !body.classList.contains("d-none");
+                    if (isOpen) {
+                        body.classList.add("d-none");
+                        state.expanded.delete(r.routineId);
+                        setArrow(false);
+                    } else {
+                        body.classList.remove("d-none");
+                        state.expanded.add(r.routineId);
+                        setArrow(true);
+                    }
+                });
+
+                const checkAllEl = body.querySelector(`#dash_checkall_${r.routineId}`);
+                const allChecked = r.totalSteps > 0 && r.steps.every(s => s.completed || s.skipped);
+                checkAllEl.checked = allChecked;
+
+                checkAllEl.addEventListener("change", async (e) => {
+                    const completed = e.target.checked;
+
+                    const ok = await fetch("/Routines/SetAll", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ routineId: r.routineId, date: selectedDate, completed }),
+                    }).then(x => x.ok);
+
+                    if (ok) {
+                        location.reload();
+                    } else {
+                        e.target.checked = !completed;
+                        alert("Nie udało się zapisać.");
+                    }
+                });
+
+                if (state.expanded.has(r.routineId)) {
+                    body.classList.remove("d-none");
+                    setArrow(true);
+                } else {
+                    setArrow(false);
+                }
+
+                stepsHost.addEventListener("change", async (e) => {
+                    if (e.target.matches("input[type=checkbox][data-prod-id]")) {
+                        const prodId = parseInt(e.target.getAttribute("data-prod-id"), 10);
+                        const stepId = parseInt(e.target.getAttribute("data-step-id"), 10);
+                        const completed = e.target.checked;
+
+                        const ok = await fetch("/Routines/ToggleProduct", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                routineId: r.routineId,
+                                stepId,
+                                productId: prodId,
+                                date: selectedDate,
+                                completed
+                            }),
+                        }).then(x => x.ok);
+
+                        if (!ok) {
+                            e.target.checked = !completed;
+                            alert("Błąd zapisu.");
+                            return;
+                        }
+
+                        const rowEl = e.target.closest(".step-card");
+                        const stepCb = rowEl.querySelector('input[type="checkbox"][data-step-id]:not([data-prod-id])');
+                        const productCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
+
+                        const mode = (stepCb?.getAttribute("data-step-mode") || "ANY").toUpperCase();
+
+                        let stepCompleted;
+
+                        if (mode === "ANY") {
+                            const anyCompleted = productCbs.some(cb => cb.checked === true);
+                            stepCompleted = anyCompleted;
+                        } else {
+                            const allCompleted = productCbs.length > 0 && productCbs.every(cb => cb.checked === true);
+                            stepCompleted = allCompleted;
+                            if (stepCb) stepCb.checked = allCompleted;
+                        }
+
+                        try {
+                            await fetch("/Routines/ToggleStep", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
                                     routineId: r.routineId,
                                     stepId,
-                                    productId: prodId,
                                     date: selectedDate,
-                                    completed
+                                    completed: stepCompleted,
+                                    note: null
                                 }),
-                            }).then(x => x.ok);
+                            });
+                        } catch { }
 
-                            if (!ok) {
-                                e.target.checked = !completed;
-                                alert("Błąd zapisu.");
+                        location.reload();
+                        return;
+                    }
+
+                    if (e.target.matches("input[type=checkbox][data-step-id]") && !e.target.hasAttribute("data-prod-id")) {
+                        const stepId = parseInt(e.target.getAttribute("data-step-id"), 10);
+                        const mode = (e.target.getAttribute("data-step-mode") || "OTHER").toUpperCase();
+                        const completed = e.target.checked;
+
+                        if (mode === "NONE") {
+                            const rowEl = e.target.closest(".step-card");
+                            const prodCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
+
+                            if (!prodCbs.length) {
+                                const ok = await fetch("/Routines/ToggleStep", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        routineId: r.routineId,
+                                        stepId,
+                                        date: selectedDate,
+                                        completed,
+                                        note: null
+                                    }),
+                                }).then(x => x.ok);
+
+                                if (!ok) {
+                                    e.target.checked = !completed;
+                                    alert("Błąd zapisu.");
+                                } else {
+                                    location.reload();
+                                }
                                 return;
                             }
 
-                            const rowEl = e.target.closest(".step-card");
-                            const stepCb = rowEl.querySelector('input[type="checkbox"][data-step-id]:not([data-prod-id])');
-                            const productCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
-
-                            const mode = (stepCb?.getAttribute("data-step-mode") || "ANY").toUpperCase();
-
-                            let stepCompleted;
-
-                            if (mode === "ANY") {
-                                const anyCompleted = productCbs.some(cb => cb.checked === true);
-                                stepCompleted = anyCompleted;
-                            } else {
-                                const allCompleted = productCbs.length > 0 && productCbs.every(cb => cb.checked === true);
-                                stepCompleted = allCompleted;
-                                if (stepCb) stepCb.checked = allCompleted;
-                            }
-
                             try {
+                                const results = await Promise.all(prodCbs.map(cb => {
+                                    const prodId = parseInt(cb.getAttribute("data-prod-id"), 10);
+                                    cb.checked = completed;
+                                    return fetch("/Routines/ToggleProduct", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            routineId: r.routineId,
+                                            stepId,
+                                            productId: prodId,
+                                            date: selectedDate,
+                                            completed
+                                        }),
+                                    }).then(x => x.ok);
+                                }));
+
+                                if (results.some(ok => !ok)) throw new Error("partial-fail");
+
                                 await fetch("/Routines/ToggleStep", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
@@ -553,175 +608,97 @@
                                         routineId: r.routineId,
                                         stepId,
                                         date: selectedDate,
-                                        completed: stepCompleted,
+                                        completed,
                                         note: null
                                     }),
                                 });
-                            } catch { }
 
-                            await loadRoutines();
+                                location.reload();
+                            } catch {
+                                e.target.checked = !completed;
+                                alert("Nie udało się zapisać wszystkich pozycji.");
+                            }
                             return;
                         }
 
-                        if (e.target.matches("input[type=checkbox][data-step-id]") && !e.target.hasAttribute("data-prod-id")) {
-                            const stepId = parseInt(e.target.getAttribute("data-step-id"), 10);
-                            const mode = (e.target.getAttribute("data-step-mode") || "OTHER").toUpperCase();
-                            const completed = e.target.checked;
+                        const ok = await fetch("/Routines/ToggleStep", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                routineId: r.routineId,
+                                stepId,
+                                date: selectedDate,
+                                completed,
+                                note: null
+                            }),
+                        }).then(x => x.ok);
 
-                            if (mode === "NONE") {
-                                const rowEl = e.target.closest(".step-card");
-                                const prodCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
-
-                                if (!prodCbs.length) {
-                                    const ok = await fetch("/Routines/ToggleStep", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                            routineId: r.routineId,
-                                            stepId,
-                                            date: selectedDate,
-                                            completed,
-                                            note: null
-                                        }),
-                                    }).then(x => x.ok);
-
-                                    if (!ok) {
-                                        e.target.checked = !completed;
-                                        alert("Błąd zapisu.");
-                                    } else {
-                                        await loadRoutines();
-                                    }
-                                    return;
-                                }
-
-                                try {
-                                    const results = await Promise.all(prodCbs.map(cb => {
-                                        const prodId = parseInt(cb.getAttribute("data-prod-id"), 10);
-                                        cb.checked = completed;
-                                        return fetch("/Routines/ToggleProduct", {
-                                            method: "POST",
-                                            headers: { "Content-Type": "application/json" },
-                                            body: JSON.stringify({
-                                                routineId: r.routineId,
-                                                stepId,
-                                                productId: prodId,
-                                                date: selectedDate,
-                                                completed
-                                            }),
-                                        }).then(x => x.ok);
-                                    }));
-
-                                    if (results.some(ok => !ok)) throw new Error("partial-fail");
-
-                                    await fetch("/Routines/ToggleStep", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                            routineId: r.routineId,
-                                            stepId,
-                                            date: selectedDate,
-                                            completed,
-                                            note: null
-                                        }),
-                                    });
-
-                                    await loadRoutines();
-                                } catch {
-                                    e.target.checked = !completed;
-                                    alert("Nie udało się zapisać wszystkich pozycji.");
-                                }
-                                return;
-                            }
-
-                            const ok = await fetch("/Routines/ToggleStep", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    routineId: r.routineId,
-                                    stepId,
-                                    date: selectedDate,
-                                    completed,
-                                    note: null
-                                }),
-                            }).then(x => x.ok);
-
-                            if (!ok) {
-                                e.target.checked = !completed;
-                                alert("Błąd zapisu.");
-                            } else {
-                                await loadRoutines();
-                            }
+                        if (!ok) {
+                            e.target.checked = !completed;
+                            alert("Błąd zapisu.");
+                        } else {
+                            location.reload();
                         }
-                    });
-
-                    card.appendChild(header); 
-                    host.appendChild(card);
-                    host.appendChild(body);
+                    }
                 });
-            }
 
-            window.LC_Dashboard_Routines = {
-                setTags(ids) {
-                    state.tagIds = (ids || []).map(String);
-                    renderRoutines();
-                },
-                reload() {
-                    loadRoutines();
-                }
-            };
+                card.appendChild(header);
+                host.appendChild(card);
+                host.appendChild(body);
+            });
+        }
 
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', loadRoutines);
-            } else {
+        window.LC_Dashboard_Routines = {
+            setTags(ids) {
+                state.tagIds = (ids || []).map(String);
+                renderRoutines();
+            },
+            reload() {
                 loadRoutines();
             }
-        })();
-    </script>
+        };
 
-    <script>
-        (function () {
-            const tfRoot = document.querySelector('#dashboardTagFilterWrap .tf');
-            if (!tfRoot) return;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadRoutines);
+        } else {
+            loadRoutines();
+        }
+    })();
+</script>
 
-            document.addEventListener('tagfilter:change', function (e) {
-                const detail = e.detail || {};
+<script>
+    (function () {
+        const tfRoot = document.querySelector('#dashboardTagFilterWrap .tf');
+        if (!tfRoot) return;
 
-                if (!detail.root || !detail.root.closest('#dashboardTagFilterWrap')) {
-                    return;
-                }
+        document.addEventListener('tagfilter:change', function (e) {
+            const detail = e.detail || {};
 
-                e.preventDefault();
+            if (!detail.root || !detail.root.closest('#dashboardTagFilterWrap')) {
+                return;
+            }
 
-                const selectedIds = (detail.selectedIds || []).map(String);
+            e.preventDefault();
 
-                document.querySelectorAll('.habit-card').forEach(card => {
-                    const cardTags = (card.dataset.tags || '')
-                        .split(',')
-                        .map(x => x.trim())
-                        .filter(Boolean);
+            const selectedIds = (detail.selectedIds || []).map(String);
 
-                    const visible =
-                        selectedIds.length === 0 ||
-                        selectedIds.every(id => cardTags.includes(id));
+            document.querySelectorAll('.habit-card').forEach(card => {
+                const cardTags = (card.dataset.tags || '')
+                    .split(',')
+                    .map(x => x.trim())
+                    .filter(Boolean);
 
-                    card.style.display = visible ? '' : 'none';
-                });
+                const visible =
+                    selectedIds.length === 0 ||
+                    selectedIds.every(id => cardTags.includes(id));
 
-                if (window.LC_Dashboard_Routines && typeof window.LC_Dashboard_Routines.setTags === 'function') {
-                    window.LC_Dashboard_Routines.setTags(selectedIds);
-                }
+                card.style.display = visible ? '' : 'none';
             });
-        })();
-    </script>
 
-    <script src="~/js/tags.js" asp-append-version="true"></script>
-
-    @{
-        var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
-            .ToDictionary(t => t.Id.ToString(), t => t.Name);
-    }
-
-    <script>
-    window.LC_TagDict = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tagDict));
-    </script>
+            if (window.LC_Dashboard_Routines && typeof window.LC_Dashboard_Routines.setTags === 'function') {
+                window.LC_Dashboard_Routines.setTags(selectedIds);
+            }
+        });
+    })();
+</script>
 }
