@@ -20,7 +20,7 @@ builder.Services.AddScoped<IHabitService, HabitService>();
 builder.Services.AddScoped<IRoutineService, RoutineService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
-
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddSingleton<IGitInfoService, GitInfoService>();
 
 builder.Services.AddAutoMapper(typeof(Program));

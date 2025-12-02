@@ -1,35 +1,727 @@
 @model LifeCare.ViewModels.HomeDashboardVM
+
 @{
     ViewData["Title"] = "Dashboard";
+
+    var date = Model.SelectedDate;
+    var culture = new System.Globalization.CultureInfo("pl-PL");
+    var dateString = date.ToDateTime(TimeOnly.MinValue).ToString("dddd, dd MMMM yyyy", culture);
+
+    var allTagsVm = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>());
+    var selectedTagIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>());
+
+    var prevDate = Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd");
+    var nextDate = Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd");
+
+    var dailyCompletionPercentage = Model.OverallCompletionPercentage;
+    var currentStreak = Model.CurrentStreak;
+    var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
+        .ToDictionary(t => t.Id.ToString(), t => t.Name);
 }
 
-<section class="dashboard container my-5">
-    <h2 class="mb-4 text-center">Dashboard</h2>
-    <div class="row text-center">
-        <div class="col-md-4 mb-3">
-            <div class="stat-card">
-                <h5>Tasks</h5>
-                <p class="stat-value">@Model.TasksCount</p>
+@Html.AntiForgeryToken()
+
+<div class="container py-4">
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-light">Twój dzień</h2>
+            <div class="text-muted text-capitalize">@dateString</div>
+        </div>
+        <div class="d-flex align-items-center">
+        </div>
+    </header>
+
+    <div class="row mb-5">
+
+        <div class="col-6 col-md-4 mb-3">
+            <div class="soft-card dark-card p-4 text-center rounded-lg shadow-lg"
+                 style="background: #1E1E1E; border: 1px solid rgba(255, 255, 255, 0.05);">
+                <div class="progress-circle large" data-percentage="@dailyCompletionPercentage">
+                    <span class="text-white fw-bold display-4">@dailyCompletionPercentage%</span>
+                </div>
+                <div class="mt-3 text-muted">Postęp Dnia</div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="stat-card">
-                <h5>Habits</h5>
-                <p class="stat-value">@Model.HabitsCount</p>
+
+        <div class="col-6 col-md-4 mb-3">
+            <div class="soft-card p-4 rounded-lg shadow-lg"
+                 style="background: #1e1b12; border-left: 5px solid #FF9900;">
+                <i class="fa fa-fire fa-2x" style="color: #FF9900;"></i>
+                <div class="text-white fw-bold display-4 mt-2">@currentStreak</div>
+                <div class="text-muted">Aktualna Seria Dni</div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="stat-card">
-                <h5>Routines</h5>
-                <p class="stat-value">@Model.RoutinesCount</p>
+
+        <div class="col-12 col-md-4 mb-3">
+            <div class="soft-card p-4 rounded-lg shadow-lg"
+                 style="background: #1e1e1e; border-left: 5px solid #00F0FF;">
+                <i class="fa fa-list-check fa-2x" style="color: #00F0FF;"></i>
+                <div class="text-white fw-bold display-4 mt-2">@Model.TasksCount</div>
+                <div class="text-muted">Zadań na dziś</div>
             </div>
         </div>
     </div>
-    @if (User.IsInRole("Admin"))
-    {
-        <section class="news mt-5 text-center">
-            <h3 class="mb-3">Latest Updates</h3>
-            <a class="btn btn-outline-primary" href="/News">View recent commits</a>
-        </section>
+
+    <div id="dashboardTagFilterWrap" class="mb-4">
+    </div>
+
+    <h3 class="text-light mb-3">Twoje Czynności</h3>
+
+    <div class="d-flex flex-column gap-4" id="dailyActivitiesList">
+
+        <h4 class="text-muted border-bottom pb-2 mt-4">Nawyki (Habits)</h4>
+        @if (!Model.Habits.Any())
+        {
+        <p class="text-muted">Brak nawyków przypisanych do tego dnia.</p>
+        }
+        else
+        {
+        <div class="d-flex flex-wrap gap-3 habits-grid">
+            @foreach (var h in Model.Habits.OrderBy(x => x.HabitId))
+            {
+            <div class="habit-card"
+                 data-habit-id="@h.HabitId"
+                 data-tags="@(h.SelectedTagIds != null ? string.Join(',', h.SelectedTagIds) : "")"
+                 style="flex: 1 1 300px; min-width: 250px;"> <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-center"
+                                                                  style="border-left: 8px solid @h.Color; background: #181818;">
+
+                    <i class="me-3 fa @h.Icon fa-2x" style="color: @h.Color;"></i>
+
+                    <div class="flex-grow-1 text-light">
+                        <strong class="@(h.IsCompleted ? "text-decoration-line-through text-muted" : "text-white")">@h.Name</strong><br />
+
+                        @{
+                        // Upewnij się, że słownik tagDict jest zdefiniowany na początku Index.cshtml
+                        var habitTagNames = h.SelectedTagIds
+                        .Select(id => tagDict.TryGetValue(id.ToString(), out var name) ? name : $"ID:{id}")
+                        .ToList();
+                        }
+                        @if (habitTagNames.Any())
+                        {
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            @foreach (var tagName in habitTagNames)
+                            {
+                            <span class="tag-pill badge bg-surface-tonal text-white-50">@tagName</span>
+                            }
+                        </div>
+                        }
+                        @if (h.IsQuantityType && h.TargetQuantity.HasValue)
+                        {
+                        <div class="progress mt-1" style="height: 5px;">
+                            @{
+                            var progress = (h.DoneQuantity / h.TargetQuantity.Value) * 100;
+                            var progressWidth = progress > 100 ? 100 : progress;
+                            }
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: @progressWidth%; background-color: @h.Color;"
+                                 aria-valuenow="@progressWidth" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <small class="text-muted mt-1 d-block">
+                            @h.DoneQuantity / @h.TargetQuantity
+                        </small>
+                        }
+                    </div>
+
+                    <div class="text-end ms-3">
+                        @if (h.IsCompleted && (!h.IsQuantityType || h.DoneQuantity >= h.TargetQuantity))
+                        {
+                        <i class="fa fa-check-circle fa-2x text-success me-2" style="opacity: 0.8;"></i>
+                        }
+
+                        @if (h.IsQuantityType && h.TargetQuantity.HasValue)
+                        {
+                        <button class="btn btn-sm js-habit-quantity-btn" style="background: @h.Color; color: #121212;">
+                            +
+                        </button>
+                        }
+                        else
+                        {
+                        <input type="checkbox"
+                               class="form-check-input js-habit-toggle big-checkbox"
+                               @(h.IsCompleted ? "checked" : "") />
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        }
+
+        <h4 class="text-muted border-bottom pb-2 mt-4">Rutyny (Routines)</h4>
+
+        <div id="dashboardRoutinesList" class="d-flex flex-column gap-3">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/tags.js" asp-append-version="true"></script>
+
+    <script>
+        (function () {
+            const selectedDate = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenInput ? tokenInput.value : '';
+
+            document.querySelectorAll('.js-habit-toggle').forEach(cb => {
+                cb.addEventListener('change', async (e) => {
+                    const card = e.target.closest('.habit-card');
+                    if (!card) return;
+
+                    const habitId = card.dataset.habitId;
+
+                    await fetch('@Url.Action("ToggleHabitForDay", "Habits")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({
+                            habitId: parseInt(habitId),
+                            date: selectedDate
+                        })
+                    });
+                });
+            });
+
+            document.querySelectorAll('.js-habit-quantity-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const card = e.target.closest('.habit-card');
+                    if (!card) return;
+
+                    const habitId = card.dataset.habitId;
+
+                    const input = prompt("Podaj ilość do dodania:");
+                    if (!input) return;
+
+                    const value = parseFloat(input.replace(',', '.'));
+                    if (isNaN(value)) return;
+
+                    await fetch('@Url.Action("UpdateHabitQuantityForDay", "Habits")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({
+                            habitId: parseInt(habitId),
+                            date: selectedDate,
+                            value: value
+                        })
+                    });
+
+                    location.reload();
+                });
+            });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const selectedDate = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
+
+            const state = {
+                all: [],          
+                tagIds: [],      
+                expanded: new Set()
+            };
+
+            const qs = (sel, root = document) => root.querySelector(sel);
+            const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+            function fmtTimeMaybe(t) {
+                if (!t) return "";
+                if (typeof t === "string" && t.includes(":")) {
+                    const [hh, mm] = t.split(":");
+                    return `${parseInt(hh, 10)}:${mm}`;
+                }
+                return t.toString().slice(0, 5);
+            }
+
+            function escapeHtml(s) {
+                return String(s)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+            }
+
+            function getRoutineTagIds(r) {
+                if (Array.isArray(r?.tagIds)) return r.tagIds.map(String);
+                if (Array.isArray(r?.selectedTagIds)) return r.selectedTagIds.map(String);
+                return [];
+            }
+
+            function tagsHtml(ids) {
+                const dict = window.LC_TagDict || {};
+                const names = (ids || []).map(String).map(id => dict[id] || id);
+                if (!names.length) return "";
+                return `<div class="mt-1 d-flex flex-wrap gap-1">${names.map(n => `<span class="tag-pill badge bg-surface-tonal text-white-50">${escapeHtml(n)}</span>`).join("")}</div>`;
+            }
+
+            async function loadRoutines() {
+                const host = document.getElementById('dashboardRoutinesList');
+                if (!host) return;
+
+                host.innerHTML = '<div class="soft-card text-muted">Ładowanie rutyn…</div>';
+
+                const url = new URL(window.location.origin + `/Routines/ForDate`);
+                url.searchParams.set("date", selectedDate);
+                url.searchParams.set("_", Date.now().toString());
+
+                try {
+                    const res = await fetch(url.toString(), { cache: 'no-store' });
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    const list = await res.json();
+                    state.all = Array.isArray(list) ? list : [];
+                    renderRoutines();
+                } catch (err) {
+                    host.innerHTML = `<div class="soft-card text-danger">Nie udało się pobrać rutyn.</div>`;
+                    console.error('Dashboard routines load error:', err);
+                }
+            }
+
+            function renderRoutines() {
+                const host = document.getElementById('dashboardRoutinesList');
+                if (!host) return;
+
+                host.innerHTML = "";
+
+                let list = state.all;
+
+                if (state.tagIds.length > 0) {
+                    const tags = state.tagIds;
+                    list = list.filter(r => {
+                        const rTags = getRoutineTagIds(r);
+                        if (!rTags.length) return false;
+                        return tags.every(id => rTags.includes(String(id)));
+                    });
+                }
+
+                if (!list.length) {
+                    host.innerHTML = `<div class="soft-card text-muted">Brak rutyn na ten dzień.</div>`;
+                    return;
+                }
+
+                list.forEach(r => {
+                    const card = document.createElement("div");
+                    card.className = "routine-card dynamic-width clickable-card";
+                    card.setAttribute("data-routine-id", r.routineId);
+
+                    const tagIds = getRoutineTagIds(r);
+                    card.setAttribute("data-tags", tagIds.length ? tagIds.join(",") : "");
+
+                    if (r.completed) card.classList.add("completed");
+
+                    const progressBadge = `<span class="badge bg-secondary">${r.doneSteps}/${r.totalSteps}</span>`;
+                    const routineCompletedClass = r.completed ? "completed-routine" : "";
+
+                    const header = document.createElement("div");
+                    header.className = `soft-card dark-card p-3 d-flex flex-row align-items-center justify-content-between rounded-top-lg rounded-bottom-0 ${routineCompletedClass}`;
+                    header.style.borderLeft = `8px solid ${r.color || '#cccccc'}`;
+                    header.style.background = '#181818';
+                    header.style.marginBottom = '0';
+
+                    header.innerHTML = `
+                        <div class="d-flex align-items-center gap-3 flex-grow-1">
+                            <i class="fa ${r.icon} fa-2x" style="color:${r.color || '#cccccc'}"></i>
+                            <div class="text-light flex-grow-1">
+                                <div class="fw-semibold text-white ${r.completed ? "strike text-muted" : ""}">${escapeHtml(r.name || "")}</div>
+                                ${r.timeOfDay ? `<div class="small text-muted">${fmtTimeMaybe(r.timeOfDay)}</div>` : ``}
+                                ${tagsHtml(tagIds)}
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column align-items-end gap-2 ms-2">
+                            ${progressBadge}
+
+                            <button class="btn btn-outline-secondary btn-sm" data-toggle-steps type="button" title="Rozwiń">
+                                <i class="fa fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    const body = document.createElement("div");
+                    body.className = "routine-steps-body d-none p-4 mb-4"; // p-4 zwiększa wewnętrzny padding, mb-4 odstęp do kolejnej rutyny
+                    body.style.backgroundColor = 'var(--clr-surface-a10)';
+                    body.style.borderLeft = `8px solid ${r.color || '#cccccc'}`; // Pasek koloru jest kontynuowany
+                    body.style.borderBottomLeftRadius = 'var(--radius-lg)'; // Zaokrąglenia tylko na dole
+                    body.style.borderBottomRightRadius = 'var(--radius-lg)';
+                    body.style.boxShadow = 'var(--shadow-soft)';
+                    body.style.borderTop = '1px solid rgba(255, 255, 255, 0.08)'; // Delikatna linia oddzielająca od nagłówka
+
+                    body.innerHTML = `
+                        <div class="d-flex align-items-center justify-content-end mb-3">
+                            <div class="form-check" title="Zaznacz/Odznacz wszystkie kroki">
+                                <input class="form-check-input" type="checkbox" id="dash_checkall_${r.routineId}">
+                                <label class="form-check-label small text-muted" for="dash_checkall_${r.routineId}"></label>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column gap-3" data-steps></div>
+                    `;
+
+                    const stepsHost = qs("[data-steps]", body);
+
+                    r.steps.forEach((s, idx) => {
+                        const mode = (s.rotationMode || "").toUpperCase();
+                        const hasMultiple = Array.isArray(s.products) && s.products.length > 1;
+                        const isAny = s.rotationEnabled && mode === "ANY";
+                        const isNone = !s.rotationEnabled && hasMultiple;
+
+                        const showStepCheckbox = !isAny;
+                        const showProductCheckboxes = isAny || isNone;
+
+                        let labelText = "";
+                        let labelTitle = "";
+                        if (s.rotationEnabled && mode === "ANY") {
+                            labelText = "Wybierz z wielu";
+                            labelTitle = "Wybierz co najmniej jeden produkt/działanie z listy, aby krok został wykonany.";
+                        } else if (s.rotationEnabled) {
+                            labelText = "Rotacja";
+                            labelTitle = "Produkty/działania używane naprzemiennie (po kolei).";
+                        } else if (hasMultiple) {
+                            labelText = "Brak rotacji";
+                            labelTitle = "Aby zakończyć krok, musisz zaznaczyć wszystkie dostępne produkty/działania.";
+                        }
+                        const rotationLabel = labelText
+                            ? `<span class="daily-step-rotation badge bg-info me-1" title="${escapeHtml(labelTitle)}" style="background-color: var(--clr-primary-a40) !important; color: #111;">${labelText}</span>`
+                            : "";
+
+                        const stepCheckboxChecked =
+                            isNone && showStepCheckbox && showProductCheckboxes && Array.isArray(s.products) && s.products.length
+                                ? s.products.every(p => !!p.completed)
+                                : !!s.completed;
+
+                        const row = document.createElement("div");
+                        row.className = `step-card p-3 rounded-md ${s.completed || s.skipped ? "completed-step" : ""}`;
+
+                        row.style.border = `1px solid var(--clr-surface-a30)`; // Cienkie, tonalne obramowanie (A30)
+                        row.style.backgroundColor = 'var(--clr-surface-a10)'; // Tło kroku (A10)
+                        row.style.borderRadius = 'var(--radius-md)';
+                        row.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)';
+
+                        const headerHtml = `
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div class="me-3 flex-grow-1">
+                                    <div class="step-title fw-semibold text-white">
+                                        <span class="text-muted me-2">#${idx + 1}</span>
+                                        <span class="${s.completed ? "strike text-muted" : ""}">${escapeHtml(s.name || "")}</span>
+                                    </div>
+                                    ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
+                                </div>
+                                <div class="text-end ms-2 d-flex align-items-center gap-2"> ${rotationLabel} ${showStepCheckbox ? `
+                                    <div class="form-check m-0">
+                                      <input class="form-check-input big-checkbox"
+                                             type="checkbox"
+                                             ${stepCheckboxChecked ? "checked" : ""}
+                                             data-step-id="${s.stepId}"
+                                             data-step-mode="${isAny ? "ANY" : (isNone ? "NONE" : "OTHER")}">
+                                    </div>` : ``}
+                                </div>
+                            </div>
+                        `;
+
+                        let productsHtml = "";
+                        if (s.products && s.products.length) {
+                            productsHtml = `
+                                <div class="mt-3 d-flex flex-column gap-3" style="border-top: 1px dashed rgba(255, 255, 255, 0.08); padding-top: 1rem;">
+                                  ${s.products.map(p => `
+                                    <div class="product-row d-flex align-items-center justify-content-between">
+                                      <div class="d-flex align-items-start gap-3">
+                                        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ``}
+                                        <div>
+                                          <div class="fw-semibold small ${p.completed ? "strike text-muted" : "text-white"}">${escapeHtml(p.name || "")}</div>
+                                          ${p.note ? `<div class="product-note xsmall text-muted">${escapeHtml(p.note)}</div>` : ``}
+                                          ${p.url ? `<div class="xsmall"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
+                                        </div>
+                                      </div>
+                                      ${showProductCheckboxes ? `
+                                        <div class="form-check mt-1 align-self-center"> 
+                                          <input class="form-check-input big-checkbox" type="checkbox"
+                                                 data-prod-id="${p.productId}"
+                                                 data-step-id="${s.stepId}"
+                                                 ${p.completed ? "checked" : ""}>
+                                        </div>` : ``}
+                                    </div>
+                                  `).join("")}
+                                </div>
+                            `;
+                        }
+
+                        row.innerHTML = `${headerHtml}${productsHtml}`;
+                        stepsHost.appendChild(row);
+                    });
+
+                    card.addEventListener("click", (e) => {
+                        const interactive = e.target.closest("a,button,input,label,.dropdown-menu,[data-bs-toggle]");
+                        if (interactive) return;
+                    });
+
+                    const toggleBtn = header.querySelector("[data-toggle-steps]");
+                    const setArrow = (open) => {
+                        toggleBtn.innerHTML = `<i class="fa fa-chevron-${open ? "up" : "down"}"></i>`;
+                    };
+
+                    toggleBtn.addEventListener("click", (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        const isOpen = !body.classList.contains("d-none");
+                        if (isOpen) {
+                            body.classList.add("d-none");
+                            state.expanded.delete(r.routineId);
+                            setArrow(false);
+                        } else {
+                            body.classList.remove("d-none");
+                            state.expanded.add(r.routineId);
+                            setArrow(true);
+                        }
+                    });
+
+                    const checkAllEl = body.querySelector(`#dash_checkall_${r.routineId}`);
+                    const allChecked = r.totalSteps > 0 && r.steps.every(s => s.completed || s.skipped);
+                    checkAllEl.checked = allChecked;
+
+                    checkAllEl.addEventListener("change", async (e) => {
+                        const completed = e.target.checked;
+
+                        const ok = await fetch("/Routines/SetAll", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ routineId: r.routineId, date: selectedDate, completed }),
+                        }).then(x => x.ok);
+
+                        if (ok) {
+                            await loadRoutines();
+                        } else {
+                            e.target.checked = !completed;
+                            alert("Nie udało się zapisać.");
+                        }
+                    });
+
+                    if (state.expanded.has(r.routineId)) {
+                        body.classList.remove("d-none");
+                        setArrow(true);
+                    } else {
+                        setArrow(false);
+                    }
+
+                    stepsHost.addEventListener("change", async (e) => {
+
+                        if (e.target.matches("input[type=checkbox][data-prod-id]")) {
+                            const prodId = parseInt(e.target.getAttribute("data-prod-id"), 10);
+                            const stepId = parseInt(e.target.getAttribute("data-step-id"), 10);
+                            const completed = e.target.checked;
+
+                            const ok = await fetch("/Routines/ToggleProduct", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    routineId: r.routineId,
+                                    stepId,
+                                    productId: prodId,
+                                    date: selectedDate,
+                                    completed
+                                }),
+                            }).then(x => x.ok);
+
+                            if (!ok) {
+                                e.target.checked = !completed;
+                                alert("Błąd zapisu.");
+                                return;
+                            }
+
+                            const rowEl = e.target.closest(".step-card");
+                            const stepCb = rowEl.querySelector('input[type="checkbox"][data-step-id]:not([data-prod-id])');
+                            const productCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
+
+                            const mode = (stepCb?.getAttribute("data-step-mode") || "ANY").toUpperCase();
+
+                            let stepCompleted;
+
+                            if (mode === "ANY") {
+                                const anyCompleted = productCbs.some(cb => cb.checked === true);
+                                stepCompleted = anyCompleted;
+                            } else {
+                                const allCompleted = productCbs.length > 0 && productCbs.every(cb => cb.checked === true);
+                                stepCompleted = allCompleted;
+                                if (stepCb) stepCb.checked = allCompleted;
+                            }
+
+                            try {
+                                await fetch("/Routines/ToggleStep", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        routineId: r.routineId,
+                                        stepId,
+                                        date: selectedDate,
+                                        completed: stepCompleted,
+                                        note: null
+                                    }),
+                                });
+                            } catch { }
+
+                            await loadRoutines();
+                            return;
+                        }
+
+                        if (e.target.matches("input[type=checkbox][data-step-id]") && !e.target.hasAttribute("data-prod-id")) {
+                            const stepId = parseInt(e.target.getAttribute("data-step-id"), 10);
+                            const mode = (e.target.getAttribute("data-step-mode") || "OTHER").toUpperCase();
+                            const completed = e.target.checked;
+
+                            if (mode === "NONE") {
+                                const rowEl = e.target.closest(".step-card");
+                                const prodCbs = Array.from(rowEl.querySelectorAll('input[type="checkbox"][data-prod-id]'));
+
+                                if (!prodCbs.length) {
+                                    const ok = await fetch("/Routines/ToggleStep", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            routineId: r.routineId,
+                                            stepId,
+                                            date: selectedDate,
+                                            completed,
+                                            note: null
+                                        }),
+                                    }).then(x => x.ok);
+
+                                    if (!ok) {
+                                        e.target.checked = !completed;
+                                        alert("Błąd zapisu.");
+                                    } else {
+                                        await loadRoutines();
+                                    }
+                                    return;
+                                }
+
+                                try {
+                                    const results = await Promise.all(prodCbs.map(cb => {
+                                        const prodId = parseInt(cb.getAttribute("data-prod-id"), 10);
+                                        cb.checked = completed;
+                                        return fetch("/Routines/ToggleProduct", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({
+                                                routineId: r.routineId,
+                                                stepId,
+                                                productId: prodId,
+                                                date: selectedDate,
+                                                completed
+                                            }),
+                                        }).then(x => x.ok);
+                                    }));
+
+                                    if (results.some(ok => !ok)) throw new Error("partial-fail");
+
+                                    await fetch("/Routines/ToggleStep", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            routineId: r.routineId,
+                                            stepId,
+                                            date: selectedDate,
+                                            completed,
+                                            note: null
+                                        }),
+                                    });
+
+                                    await loadRoutines();
+                                } catch {
+                                    e.target.checked = !completed;
+                                    alert("Nie udało się zapisać wszystkich pozycji.");
+                                }
+                                return;
+                            }
+
+                            const ok = await fetch("/Routines/ToggleStep", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    routineId: r.routineId,
+                                    stepId,
+                                    date: selectedDate,
+                                    completed,
+                                    note: null
+                                }),
+                            }).then(x => x.ok);
+
+                            if (!ok) {
+                                e.target.checked = !completed;
+                                alert("Błąd zapisu.");
+                            } else {
+                                await loadRoutines();
+                            }
+                        }
+                    });
+
+                    card.appendChild(header); 
+                    host.appendChild(card);
+                    host.appendChild(body);
+                });
+            }
+
+            window.LC_Dashboard_Routines = {
+                setTags(ids) {
+                    state.tagIds = (ids || []).map(String);
+                    renderRoutines();
+                },
+                reload() {
+                    loadRoutines();
+                }
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', loadRoutines);
+            } else {
+                loadRoutines();
+            }
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const tfRoot = document.querySelector('#dashboardTagFilterWrap .tf');
+            if (!tfRoot) return;
+
+            document.addEventListener('tagfilter:change', function (e) {
+                const detail = e.detail || {};
+
+                if (!detail.root || !detail.root.closest('#dashboardTagFilterWrap')) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                const selectedIds = (detail.selectedIds || []).map(String);
+
+                document.querySelectorAll('.habit-card').forEach(card => {
+                    const cardTags = (card.dataset.tags || '')
+                        .split(',')
+                        .map(x => x.trim())
+                        .filter(Boolean);
+
+                    const visible =
+                        selectedIds.length === 0 ||
+                        selectedIds.every(id => cardTags.includes(id));
+
+                    card.style.display = visible ? '' : 'none';
+                });
+
+                if (window.LC_Dashboard_Routines && typeof window.LC_Dashboard_Routines.setTags === 'function') {
+                    window.LC_Dashboard_Routines.setTags(selectedIds);
+                }
+            });
+        })();
+    </script>
+
+    <script src="~/js/tags.js" asp-append-version="true"></script>
+
+    @{
+        var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
+            .ToDictionary(t => t.Id.ToString(), t => t.Name);
     }
-</section>
+
+    <script>
+    window.LC_TagDict = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tagDict));
+    </script>
+}
