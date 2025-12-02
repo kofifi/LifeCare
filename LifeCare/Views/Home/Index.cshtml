@@ -340,13 +340,13 @@
                     `;
 
                     const body = document.createElement("div");
-                    body.className = "routine-steps-body d-none p-4 mb-4"; // p-4 zwiększa wewnętrzny padding, mb-4 odstęp do kolejnej rutyny
+                    body.className = "routine-steps-body d-none p-4 mb-4";
                     body.style.backgroundColor = 'var(--clr-surface-a10)';
-                    body.style.borderLeft = `8px solid ${r.color || '#cccccc'}`; // Pasek koloru jest kontynuowany
-                    body.style.borderBottomLeftRadius = 'var(--radius-lg)'; // Zaokrąglenia tylko na dole
+                    body.style.borderLeft = `8px solid ${r.color || '#cccccc'}`;
+                    body.style.borderBottomLeftRadius = 'var(--radius-lg)';
                     body.style.borderBottomRightRadius = 'var(--radius-lg)';
                     body.style.boxShadow = 'var(--shadow-soft)';
-                    body.style.borderTop = '1px solid rgba(255, 255, 255, 0.08)'; // Delikatna linia oddzielająca od nagłówka
+                    body.style.borderTop = '1px solid rgba(255, 255, 255, 0.08)';
 
                     body.innerHTML = `
                         <div class="d-flex align-items-center justify-content-end mb-3">
@@ -393,8 +393,8 @@
                         const row = document.createElement("div");
                         row.className = `step-card p-3 rounded-md ${s.completed || s.skipped ? "completed-step" : ""}`;
 
-                        row.style.border = `1px solid var(--clr-surface-a30)`; // Cienkie, tonalne obramowanie (A30)
-                        row.style.backgroundColor = 'var(--clr-surface-a10)'; // Tło kroku (A10)
+                        row.style.border = `1px solid var(--clr-surface-a30)`; 
+                        row.style.backgroundColor = 'var(--clr-surface-a10)'; 
                         row.style.borderRadius = 'var(--radius-md)';
                         row.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)';
 
