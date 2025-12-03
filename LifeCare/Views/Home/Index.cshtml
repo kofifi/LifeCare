@@ -48,7 +48,7 @@
             <div class="soft-card p-4 rounded-lg shadow-lg"
                  style="background: #1e1b12; border-left: 5px solid #FF9900;">
                 <i class="fa fa-fire fa-2x" style="color: #FF9900;"></i>
-                <div class="text-white fw-bold display-4 mt-2">@currentStreak</div>
+                <div id="dashCurrentStreak" class="text-white fw-bold display-4 mt-2">@currentStreak</div>
                 <div class="text-muted">Aktualna Seria Dni</div>
             </div>
         </div>
@@ -197,10 +197,18 @@
     <script src="~/js/tags.js" asp-append-version="true"></script>
 
     <script>
-        window.LC_HABITS_SELECTED_DATE = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
-    </script>
-    <script src="~/js/habit.js" asp-append-version="true"></script>
+    window.LC_HABITS_SELECTED_DATE = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
+</script>
 
+    @{
+        var tagDictJs = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
+            .ToDictionary(t => t.Id.ToString(), t => t.Name);
+    }
+    <script>
+    window.LC_TagDict = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tagDictJs));
+</script>
+
+    <script src="~/js/habit.js" asp-append-version="true"></script>
 
     <script>
     (function () {
@@ -211,6 +219,8 @@
             tagIds: [],
             expanded: new Set()
         };
+
+        let routinesLoadedOnce = false;
 
         const qs = (sel, root = document) => root.querySelector(sel);
         const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -244,30 +254,14 @@
             return `<div class="mt-1 d-flex flex-wrap gap-1">${names.map(n => `<span class="tag-pill badge bg-surface-tonal text-white-50">${escapeHtml(n)}</span>`).join("")}</div>`;
         }
 
-        async function refreshDailySummary() {
-            try {
-                const url = new URL(window.location.origin + '/Home/DailySummary');
-                url.searchParams.set('date', selectedDate);
-                const res = await fetch(url.toString(), { cache: 'no-store' });
-                if (!res.ok) return;
-                const data = await res.json();
-                const circle = document.querySelector('.progress-circle');
-                if (!circle) return;
-                const span = circle.querySelector('span');
-                const raw = data.overallCompletionPercentage;
-                if (typeof raw !== 'number') return;
-                const val = Math.round(raw);
-                circle.dataset.percentage = String(val);
-                if (span) span.textContent = val + '%';
-            } catch {
-            }
-        }
-
-        async function loadRoutines() {
+        async function loadRoutines(silent = false) {
             const host = document.getElementById('dashboardRoutinesList');
             if (!host) return;
 
-            host.innerHTML = '<div class="soft-card text-muted">Ładowanie rutyn…</div>';
+            const showLoading = !routinesLoadedOnce && !silent;
+            if (showLoading) {
+                host.innerHTML = '<div class="soft-card text-muted">Ładowanie rutyn…</div>';
+            }
 
             const url = new URL(window.location.origin + `/Routines/ForDate`);
             url.searchParams.set("date", selectedDate);
@@ -278,9 +272,12 @@
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const list = await res.json();
                 state.all = Array.isArray(list) ? list : [];
+                routinesLoadedOnce = true;
                 renderRoutines();
             } catch (err) {
-                host.innerHTML = `<div class="soft-card text-danger">Nie udało się pobrać rutyn.</div>`;
+                if (!routinesLoadedOnce) {
+                    host.innerHTML = `<div class="soft-card text-danger">Nie udało się pobrać rutyn.</div>`;
+                }
                 console.error('Dashboard routines load error:', err);
             }
         }
@@ -308,8 +305,6 @@
             }
 
             list.forEach(r => {
-                const isCompleted = r.totalSteps > 0 && r.doneSteps >= r.totalSteps;
-
                 const card = document.createElement("div");
                 card.className = "routine-card dynamic-width clickable-card";
                 card.setAttribute("data-routine-id", r.routineId);
@@ -317,10 +312,10 @@
                 const tagIds = getRoutineTagIds(r);
                 card.setAttribute("data-tags", tagIds.length ? tagIds.join(",") : "");
 
-                if (isCompleted) card.classList.add("completed");
+                if (r.completed) card.classList.add("completed");
 
                 const progressBadge = `<span class="badge bg-secondary">${r.doneSteps}/${r.totalSteps}</span>`;
-                const routineCompletedClass = isCompleted ? "completed-routine" : "";
+                const routineCompletedClass = r.completed ? "completed-routine" : "";
 
                 const header = document.createElement("div");
                 header.className = `soft-card dark-card p-3 d-flex flex-row align-items-center justify-content-between rounded-top-lg rounded-bottom-0 ${routineCompletedClass}`;
@@ -332,7 +327,7 @@
                         <div class="d-flex align-items-center gap-3 flex-grow-1">
                             <i class="fa ${r.icon} fa-2x" style="color:${r.color || '#cccccc'}"></i>
                             <div class="text-light flex-grow-1">
-                                <div class="fw-semibold text-white ${isCompleted ? "strike text-muted" : ""}">${escapeHtml(r.name || "")}</div>
+                                <div class="fw-semibold text-white ${r.completed ? "strike text-muted" : ""}">${escapeHtml(r.name || "")}</div>
                                 ${r.timeOfDay ? `<div class="small text-muted">${fmtTimeMaybe(r.timeOfDay)}</div>` : ``}
                                 ${tagsHtml(tagIds)}
                             </div>
@@ -371,7 +366,6 @@
                     const hasMultiple = Array.isArray(s.products) && s.products.length > 1;
                     const isAny = s.rotationEnabled && mode === "ANY";
                     const isNone = !s.rotationEnabled && hasMultiple;
-                    const isRotAll = s.rotationEnabled && mode !== "ANY";
 
                     const showStepCheckbox = !isAny;
                     const showProductCheckboxes = isAny || isNone;
@@ -393,73 +387,74 @@
                         ? `<span class="daily-step-rotation badge bg-info me-1" title="${escapeHtml(labelTitle)}" style="background-color: var(--clr-primary-a40) !important; color: #111;">${labelText}</span>`
                         : "";
 
-                    const stepEffectiveCompleted = !!(s.completed || s.skipped);
+                    const stepCheckboxChecked =
+                        isNone && showStepCheckbox && showProductCheckboxes && Array.isArray(s.products) && s.products.length
+                            ? s.products.every(p => !!p.completed)
+                            : !!s.completed;
 
                     const row = document.createElement("div");
-                    row.className = `step-card p-3 rounded-md ${stepEffectiveCompleted ? "completed-step" : ""}`;
+                    row.className = `step-card p-3 rounded-md ${s.completed || s.skipped ? "completed-step" : ""}`;
+
                     row.style.border = `1px solid var(--clr-surface-a30)`;
-                    row.style.backgroundColor = "var(--clr-surface-a10)";
-                    row.style.borderRadius = "var(--radius-md)";
-                    row.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)";
+                    row.style.backgroundColor = 'var(--clr-surface-a10)';
+                    row.style.borderRadius = 'var(--radius-md)';
+                    row.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)';
 
                     const headerHtml = `
-                        <div class="d-flex align-items-start justify-content-between">
-                            <div class="me-3 flex-grow-1">
-                                <div class="step-title fw-semibold text-white">
-                                    <span class="text-muted me-2">#${idx + 1}</span>
-                                    <span class="${stepEffectiveCompleted ? "strike text-muted" : ""}">${escapeHtml(s.name || "")}</span>
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div class="me-3 flex-grow-1">
+                                    <div class="step-title fw-semibold text-white">
+                                        <span class="text-muted me-2">#${idx + 1}</span>
+                                        <span class="${s.completed ? "strike text-muted" : ""}">${escapeHtml(s.name || "")}</span>
+                                    </div>
+                                    ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
                                 </div>
-                                ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
+                                <div class="text-end ms-2 d-flex align-items-center gap-2"> 
+                                    ${rotationLabel} 
+                                  ${showStepCheckbox ? `
+                                    <div class="form-check m-0">
+                                      <input class="form-check-input big-checkbox"
+                                             type="checkbox"
+                                             ${stepCheckboxChecked ? "checked" : ""}
+                                             data-step-id="${s.stepId}"
+                                             data-step-mode="${isAny ? "ANY" : (isNone ? "NONE" : "OTHER")}">
+                                    </div>` : ``}
+                                </div>
                             </div>
-                            <div class="text-end ms-2 d-flex align-items-center gap-2"> 
-                                ${rotationLabel} 
-                              ${showStepCheckbox ? `
-                                <div class="form-check m-0">
-                                  <input class="form-check-input big-checkbox"
-                                         type="checkbox"
-                                         ${stepEffectiveCompleted ? "checked" : ""}
-                                         data-step-id="${s.stepId}"
-                                         data-step-mode="${isAny ? "ANY" : (isNone ? "NONE" : "OTHER")}">
-                                </div>` : ``}
-                            </div>
-                        </div>
-                    `;
-
-                    const productCompletedByStep = (isRotAll || isNone) && stepEffectiveCompleted;
+                        `;
 
                     let productsHtml = "";
                     if (s.products && s.products.length) {
-                        const prodsHtml = s.products.map(p => {
-                            const productCompleted = !!p.completed || productCompletedByStep;
-                            const productTextClass = productCompleted ? "strike text-muted" : "text-white";
-                            const productCheckboxChecked = showProductCheckboxes && productCompleted ? "checked" : "";
-
-                            return `
-                                <div class="product-row d-flex align-items-center justify-content-between">
-                                  <div class="d-flex align-items-start gap-3">
-                                    ${p.imageUrl ? `<img src="${p.imageUrl}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ``}
-                                    <div>
-                                      <div class="fw-semibold small ${productTextClass}">${escapeHtml(p.name || "")}</div>
-                                      ${p.note ? `<div class="product-note xsmall text-muted">${escapeHtml(p.note)}</div>` : ``}
-                                      ${p.url ? `<div class="xsmall"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
-                                    </div>
-                                  </div>
-                                  ${showProductCheckboxes ? `
-                                    <div class="form-check mt-1 align-self-center"> 
-                                      <input class="form-check-input big-checkbox" type="checkbox"
-                                             data-prod-id="${p.productId}"
-                                             data-step-id="${s.stepId}"
-                                             ${productCheckboxChecked}>
-                                    </div>` : ``}
-                                </div>
-                            `;
-                        }).join("");
+                        const stepDone = !!(s.completed || s.skipped);
 
                         productsHtml = `
-                            <div class="mt-4 d-flex flex-column gap-4" style="border-top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.25rem;">
-                              ${prodsHtml}
-                            </div>
-                        `;
+                                <div class="mt-4 d-flex flex-column gap-4" style="border-top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.25rem;">
+                                  ${s.products.map(p => {
+                            const productDone = stepDone || !!p.completed;
+                            const productCls = productDone ? "strike text-muted" : "text-white";
+
+                            return `
+                                        <div class="product-row d-flex align-items-center justify-content-between">
+                                          <div class="d-flex align-items-start gap-3">
+                                            ${p.imageUrl ? `<img src="${p.imageUrl}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ``}
+                                            <div>
+                                              <div class="fw-semibold small ${productCls}">${escapeHtml(p.name || "")}</div>
+                                              ${p.note ? `<div class="product-note xsmall text-muted">${escapeHtml(p.note)}</div>` : ``}
+                                              ${p.url ? `<div class="xsmall"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
+                                            </div>
+                                          </div>
+                                          ${showProductCheckboxes ? `
+                                            <div class="form-check mt-1 align-self-center"> 
+                                              <input class="form-check-input big-checkbox" type="checkbox"
+                                                     data-prod-id="${p.productId}"
+                                                     data-step-id="${s.stepId}"
+                                                     ${p.completed ? "checked" : ""}>
+                                            </div>` : ``}
+                                        </div>
+                                      `;
+                        }).join("")}
+                                </div>
+                            `;
                     }
 
                     row.innerHTML = `${headerHtml}${productsHtml}`;
@@ -501,12 +496,14 @@
                     const ok = await fetch("/Routines/SetAll", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ routineId: r.routineId, date: selectedDate, completed }),
+                        body: JSON.stringify({ routineId: r.routineId, date: selectedDate, completed })
                     }).then(x => x.ok);
 
                     if (ok) {
-                        await loadRoutines();
-                        await refreshDailySummary();
+                        await loadRoutines(true);
+                        if (window.LC_Dashboard && typeof window.LC_Dashboard.refreshSummary === "function") {
+                            window.LC_Dashboard.refreshSummary(selectedDate);
+                        }
                     } else {
                         e.target.checked = !completed;
                         alert("Nie udało się zapisać.");
@@ -521,6 +518,7 @@
                 }
 
                 stepsHost.addEventListener("change", async (e) => {
+
                     if (e.target.matches("input[type=checkbox][data-prod-id]")) {
                         const prodId = parseInt(e.target.getAttribute("data-prod-id"), 10);
                         const stepId = parseInt(e.target.getAttribute("data-step-id"), 10);
@@ -535,7 +533,7 @@
                                 productId: prodId,
                                 date: selectedDate,
                                 completed
-                            }),
+                            })
                         }).then(x => x.ok);
 
                         if (!ok) {
@@ -571,13 +569,14 @@
                                     date: selectedDate,
                                     completed: stepCompleted,
                                     note: null
-                                }),
+                                })
                             });
-                        } catch {
-                        }
+                        } catch { }
 
-                        await loadRoutines();
-                        await refreshDailySummary();
+                        await loadRoutines(true);
+                        if (window.LC_Dashboard && typeof window.LC_Dashboard.refreshSummary === "function") {
+                            window.LC_Dashboard.refreshSummary(selectedDate);
+                        }
                         return;
                     }
 
@@ -600,15 +599,17 @@
                                         date: selectedDate,
                                         completed,
                                         note: null
-                                    }),
+                                    })
                                 }).then(x => x.ok);
 
                                 if (!ok) {
                                     e.target.checked = !completed;
                                     alert("Błąd zapisu.");
                                 } else {
-                                    await loadRoutines();
-                                    await refreshDailySummary();
+                                    await loadRoutines(true);
+                                    if (window.LC_Dashboard && typeof window.LC_Dashboard.refreshSummary === "function") {
+                                        window.LC_Dashboard.refreshSummary(selectedDate);
+                                    }
                                 }
                                 return;
                             }
@@ -626,7 +627,7 @@
                                             productId: prodId,
                                             date: selectedDate,
                                             completed
-                                        }),
+                                        })
                                     }).then(x => x.ok);
                                 }));
 
@@ -641,11 +642,13 @@
                                         date: selectedDate,
                                         completed,
                                         note: null
-                                    }),
+                                    })
                                 });
 
-                                await loadRoutines();
-                                await refreshDailySummary();
+                                await loadRoutines(true);
+                                if (window.LC_Dashboard && typeof window.LC_Dashboard.refreshSummary === "function") {
+                                    window.LC_Dashboard.refreshSummary(selectedDate);
+                                }
                             } catch {
                                 e.target.checked = !completed;
                                 alert("Nie udało się zapisać wszystkich pozycji.");
@@ -662,15 +665,17 @@
                                 date: selectedDate,
                                 completed,
                                 note: null
-                            }),
+                            })
                         }).then(x => x.ok);
 
                         if (!ok) {
                             e.target.checked = !completed;
                             alert("Błąd zapisu.");
                         } else {
-                            await loadRoutines();
-                            await refreshDailySummary();
+                            await loadRoutines(true);
+                            if (window.LC_Dashboard && typeof window.LC_Dashboard.refreshSummary === "function") {
+                                window.LC_Dashboard.refreshSummary(selectedDate);
+                            }
                         }
                     }
                 });
@@ -686,18 +691,21 @@
                 state.tagIds = (ids || []).map(String);
                 renderRoutines();
             },
-            reload() {
-                loadRoutines();
+            reload(silent = true) {
+                loadRoutines(silent);
             }
         };
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadRoutines);
+            document.addEventListener('DOMContentLoaded', function () {
+                loadRoutines(false);
+            });
         } else {
-            loadRoutines();
+            loadRoutines(false);
         }
     })();
-    </script>
+</script>
+
     <script>
     (function () {
         const tfRoot = document.querySelector('#dashboardTagFilterWrap .tf');
@@ -732,7 +740,8 @@
             }
         });
     })();
-    </script>
+</script>
+
     <script>
     (function () {
         const selectedDate = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
@@ -746,6 +755,7 @@
                 const data = await res.json();
                 const percent = data.overallCompletionPercentage ?? 0;
                 const tasks = data.tasksCount ?? null;
+                const streak = data.currentStreak ?? null;
 
                 const circle = document.querySelector('.progress-circle');
                 if (circle) {
@@ -758,6 +768,11 @@
                 if (tasksEl !== null && tasks !== null) {
                     tasksEl.textContent = tasks;
                 }
+
+                const streakEl = document.getElementById('dashCurrentStreak');
+                if (streakEl !== null && streak !== null) {
+                    streakEl.textContent = streak;
+                }
             } catch (err) {
                 console.error('DailySummary error', err);
             }
@@ -767,5 +782,5 @@
         window.LC_Dashboard.refreshSummary = refreshDailySummary;
         window.LC_Dashboard.selectedDate = selectedDate;
     })();
-    </script>
+</script>
 }

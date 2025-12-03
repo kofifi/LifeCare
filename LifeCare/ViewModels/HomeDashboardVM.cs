@@ -7,24 +7,9 @@ namespace LifeCare.ViewModels
         public List<HabitDashboardItemVM> Habits { get; set; } = new();
         public List<RoutineDashboardItemVM> Routines { get; set; } = new();
 
-        public int HabitsCount => Habits.Count;
-        public int RoutinesCount => Routines.Count;
-
-        public int TasksCount { get; set; } // na przyszłość
-        public int CurrentStreak { get; set; } // Dni pod rząd
-        public int OverallCompletionPercentage
-        {
-            get
-            {
-                var total = Habits.Count + Routines.Count;
-                if (total == 0) return 0;
-                
-                var doneHabits = Habits.Count(h => h.IsCompleted);
-                var doneRoutines = Routines.Count(r => r.IsCompleted); // r.IsCompleted musi być wiarygodne
-                
-                return (int)Math.Round(((double)(doneHabits + doneRoutines) / total) * 100);
-            }
-        }
+        public int TasksCount { get; set; }
+        public int OverallCompletionPercentage { get; set; }
+        public int CurrentStreak { get; set; }
     }
 
     public class HabitDashboardItemVM
@@ -41,7 +26,6 @@ namespace LifeCare.ViewModels
         public bool IsCompleted { get; set; }
 
         public List<int> SelectedTagIds { get; set; } = new();
-        
     }
 
     public class RoutineDashboardItemVM

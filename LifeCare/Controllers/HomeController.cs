@@ -55,12 +55,13 @@ namespace LifeCare.Controllers
             var userId = _userManager.GetUserId(User);
             if (userId == null) return Challenge();
 
-            var model = await _dashboardService.GetHomeDashboardAsync(userId, date);
+            var summary = await _dashboardService.GetDailySummaryAsync(userId, date);
 
             return Json(new
             {
-                overallCompletionPercentage = model.OverallCompletionPercentage,
-                tasksCount = model.TasksCount
+                overallCompletionPercentage = summary.OverallCompletionPercentage,
+                tasksCount = summary.TasksCount,
+                currentStreak = summary.CurrentStreak
             });
         }
 
