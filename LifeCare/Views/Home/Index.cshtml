@@ -100,9 +100,9 @@
 
                         <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-center h-100"
                              style="border-left: 8px solid @h.Color; background: #181818;">
-                            
+
                             <i class="me-3 fa @h.Icon fa-2x" style="color: @h.Color;"></i>
-                            
+
                             <div class="flex-grow-1 text-light">
                                 <strong data-habit-title class="@(h.IsCompleted ? "text-decoration-line-through text-muted" : "text-white")">@h.Name</strong><br/>
 
@@ -132,7 +132,8 @@
                                              role="progressbar"
                                              data-habit-progress-bar
                                              style="width: @progressWidth%; background-color: @h.Color;"
-                                             aria-valuenow="@progressWidth" aria-valuemin="0" aria-valuemax="100"></div>
+                                             aria-valuenow="@progressWidth" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
                                     </div>
                                     <small class="text-muted mt-1 d-block" data-habit-progress>
                                         @h.DoneQuantity/@h.TargetQuantity
@@ -370,6 +371,7 @@
                     const hasMultiple = Array.isArray(s.products) && s.products.length > 1;
                     const isAny = s.rotationEnabled && mode === "ANY";
                     const isNone = !s.rotationEnabled && hasMultiple;
+                    const isRotAll = s.rotationEnabled && mode !== "ANY";
 
                     const showStepCheckbox = !isAny;
                     const showProductCheckboxes = isAny || isNone;
@@ -391,67 +393,73 @@
                         ? `<span class="daily-step-rotation badge bg-info me-1" title="${escapeHtml(labelTitle)}" style="background-color: var(--clr-primary-a40) !important; color: #111;">${labelText}</span>`
                         : "";
 
-                    const stepCheckboxChecked =
-                        isNone && showStepCheckbox && showProductCheckboxes && Array.isArray(s.products) && s.products.length
-                            ? s.products.every(p => !!p.completed)
-                            : !!s.completed;
+                    const stepEffectiveCompleted = !!(s.completed || s.skipped);
 
                     const row = document.createElement("div");
-                    row.className = `step-card p-3 rounded-md ${s.completed || s.skipped ? "completed-step" : ""}`;
-
+                    row.className = `step-card p-3 rounded-md ${stepEffectiveCompleted ? "completed-step" : ""}`;
                     row.style.border = `1px solid var(--clr-surface-a30)`;
-                    row.style.backgroundColor = 'var(--clr-surface-a10)';
-                    row.style.borderRadius = 'var(--radius-md)';
-                    row.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)';
+                    row.style.backgroundColor = "var(--clr-surface-a10)";
+                    row.style.borderRadius = "var(--radius-md)";
+                    row.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)";
 
                     const headerHtml = `
-                            <div class="d-flex align-items-start justify-content-between">
-                                <div class="me-3 flex-grow-1">
-                                    <div class="step-title fw-semibold text-white">
-                                        <span class="text-muted me-2">#${idx + 1}</span>
-                                        <span class="${s.completed ? "strike text-muted" : ""}">${escapeHtml(s.name || "")}</span>
-                                    </div>
-                                    ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="me-3 flex-grow-1">
+                                <div class="step-title fw-semibold text-white">
+                                    <span class="text-muted me-2">#${idx + 1}</span>
+                                    <span class="${stepEffectiveCompleted ? "strike text-muted" : ""}">${escapeHtml(s.name || "")}</span>
                                 </div>
-                                <div class="text-end ms-2 d-flex align-items-center gap-2"> 
-                                    ${rotationLabel} 
-                                  ${showStepCheckbox ? `
-                                    <div class="form-check m-0">
-                                      <input class="form-check-input big-checkbox"
-                                             type="checkbox"
-                                             ${stepCheckboxChecked ? "checked" : ""}
-                                             data-step-id="${s.stepId}"
-                                             data-step-mode="${isAny ? "ANY" : (isNone ? "NONE" : "OTHER")}">
-                                    </div>` : ``}
-                                </div>
+                                ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
                             </div>
-                        `;
+                            <div class="text-end ms-2 d-flex align-items-center gap-2"> 
+                                ${rotationLabel} 
+                              ${showStepCheckbox ? `
+                                <div class="form-check m-0">
+                                  <input class="form-check-input big-checkbox"
+                                         type="checkbox"
+                                         ${stepEffectiveCompleted ? "checked" : ""}
+                                         data-step-id="${s.stepId}"
+                                         data-step-mode="${isAny ? "ANY" : (isNone ? "NONE" : "OTHER")}">
+                                </div>` : ``}
+                            </div>
+                        </div>
+                    `;
+
+                    const productCompletedByStep = (isRotAll || isNone) && stepEffectiveCompleted;
 
                     let productsHtml = "";
                     if (s.products && s.products.length) {
-                        productsHtml = `
-                                <div class="mt-4 d-flex flex-column gap-4" style="border-top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.25rem;">
-                                  ${s.products.map(p => `
-                                    <div class="product-row d-flex align-items-center justify-content-between">
-                                      <div class="d-flex align-items-start gap-3">
-                                        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ``}
-                                        <div>
-                                          <div class="fw-semibold small ${p.completed ? "strike text-muted" : "text-white"}">${escapeHtml(p.name || "")}</div>
-                                          ${p.note ? `<div class="product-note xsmall text-muted">${escapeHtml(p.note)}</div>` : ``}
-                                          ${p.url ? `<div class="xsmall"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
-                                        </div>
-                                      </div>
-                                      ${showProductCheckboxes ? `
-                                        <div class="form-check mt-1 align-self-center"> 
-                                          <input class="form-check-input big-checkbox" type="checkbox"
-                                                 data-prod-id="${p.productId}"
-                                                 data-step-id="${s.stepId}"
-                                                 ${p.completed ? "checked" : ""}>
-                                        </div>` : ``}
+                        const prodsHtml = s.products.map(p => {
+                            const productCompleted = !!p.completed || productCompletedByStep;
+                            const productTextClass = productCompleted ? "strike text-muted" : "text-white";
+                            const productCheckboxChecked = showProductCheckboxes && productCompleted ? "checked" : "";
+
+                            return `
+                                <div class="product-row d-flex align-items-center justify-content-between">
+                                  <div class="d-flex align-items-start gap-3">
+                                    ${p.imageUrl ? `<img src="${p.imageUrl}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ``}
+                                    <div>
+                                      <div class="fw-semibold small ${productTextClass}">${escapeHtml(p.name || "")}</div>
+                                      ${p.note ? `<div class="product-note xsmall text-muted">${escapeHtml(p.note)}</div>` : ``}
+                                      ${p.url ? `<div class="xsmall"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
                                     </div>
-                                  `).join("")}
+                                  </div>
+                                  ${showProductCheckboxes ? `
+                                    <div class="form-check mt-1 align-self-center"> 
+                                      <input class="form-check-input big-checkbox" type="checkbox"
+                                             data-prod-id="${p.productId}"
+                                             data-step-id="${s.stepId}"
+                                             ${productCheckboxChecked}>
+                                    </div>` : ``}
                                 </div>
                             `;
+                        }).join("");
+
+                        productsHtml = `
+                            <div class="mt-4 d-flex flex-column gap-4" style="border-top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.25rem;">
+                              ${prodsHtml}
+                            </div>
+                        `;
                     }
 
                     row.innerHTML = `${headerHtml}${productsHtml}`;
