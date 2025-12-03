@@ -36,6 +36,7 @@ namespace LifeCare.ViewModels
 
         public bool IsQuantityType { get; set; }
         public decimal? TargetQuantity { get; set; }
+        public string? Unit { get; set; }
         public decimal DoneQuantity { get; set; }
         public bool IsCompleted { get; set; }
 

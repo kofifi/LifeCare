@@ -93,19 +93,19 @@
                          data-id="@h.HabitId"
                          data-type="@(h.IsQuantityType ? "quantity" : "checkbox")"
                          data-target="@h.TargetQuantity"
-                         data-unit="jedn."
+                         data-unit="@h.Unit"
                          data-name="@h.Name"
                          data-tags="@(h.SelectedTagIds != null ? string.Join(',', h.SelectedTagIds) : "")"
                          style="width: calc((100% - 2rem) / 3); min-width: 250px; flex-grow: 0; flex-shrink: 0;">
 
-                        <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-start h-100"
+                        <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-center h-100"
                              style="border-left: 8px solid @h.Color; background: #181818;">
-
+                            
                             <i class="me-3 fa @h.Icon fa-2x" style="color: @h.Color;"></i>
-
+                            
                             <div class="flex-grow-1 text-light">
-                                <strong data-habit-title class="@(h.IsCompleted ? "text-decoration-line-through text-muted" : "text-white")">@h.Name</strong><br />
-                                
+                                <strong data-habit-title class="@(h.IsCompleted ? "text-decoration-line-through text-muted" : "text-white")">@h.Name</strong><br/>
+
                                 @{
                                     var habitTagNames = h.SelectedTagIds
                                         .Select(id => tagDict.TryGetValue(id.ToString(), out var name) ? name : $"ID:{id}")
@@ -140,7 +140,7 @@
                                 }
                             </div>
 
-                            <div class="text-end ms-3">
+                            <div class="text-end ms-3 d-flex align-items-center justify-content-center" style="height: 100%;">
                                 @if (h.IsQuantityType && h.TargetQuantity.HasValue)
                                 {
                                     <button class="btn btn-sm" style="background: @h.Color; color: #121212;" data-qty-plus>
