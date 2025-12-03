@@ -2,20 +2,20 @@
 @using LifeCare.ViewModels
 
 @{
-ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Dashboard";
 
-var date = Model.SelectedDate;
-var culture = new System.Globalization.CultureInfo("pl-PL");
-var dateString = date.ToDateTime(TimeOnly.MinValue).ToString("dddd, dd MMMM yyyy", culture);
+    var date = Model.SelectedDate;
+    var culture = new System.Globalization.CultureInfo("pl-PL");
+    var dateString = date.ToDateTime(TimeOnly.MinValue).ToString("dddd, dd MMMM yyyy", culture);
 
-var prevDate = Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd");
-var nextDate = Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd");
+    var prevDate = Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd");
+    var nextDate = Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd");
 
-var dailyCompletionPercentage = Model.OverallCompletionPercentage;
-var currentStreak = Model.CurrentStreak;
+    var dailyCompletionPercentage = Model.OverallCompletionPercentage;
+    var currentStreak = Model.CurrentStreak;
 
-var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
-.ToDictionary(t => t.Id.ToString(), t => t.Name);
+    var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()))
+        .ToDictionary(t => t.Id.ToString(), t => t.Name);
 }
 
 @Html.AntiForgeryToken()
@@ -57,7 +57,7 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
             <div class="soft-card p-4 rounded-lg shadow-lg"
                  style="background: #1e1e1e; border-left: 5px solid #00F0FF;">
                 <i class="fa fa-list-check fa-2x" style="color: #00F0FF;"></i>
-                <div class="text-white fw-bold display-4 mt-2">@Model.TasksCount</div>
+                <div id="dashTasksCount" class="text-white fw-bold display-4 mt-2">@Model.TasksCount</div>
                 <div class="text-muted">Zadań na dziś</div>
             </div>
         </div>
@@ -66,11 +66,11 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
     <div id="dashboardTagFilterWrap" class="mb-4">
         @await Html.PartialAsync("_TagFilter", new TagFilterVM
         {
-        Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
-        SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
-        QueryKey = "tagIds",
-        Placeholder = "Filtruj nawyki i rutyny po tagach…",
-        SubmitMode = "manual"
+            Tags = (IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<TagVM>()),
+            SelectedIds = (IEnumerable<int>)(ViewBag.SelectedTagIds ?? Enumerable.Empty<int>()),
+            QueryKey = "tagIds",
+            Placeholder = "Filtruj nawyki i rutyny po tagach…",
+            SubmitMode = "manual"
         })
     </div>
 
@@ -82,86 +82,83 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
 
         @if (!Model.Habits.Any())
         {
-        <p class="text-muted">Brak nawyków przypisanych do tego dnia.</p>
+            <p class="text-muted">Brak nawyków przypisanych do tego dnia.</p>
         }
         else
         {
-        <div id="habit-list" class="d-flex flex-wrap gap-3 habits-grid align-items-stretch">
-            @foreach (var h in Model.Habits.OrderBy(x => x.HabitId))
-            {
-            <div class="habit-card"
-                 data-id="@h.HabitId"
-                 data-type="@(h.IsQuantityType ? "quantity" : "checkbox")"
-                 data-target="@h.TargetQuantity"
-                 data-unit="jedn."
-                 data-name="@h.Name"
-                 data-tags="@(h.SelectedTagIds != null ? string.Join(',', h.SelectedTagIds) : "")"
-                 style="width: calc((100% - 2rem) / 3); min-width: 250px; flex-grow: 0; flex-shrink: 0;">
+            <div id="habit-list" class="d-flex flex-wrap gap-3 habits-grid align-items-stretch">
+                @foreach (var h in Model.Habits.OrderBy(x => x.HabitId))
+                {
+                    <div class="habit-card"
+                         data-id="@h.HabitId"
+                         data-type="@(h.IsQuantityType ? "quantity" : "checkbox")"
+                         data-target="@h.TargetQuantity"
+                         data-unit="jedn."
+                         data-name="@h.Name"
+                         data-tags="@(h.SelectedTagIds != null ? string.Join(',', h.SelectedTagIds) : "")"
+                         style="width: calc((100% - 2rem) / 3); min-width: 250px; flex-grow: 0; flex-shrink: 0;">
 
-                <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-start h-100"
-                     style="border-left: 8px solid @h.Color; background: #181818;">
+                        <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-start h-100"
+                             style="border-left: 8px solid @h.Color; background: #181818;">
 
-                    <i class="me-3 fa @h.Icon fa-2x" style="color: @h.Color;"></i>
+                            <i class="me-3 fa @h.Icon fa-2x" style="color: @h.Color;"></i>
 
-                    <div class="flex-grow-1 text-light">
-                        <strong class="@(h.IsCompleted ? "text-decoration-line-through text-muted" : "text-white")">@h.Name</strong><br />
+                            <div class="flex-grow-1 text-light">
+                                <strong data-habit-title class="@(h.IsCompleted ? "text-decoration-line-through text-muted" : "text-white")">@h.Name</strong><br />
+                                
+                                @{
+                                    var habitTagNames = h.SelectedTagIds
+                                        .Select(id => tagDict.TryGetValue(id.ToString(), out var name) ? name : $"ID:{id}")
+                                        .ToList();
+                                }
+                                @if (habitTagNames.Any())
+                                {
+                                    <div class="d-flex flex-wrap gap-1 mt-1 mb-2">
+                                        @foreach (var tagName in habitTagNames)
+                                        {
+                                            <span class="tag-pill badge bg-surface-tonal text-white-50">@tagName</span>
+                                        }
+                                    </div>
+                                }
 
-                        @{
-                        var habitTagNames = h.SelectedTagIds
-                        .Select(id => tagDict.TryGetValue(id.ToString(), out var name) ? name : $"ID:{id}")
-                        .ToList();
-                        }
-                        @if (habitTagNames.Any())
-                        {
-                        <div class="d-flex flex-wrap gap-1 mt-1 mb-2">
-                            @foreach (var tagName in habitTagNames)
-                            {
-                            <span class="tag-pill badge bg-surface-tonal text-white-50">@tagName</span>
-                            }
+                                @if (h.IsQuantityType && h.TargetQuantity.HasValue)
+                                {
+                                    <div class="progress mt-1" style="height: 5px;" data-habit-progress-wrapper>
+                                        @{
+                                            var progress = (h.DoneQuantity / h.TargetQuantity.Value) * 100;
+                                            var progressWidth = progress > 100 ? 100 : progress;
+                                        }
+                                        <div class="progress-bar"
+                                             role="progressbar"
+                                             data-habit-progress-bar
+                                             style="width: @progressWidth%; background-color: @h.Color;"
+                                             aria-valuenow="@progressWidth" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block" data-habit-progress>
+                                        @h.DoneQuantity/@h.TargetQuantity
+                                    </small>
+                                }
+                            </div>
+
+                            <div class="text-end ms-3">
+                                @if (h.IsQuantityType && h.TargetQuantity.HasValue)
+                                {
+                                    <button class="btn btn-sm" style="background: @h.Color; color: #121212;" data-qty-plus>
+                                        +
+                                    </button>
+                                }
+                                else
+                                {
+                                    <input type="checkbox"
+                                           class="form-check-input big-checkbox"
+                                           data-habit-checkbox
+                                           @(h.IsCompleted ? "checked" : "")/>
+                                }
+                            </div>
                         </div>
-                        }
-
-                        @if (h.IsQuantityType && h.TargetQuantity.HasValue)
-                        {
-                        <div class="progress mt-1" style="height: 5px;">
-                            @{
-                            var progress = (h.DoneQuantity / h.TargetQuantity.Value) * 100;
-                            var progressWidth = progress > 100 ? 100 : progress;
-                            }
-                            <div class="progress-bar" role="progressbar"
-                                 style="width: @progressWidth%; background-color: @h.Color;"
-                                 aria-valuenow="@progressWidth" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        <small class="text-muted mt-1 d-block" data-habit-progress>
-                            @h.DoneQuantity/@h.TargetQuantity
-                        </small>
-                        }
                     </div>
-
-                    <div class="text-end ms-3">
-                        @if (h.IsCompleted && (!h.IsQuantityType || h.DoneQuantity >= h.TargetQuantity))
-                        {
-                        <i class="fa fa-check-circle fa-2x text-success me-2" style="opacity: 0.8;"></i>
-                        }
-
-                        @if (h.IsQuantityType && h.TargetQuantity.HasValue)
-                        {
-                        <button class="btn btn-sm" style="background: @h.Color; color: #121212;" data-qty-plus>
-                            +
-                        </button>
-                        }
-                        else
-                        {
-                        <input type="checkbox"
-                               class="form-check-input big-checkbox"
-                               data-habit-checkbox
-                               @(h.IsCompleted ? "checked" : "") />
-                        }
-                    </div>
-                </div>
+                }
             </div>
-            }
-        </div>
         }
 
         <h4 class="text-muted border-bottom pb-2 mt-4">Rutyny (Routines)</h4>
@@ -196,14 +193,15 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
 </div>
 
 @section Scripts {
-<script src="~/js/tags.js" asp-append-version="true"></script>
-<script src="~/js/habit.js" asp-append-version="true"></script>
+    <script src="~/js/tags.js" asp-append-version="true"></script>
 
-<script>
-    window.LC_TagDict = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tagDict));
-</script>
+    <script>
+        window.LC_HABITS_SELECTED_DATE = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
+    </script>
+    <script src="~/js/habit.js" asp-append-version="true"></script>
 
-<script>
+
+    <script>
     (function () {
         const selectedDate = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
 
@@ -243,6 +241,25 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
             const names = (ids || []).map(String).map(id => dict[id] || id);
             if (!names.length) return "";
             return `<div class="mt-1 d-flex flex-wrap gap-1">${names.map(n => `<span class="tag-pill badge bg-surface-tonal text-white-50">${escapeHtml(n)}</span>`).join("")}</div>`;
+        }
+
+        async function refreshDailySummary() {
+            try {
+                const url = new URL(window.location.origin + '/Home/DailySummary');
+                url.searchParams.set('date', selectedDate);
+                const res = await fetch(url.toString(), { cache: 'no-store' });
+                if (!res.ok) return;
+                const data = await res.json();
+                const circle = document.querySelector('.progress-circle');
+                if (!circle) return;
+                const span = circle.querySelector('span');
+                const raw = data.overallCompletionPercentage;
+                if (typeof raw !== 'number') return;
+                const val = Math.round(raw);
+                circle.dataset.percentage = String(val);
+                if (span) span.textContent = val + '%';
+            } catch {
+            }
         }
 
         async function loadRoutines() {
@@ -290,6 +307,8 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
             }
 
             list.forEach(r => {
+                const isCompleted = r.totalSteps > 0 && r.doneSteps >= r.totalSteps;
+
                 const card = document.createElement("div");
                 card.className = "routine-card dynamic-width clickable-card";
                 card.setAttribute("data-routine-id", r.routineId);
@@ -297,10 +316,10 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                 const tagIds = getRoutineTagIds(r);
                 card.setAttribute("data-tags", tagIds.length ? tagIds.join(",") : "");
 
-                if (r.completed) card.classList.add("completed");
+                if (isCompleted) card.classList.add("completed");
 
                 const progressBadge = `<span class="badge bg-secondary">${r.doneSteps}/${r.totalSteps}</span>`;
-                const routineCompletedClass = r.completed ? "completed-routine" : "";
+                const routineCompletedClass = isCompleted ? "completed-routine" : "";
 
                 const header = document.createElement("div");
                 header.className = `soft-card dark-card p-3 d-flex flex-row align-items-center justify-content-between rounded-top-lg rounded-bottom-0 ${routineCompletedClass}`;
@@ -312,7 +331,7 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                         <div class="d-flex align-items-center gap-3 flex-grow-1">
                             <i class="fa ${r.icon} fa-2x" style="color:${r.color || '#cccccc'}"></i>
                             <div class="text-light flex-grow-1">
-                                <div class="fw-semibold text-white ${r.completed ? "strike text-muted" : ""}">${escapeHtml(r.name || "")}</div>
+                                <div class="fw-semibold text-white ${isCompleted ? "strike text-muted" : ""}">${escapeHtml(r.name || "")}</div>
                                 ${r.timeOfDay ? `<div class="small text-muted">${fmtTimeMaybe(r.timeOfDay)}</div>` : ``}
                                 ${tagsHtml(tagIds)}
                             </div>
@@ -394,8 +413,8 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                                     </div>
                                     ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
                                 </div>
-                                <div class="text-end ms-2 d-flex align-items-center gap-2">
-                                    ${rotationLabel}
+                                <div class="text-end ms-2 d-flex align-items-center gap-2"> 
+                                    ${rotationLabel} 
                                   ${showStepCheckbox ? `
                                     <div class="form-check m-0">
                                       <input class="form-check-input big-checkbox"
@@ -423,7 +442,7 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                                         </div>
                                       </div>
                                       ${showProductCheckboxes ? `
-                                        <div class="form-check mt-1 align-self-center">
+                                        <div class="form-check mt-1 align-self-center"> 
                                           <input class="form-check-input big-checkbox" type="checkbox"
                                                  data-prod-id="${p.productId}"
                                                  data-step-id="${s.stepId}"
@@ -478,7 +497,8 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                     }).then(x => x.ok);
 
                     if (ok) {
-                        location.reload();
+                        await loadRoutines();
+                        await refreshDailySummary();
                     } else {
                         e.target.checked = !completed;
                         alert("Nie udało się zapisać.");
@@ -545,9 +565,11 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                                     note: null
                                 }),
                             });
-                        } catch { }
+                        } catch {
+                        }
 
-                        location.reload();
+                        await loadRoutines();
+                        await refreshDailySummary();
                         return;
                     }
 
@@ -577,7 +599,8 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                                     e.target.checked = !completed;
                                     alert("Błąd zapisu.");
                                 } else {
-                                    location.reload();
+                                    await loadRoutines();
+                                    await refreshDailySummary();
                                 }
                                 return;
                             }
@@ -613,7 +636,8 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                                     }),
                                 });
 
-                                location.reload();
+                                await loadRoutines();
+                                await refreshDailySummary();
                             } catch {
                                 e.target.checked = !completed;
                                 alert("Nie udało się zapisać wszystkich pozycji.");
@@ -637,7 +661,8 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
                             e.target.checked = !completed;
                             alert("Błąd zapisu.");
                         } else {
-                            location.reload();
+                            await loadRoutines();
+                            await refreshDailySummary();
                         }
                     }
                 });
@@ -664,9 +689,8 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
             loadRoutines();
         }
     })();
-</script>
-
-<script>
+    </script>
+    <script>
     (function () {
         const tfRoot = document.querySelector('#dashboardTagFilterWrap .tf');
         if (!tfRoot) return;
@@ -700,5 +724,40 @@ var tagDict = ((IEnumerable<TagVM>)(ViewBag.AvailableTags ?? Enumerable.Empty<Ta
             }
         });
     })();
-</script>
+    </script>
+    <script>
+    (function () {
+        const selectedDate = '@Model.SelectedDate.ToString("yyyy-MM-dd")';
+
+        async function refreshDailySummary(dateStr) {
+            try {
+                const url = '@Url.Action("DailySummary", "Home")' + '?date=' + encodeURIComponent(dateStr);
+                const res = await fetch(url, { cache: 'no-store' });
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const percent = data.overallCompletionPercentage ?? 0;
+                const tasks = data.tasksCount ?? null;
+
+                const circle = document.querySelector('.progress-circle');
+                if (circle) {
+                    circle.dataset.percentage = percent;
+                    const span = circle.querySelector('span');
+                    if (span) span.textContent = percent + '%';
+                }
+
+                const tasksEl = document.getElementById('dashTasksCount');
+                if (tasksEl !== null && tasks !== null) {
+                    tasksEl.textContent = tasks;
+                }
+            } catch (err) {
+                console.error('DailySummary error', err);
+            }
+        }
+
+        window.LC_Dashboard = window.LC_Dashboard || {};
+        window.LC_Dashboard.refreshSummary = refreshDailySummary;
+        window.LC_Dashboard.selectedDate = selectedDate;
+    })();
+    </script>
 }

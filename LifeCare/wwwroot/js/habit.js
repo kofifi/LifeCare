@@ -1,6 +1,11 @@
 ﻿(function () {
+    const initialDateStr = window.LC_HABITS_SELECTED_DATE;
+    const initialDate = initialDateStr
+        ? new Date(initialDateStr + 'T12:00:00')
+        : new Date();
+
     const state = {
-        selectedDate: new Date(),
+        selectedDate: initialDate,
         weekOffset: 0
     };
 
@@ -39,7 +44,7 @@
             const btn = document.createElement('button');
             btn.className = 'btn btn-outline-primary mx-1 day-button';
             btn.dataset.date = fmtYmd(d);
-            btn.textContent = d.toLocaleDateString('pl-PL', {weekday: 'short', day: '2-digit', month: '2-digit'});
+            btn.textContent = d.toLocaleDateString('pl-PL', { weekday: 'short', day: '2-digit', month: '2-digit' });
             if (isSameDay(d, state.selectedDate)) btn.classList.add('active');
 
             btn.addEventListener('click', () => {
@@ -67,7 +72,7 @@
     }
 
     async function loadEntries(dateStr) {
-        const res = await fetch(`/Habits/GetEntries?date=${encodeURIComponent(dateStr + 'T12:00:00')}`, {cache: 'no-store'});
+        const res = await fetch(`/Habits/GetEntries?date=${encodeURIComponent(dateStr + 'T12:00:00')}`, { cache: 'no-store' });
         if (!res.ok) return;
         const entries = await res.json();
 
@@ -83,20 +88,44 @@
             const id = Number(card.dataset.id);
             const type = (card.dataset.type || '').toLowerCase();
             const target = Number(card.dataset.target || 0);
-
             const entry = byHabit.get(id);
+            const title = qs('[data-habit-title]', card);
 
             if (type === 'checkbox') {
                 const cb = qs('[data-habit-checkbox]', card);
                 if (!cb) return;
+
                 const done = !!(entry && (entry.completed ?? entry.Completed));
                 cb.checked = done;
+
+                if (title) {
+                    title.classList.remove('text-white', 'text-muted', 'text-decoration-line-through');
+                    if (done) {
+                        title.classList.add('text-muted', 'text-decoration-line-through');
+                    } else {
+                        title.classList.add('text-white');
+                    }
+                }
             } else {
                 const prog = qs('[data-habit-progress]', card);
-                if (!prog) return;
+                const bar = qs('[data-habit-progress-bar]', card);
+                if (!prog || !bar) return;
+
                 const q = Number(entry?.quantity ?? entry?.Quantity ?? 0);
-                prog.textContent = `${q}/${isNaN(target) ? 0 : target}`;
-                if (target > 0 && q >= target) {
+                const tgt = isNaN(target) ? 0 : target;
+
+                let percent = 0;
+                if (tgt > 0) {
+                    percent = (q / tgt) * 100;
+                    if (percent > 100) percent = 100;
+                }
+
+                bar.style.width = percent + '%';
+                bar.setAttribute('aria-valuenow', percent.toString());
+
+                prog.textContent = `${q}/${tgt}`;
+
+                if (tgt > 0 && q >= tgt) {
                     prog.style.color = 'var(--bs-success, #28a745)';
                     prog.classList.add('fw-semibold');
                 } else if (q > 0) {
@@ -106,8 +135,22 @@
                     prog.style.color = 'gray';
                     prog.classList.remove('fw-semibold');
                 }
+
+                const done = tgt > 0 ? q >= tgt : q > 0;
+                if (title) {
+                    title.classList.remove('text-white', 'text-muted', 'text-decoration-line-through');
+                    if (done) {
+                        title.classList.add('text-muted', 'text-decoration-line-through');
+                    } else {
+                        title.classList.add('text-white');
+                    }
+                }
             }
         });
+
+        if (window.LC_Dashboard && typeof window.LC_Dashboard.refreshSummary === 'function') {
+            window.LC_Dashboard.refreshSummary(fmtYmd(state.selectedDate));
+        }
     }
 
     function resetUiToDefaults() {
@@ -154,12 +197,15 @@
 
             const ok = await fetch('/Habits/SaveEntry', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(r => r.ok);
 
             if (!ok) cb.checked = !completed;
-            else await loadEntries(fmtYmd(state.selectedDate));
+            else {
+                const ds = fmtYmd(state.selectedDate);
+                await loadEntries(ds);
+            }
         });
 
         list.addEventListener('click', (e) => {
@@ -208,13 +254,14 @@
 
             const ok = await fetch('/Habits/SaveEntry', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(r => r.ok);
 
             if (ok) {
                 bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-                await loadEntries(fmtYmd(state.selectedDate));
+                const ds = fmtYmd(state.selectedDate);
+                await loadEntries(ds);
             }
         });
     }

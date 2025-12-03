@@ -1,10 +1,9 @@
-using System.Diagnostics;
-using System.Security.Claims;
 using LifeCare.Data;
 using LifeCare.Models;
 using LifeCare.Services.Interfaces;
 using LifeCare.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,23 +12,23 @@ namespace LifeCare.Controllers
     [Authorize]
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private readonly LifeCareDbContext _db;
         private readonly IDashboardService _dashboardService;
+        private readonly UserManager<User> _userManager;
 
         public HomeController(
-            ILogger<HomeController> logger,
             LifeCareDbContext db,
-            IDashboardService dashboardService)
+            IDashboardService dashboardService,
+            UserManager<User> userManager)
         {
-            _logger = logger;
             _db = db;
             _dashboardService = dashboardService;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index(DateOnly? date = null, int[]? tagIds = null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = _userManager.GetUserId(User);
             if (userId == null) return Challenge();
 
             var model = await _dashboardService.GetHomeDashboardAsync(userId, date);
@@ -50,15 +49,20 @@ namespace LifeCare.Controllers
             return View(model);
         }
 
-        public IActionResult Privacy()
+        [HttpGet]
+        public async Task<IActionResult> DailySummary(DateOnly date)
         {
-            return View();
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Challenge();
+
+            var model = await _dashboardService.GetHomeDashboardAsync(userId, date);
+
+            return Json(new
+            {
+                overallCompletionPercentage = model.OverallCompletionPercentage,
+                tasksCount = model.TasksCount
+            });
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
     }
 }
