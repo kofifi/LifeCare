@@ -34,31 +34,48 @@
     </header>
 
     <div class="row mb-5">
-        <div class="col-6 col-md-4 mb-3">
-            <div class="soft-card dark-card p-4 text-center rounded-lg shadow-lg"
-                 style="background: #1E1E1E; border: 1px solid rgba(255, 255, 255, 0.05);">
-                <div class="progress-circle large" data-percentage="@dailyCompletionPercentage">
-                    <span class="text-white fw-bold display-4">@dailyCompletionPercentage%</span>
+        <div class="col-6 col-md-4 mb-3 d-flex">
+            <div class="soft-card dark-card summary-card summary-card--progress h-100 w-100 p-4 shadow-lg rounded-lg d-flex flex-column align-items-center justify-content-center text-center">
+                @* <i class="fa fa-bullseye summary-card__icon"></i> *@
+
+                <div class="summary-card__value text-white fw-bold display-4">
+                    <span class="summary-card__value-number" data-daily-progress>@dailyCompletionPercentage</span>
+                    <span class="summary-card__value-unit">%</span>
                 </div>
-                <div class="mt-3 text-muted">Postęp Dnia</div>
+
+                <div class="summary-card__label">
+                    Postęp dnia
+                </div>
             </div>
         </div>
 
-        <div class="col-6 col-md-4 mb-3">
-            <div class="soft-card p-4 rounded-lg shadow-lg"
-                 style="background: #1e1b12; border-left: 5px solid #FF9900;">
-                <i class="fa fa-fire fa-2x" style="color: #FF9900;"></i>
-                <div id="dashCurrentStreak" class="text-white fw-bold display-4 mt-2">@currentStreak</div>
-                <div class="text-muted">Aktualna Seria Dni</div>
+        <div class="col-6 col-md-4 mb-3 d-flex">
+            <div class="soft-card dark-card summary-card streak-card h-100 w-100 p-4 shadow-lg rounded-lg">
+                <i class="fa fa-fire summary-card__icon"></i>
+
+                <div id="dashCurrentStreak"
+                     class="summary-card__value text-white fw-bold display-4">
+                    @currentStreak
+                </div>
+
+                <div class="summary-card__label">
+                    Aktualna seria dni
+                </div>
             </div>
         </div>
 
-        <div class="col-12 col-md-4 mb-3">
-            <div class="soft-card p-4 rounded-lg shadow-lg"
-                 style="background: #1e1e1e; border-left: 5px solid #00F0FF;">
-                <i class="fa fa-list-check fa-2x" style="color: #00F0FF;"></i>
-                <div id="dashTasksCount" class="text-white fw-bold display-4 mt-2">@Model.TasksCount</div>
-                <div class="text-muted">Zadań na dziś</div>
+        <div class="col-12 col-md-4 mb-3 d-flex">
+            <div class="soft-card dark-card summary-card summary-card--tasks h-100 w-100 p-4 shadow-lg rounded-lg">
+                <i class="fa fa-list-check summary-card__icon"></i>
+
+                <div id="dashTasksCount"
+                     class="summary-card__value text-white fw-bold display-4">
+                    @Model.TasksCount
+                </div>
+
+                <div class="summary-card__label">
+                    Zadań na dziś
+                </div>
             </div>
         </div>
     </div>
@@ -99,7 +116,10 @@
                          style="width: calc((100% - 2rem) / 3); min-width: 250px; flex-grow: 0; flex-shrink: 0;">
 
                         <div class="soft-card dark-card p-3 rounded-lg d-flex flex-row align-items-center h-100"
-                             style="border-left: 8px solid @h.Color; background: #181818;">
+                             style="border-left: 8px solid @h.Color; 
+                                 /*background: radial-gradient(circle at top, color-mix(in srgb, @h.Color 20%, #000 80%), #181818);*/
+                                 background: #181818;
+                            ">
 
                             <i class="me-3 fa @h.Icon fa-2x" style="color: @h.Color;"></i>
 
@@ -169,29 +189,8 @@
     </div>
 </div>
 
-<div class="modal fade" id="quantityModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header">
-                <h5 class="modal-title">Dodaj wykonanie</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zamknij"></button>
-            </div>
-            <div class="modal-body">
-                <p>
-                    <strong id="modalHabitName"></strong>
-                </p>
-                <p>Jednostka: <span id="modalUnit"></span></p>
-                <div class="mb-3">
-                    <label for="modalQuantityInput" class="form-label">Ilość wykonana dziś</label>
-                    <input type="number" class="form-control" id="modalQuantityInput" min="0"/>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="confirmQuantityBtn" class="btn btn-success">Zapisz</button>
-            </div>
-        </div>
-    </div>
-</div>
+@await Html.PartialAsync("_QuantityModal")
+
 
 @section Scripts {
     <script src="~/js/tags.js" asp-append-version="true"></script>
@@ -308,6 +307,12 @@
                 const card = document.createElement("div");
                 card.className = "routine-card dynamic-width clickable-card";
                 card.setAttribute("data-routine-id", r.routineId);
+                card.addEventListener("mouseenter", () => {
+                    card.style.boxShadow = `0 0 0 2px ${r.color || '#cccccc'}`;
+                });
+                card.addEventListener("mouseleave", () => {
+                    card.style.boxShadow = "";
+                });
 
                 const tagIds = getRoutineTagIds(r);
                 card.setAttribute("data-tags", tagIds.length ? tagIds.join(",") : "");
@@ -387,74 +392,74 @@
                         ? `<span class="daily-step-rotation badge bg-info me-1" title="${escapeHtml(labelTitle)}" style="background-color: var(--clr-primary-a40) !important; color: #111;">${labelText}</span>`
                         : "";
 
-                    const stepCheckboxChecked =
-                        isNone && showStepCheckbox && showProductCheckboxes && Array.isArray(s.products) && s.products.length
-                            ? s.products.every(p => !!p.completed)
-                            : !!s.completed;
+                    const stepDone = !!(s.completed || s.skipped);
+                    const allProductsCompleted = Array.isArray(s.products) && s.products.length && s.products.every(p => !!p.completed);
+
+                    const stepCheckboxChecked = isNone
+                        ? (stepDone || allProductsCompleted)
+                        : !!s.completed;
 
                     const row = document.createElement("div");
                     row.className = `step-card p-3 rounded-md ${s.completed || s.skipped ? "completed-step" : ""}`;
 
                     row.style.border = `1px solid var(--clr-surface-a30)`;
-                    row.style.backgroundColor = 'var(--clr-surface-a10)';
-                    row.style.borderRadius = 'var(--radius-md)';
-                    row.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)';
+                    row.style.backgroundColor = "var(--clr-surface-a10)";
+                    row.style.borderRadius = "var(--radius-md)";
+                    row.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02)";
 
                     const headerHtml = `
-                            <div class="d-flex align-items-start justify-content-between">
-                                <div class="me-3 flex-grow-1">
-                                    <div class="step-title fw-semibold text-white">
-                                        <span class="text-muted me-2">#${idx + 1}</span>
-                                        <span class="${s.completed ? "strike text-muted" : ""}">${escapeHtml(s.name || "")}</span>
-                                    </div>
-                                    ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="me-3 flex-grow-1">
+                                <div class="step-title fw-semibold text-white">
+                                    <span class="text-muted me-2">#${idx + 1}</span>
+                                    <span class="${s.completed ? "strike text-muted" : ""}">${escapeHtml(s.name || "")}</span>
                                 </div>
-                                <div class="text-end ms-2 d-flex align-items-center gap-2"> 
-                                    ${rotationLabel} 
-                                  ${showStepCheckbox ? `
-                                    <div class="form-check m-0">
-                                      <input class="form-check-input big-checkbox"
-                                             type="checkbox"
-                                             ${stepCheckboxChecked ? "checked" : ""}
-                                             data-step-id="${s.stepId}"
-                                             data-step-mode="${isAny ? "ANY" : (isNone ? "NONE" : "OTHER")}">
-                                    </div>` : ``}
-                                </div>
+                                ${s.description ? `<div class="product-note mt-1 small text-muted">${escapeHtml(s.description)}</div>` : ``}
                             </div>
-                        `;
+                            <div class="text-end ms-2 d-flex align-items-center gap-2"> 
+                                ${rotationLabel} 
+                              ${showStepCheckbox ? `
+                                <div class="form-check m-0">
+                                  <input class="form-check-input big-checkbox"
+                                         type="checkbox"
+                                         ${stepCheckboxChecked ? "checked" : ""}
+                                         data-step-id="${s.stepId}"
+                                         data-step-mode="${isAny ? "ANY" : (isNone ? "NONE" : "OTHER")}">
+                                </div>` : ``}
+                            </div>
+                        </div>
+                    `;
 
                     let productsHtml = "";
                     if (s.products && s.products.length) {
-                        const stepDone = !!(s.completed || s.skipped);
-
                         productsHtml = `
-                                <div class="mt-4 d-flex flex-column gap-4" style="border-top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.25rem;">
-                                  ${s.products.map(p => {
-                            const productDone = stepDone || !!p.completed;
-                            const productCls = productDone ? "strike text-muted" : "text-white";
+                            <div class="mt-4 d-flex flex-column gap-4" style="border-top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.25rem;">
+                            ${s.products.map(p => {
+                                const productDone = (isNone ? stepDone : false) || !!p.completed;
+                                const productCls = productDone ? "strike text-muted" : "text-white";
 
-                            return `
-                                        <div class="product-row d-flex align-items-center justify-content-between">
-                                          <div class="d-flex align-items-start gap-3">
-                                            ${p.imageUrl ? `<img src="${p.imageUrl}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ``}
-                                            <div>
-                                              <div class="fw-semibold small ${productCls}">${escapeHtml(p.name || "")}</div>
-                                              ${p.note ? `<div class="product-note xsmall text-muted">${escapeHtml(p.note)}</div>` : ``}
-                                              ${p.url ? `<div class="xsmall"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
-                                            </div>
-                                          </div>
-                                          ${showProductCheckboxes ? `
-                                            <div class="form-check mt-1 align-self-center"> 
-                                              <input class="form-check-input big-checkbox" type="checkbox"
-                                                     data-prod-id="${p.productId}"
-                                                     data-step-id="${s.stepId}"
-                                                     ${p.completed ? "checked" : ""}>
-                                            </div>` : ``}
+                                return `
+                                    <div class="product-row d-flex align-items-center justify-content-between">
+                                      <div class="d-flex align-items-start gap-3">
+                                        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : ``}
+                                        <div>
+                                          <div class="fw-semibold small ${productCls}">${escapeHtml(p.name || "")}</div>
+                                          ${p.note ? `<div class="product-note xsmall text-muted">${escapeHtml(p.note)}</div>` : ``}
+                                          ${p.url ? `<div class="xsmall"><a href="${p.url}" target="_blank" rel="noopener">link</a></div>` : ``}
                                         </div>
-                                      `;
-                        }).join("")}
-                                </div>
-                            `;
+                                      </div>
+                                      ${showProductCheckboxes ? `
+                                        <div class="form-check mt-1 align-self-center"> 
+                                          <input class="form-check-input big-checkbox" type="checkbox"
+                                                 data-prod-id="${p.productId}"
+                                                 data-step-id="${s.stepId}"
+                                                 ${productDone ? "checked" : ""}>
+                                        </div>` : ``}
+                                    </div>
+                                `;
+                            }).join("")}
+                            </div>
+                        `;
                     }
 
                     row.innerHTML = `${headerHtml}${productsHtml}`;
@@ -757,11 +762,9 @@
                 const tasks = data.tasksCount ?? null;
                 const streak = data.currentStreak ?? null;
 
-                const circle = document.querySelector('.progress-circle');
-                if (circle) {
-                    circle.dataset.percentage = percent;
-                    const span = circle.querySelector('span');
-                    if (span) span.textContent = percent + '%';
+                const percentEl = document.querySelector('[data-daily-progress]');
+                if (percentEl !== null) {
+                    percentEl.textContent = percent;
                 }
 
                 const tasksEl = document.getElementById('dashTasksCount');
@@ -783,4 +786,9 @@
         window.LC_Dashboard.selectedDate = selectedDate;
     })();
 </script>
+}
+
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true"/>
 }

@@ -6,7 +6,8 @@
 
     const state = {
         selectedDate: initialDate,
-        weekOffset: 0
+        weekOffset: 0,
+        entriesByHabit: new Map()
     };
 
     const qs = (sel, root = document) => root.querySelector(sel);
@@ -83,6 +84,8 @@
             const hid = e.habitId ?? e.HabitId ?? e.habitID;
             if (hid != null) byHabit.set(Number(hid), e);
         });
+
+        state.entriesByHabit = byHabit;
 
         qsa('.habit-card').forEach(card => {
             const id = Number(card.dataset.id);
@@ -225,7 +228,27 @@
             modalEl.dataset.habitId = String(hid);
             modalEl.querySelector('#modalHabitName').textContent = name;
             modalEl.querySelector('#modalUnit').textContent = unit;
-            modalEl.querySelector('#modalQuantityInput').value = '';
+
+            let existingVal = 0;
+            const progressEl = card.querySelector('[data-habit-progress]');
+            if (progressEl && progressEl.textContent) {
+                const text = progressEl.textContent.trim();
+                const parts = text.split('/');
+                if (parts.length > 0) {
+                    const raw = parts[0].trim().replace(',', '.');
+                    const n = Number(raw);
+                    if (!Number.isNaN(n)) {
+                        existingVal = n;
+                    }
+                }
+            }
+
+            const inputEl = modalEl.querySelector('#modalQuantityInput');
+            if (inputEl) {
+                inputEl.value = existingVal > 0 ? existingVal : '';
+                inputEl.focus();
+                inputEl.select();
+            }
 
             const m = bootstrap.Modal.getOrCreateInstance(modalEl);
             m.show();

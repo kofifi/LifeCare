@@ -121,6 +121,7 @@ namespace LifeCare.Services
                     DoneQuantity = isQuantity ? done : 0m,
                     IsCompleted = isCompleted,
 
+                    Unit = h.Unit,                       // ← to jest kluczowa linijka
                     SelectedTagIds = h.Tags?.Select(t => t.Id).ToList() ?? new List<int>()
                 };
             }).ToList();

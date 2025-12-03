@@ -1,0 +1,48 @@
+﻿<link rel="stylesheet" href="~/css/quantity-modal.css" asp-append-version="true" />
+<script src="~/js/quantity-modal.js" asp-append-version="true"></script>
+
+<div class="modal fade" id="quantityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content lc-qty-modal">
+            <div class="modal-header lc-qty-header border-0 position-relative">
+                <div class="w-100 text-center mt-1">
+                    <div class="lc-qty-label text-uppercase small text-muted mb-1">Nawyk ilościowy</div>
+                    <h5 id="modalHabitName" class="lc-qty-title mb-0"></h5>
+                    <div class="lc-qty-unit small text-muted mt-1">
+                        Jednostka: <span id="modalUnit"></span>
+                    </div>
+                </div>
+
+                <button type="button"
+                        class="btn-close btn-close-white quantity-modal-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Zamknij"></button>
+            </div>
+
+            <div class="modal-body lc-qty-body">
+                <div class="text-center text-muted small mb-2">
+                    Dzisiejsza wartość
+                </div>
+
+                <div class="lc-qty-input-row">
+                    <button type="button" class="lc-qty-btn" data-qty-step="-1">−</button>
+
+                    <input type="number"
+                           id="modalQuantityInput"
+                           class="form-control lc-qty-input"
+                           min="0"
+                           step="1" />
+
+                    <button type="button" class="lc-qty-btn" data-qty-step="1">+</button>
+                </div>
+            </div>
+
+            <div class="modal-footer lc-qty-footer border-0 pt-0 d-flex justify-content-end align-items-center px-4 pb-3">
+                <button id="confirmQuantityBtn"
+                        class="btn btn-primary px-4">
+                    Zapisz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
