@@ -484,7 +484,7 @@
             stepsRoot.appendChild(addBelow);
 
             $('#addStepBtnBottom')?.addEventListener('click', () => {
-                state.steps.push({ id: 0, name: '', minutes: 0, desc: '', products: [], rotation: { enabled: false, mode: 'ALL' }, rrule: 'COUNT=1' });
+                state.steps.push({ id: 0, name: '', minutes: 0, desc: '', products: [], rotation: { enabled: false, mode: 'ALL' }, rrule: 'FREQ=DAILY;INTERVAL=1' });
                 render();
             });
 
@@ -493,7 +493,7 @@
 
         if (addStepBtn) {
             addStepBtn.addEventListener('click', () => {
-                state.steps.push({ id: 0, name: '', minutes: 0, desc: '', products: [], rotation: { enabled: false, mode: 'ALL' }, rrule: 'COUNT=1' });
+                state.steps.push({ id: 0, name: '', minutes: 0, desc: '', products: [], rotation: { enabled: false, mode: 'ALL' }, rrule: 'FREQ=DAILY;INTERVAL=1' });
                 render();
             });
         }
